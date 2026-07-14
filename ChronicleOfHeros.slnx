@@ -2,4 +2,6 @@
   <Project Path="src/ChronicleOfHeros.Api/ChronicleOfHeros.Api.csproj" />
   <Project Path="src/ChronicleOfHeros.AppHost/ChronicleOfHeros.AppHost.csproj" />
   <Project Path="src/ChronicleOfHeros.ServiceDefaults/ChronicleOfHeros.ServiceDefaults.csproj" />
+  <Project Path="src/ChronicleOfHeros.Web/ChronicleOfHeros.Web.csproj" />
+  <Project Path="src/ChronicleOfHeros.Web.Client/ChronicleOfHeros.Web.Client.csproj" />
 </Solution>
