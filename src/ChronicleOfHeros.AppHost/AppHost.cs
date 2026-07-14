@@ -1,5 +1,8 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-builder.AddProject<Projects.ChronicleOfHeros_Api>("Api");
+var api = builder.AddProject<Projects.ChronicleOfHeros_Api>("Api");
+
+builder.AddProject<Projects.ChronicleOfHeros_Web>("Web")
+	.WithReference(api);
 
 builder.Build().Run();
