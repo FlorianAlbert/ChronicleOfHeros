@@ -1,12 +1,11 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.4.6">
+<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../ChronicleOfHeros.Api/ChronicleOfHeros.Api.csproj" />
+    <ProjectReference Include="../ChronicleOfHeros.ServiceDefaults/ChronicleOfHeros.ServiceDefaults.csproj" />
   </ItemGroup>
 </Project>
