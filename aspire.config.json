@@ -1,0 +1,5 @@
+{
+  "appHost": {
+    "path": "src/ChronicleOfHeros.AppHost/ChronicleOfHeros.AppHost.csproj"
+  }
+}

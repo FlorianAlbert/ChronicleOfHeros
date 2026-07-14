@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/ChronicleOfHeros.AppHost/ChronicleOfHeros.AppHost.csproj" />
+  <Project Path="src/ChronicleOfHeros.ServiceDefaults/ChronicleOfHeros.ServiceDefaults.csproj" />
+</Solution>
