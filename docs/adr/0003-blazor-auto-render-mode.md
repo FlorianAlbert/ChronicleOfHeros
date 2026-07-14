@@ -1,0 +1,5 @@
+# Blazor Web App with global Auto render mode
+
+The frontend's rendering strategy is a real trade-off: Interactive Server is simplest to wire up but requires a persistent SignalR connection per user; WebAssembly avoids that but can't reach the Api via .NET service discovery from the browser; Auto gets fast first loads via server-side rendering and falls back to cached WebAssembly on return visits. We decided on **global Auto interactivity**, split across two projects as the standard .NET Blazor Web App template requires: `ChronicleOfHeros.Web` (server host, SSR + serves the WASM payload) and `ChronicleOfHeros.Web.Client` (the component library that executes in the browser). Individual components can still opt into `@rendermode InteractiveServer` later when server-only guarantees are needed (secrets, trusted logic).
+
+Consequence: because WebAssembly-rendered components can't use .NET service discovery directly, the mechanism for `Web` to call `Api` (e.g. a YARP proxy acting as a BFF) is deliberately deferred to when a real feature needs it — this ADR only fixes the render-mode shape, not the call path.
