@@ -32,6 +32,22 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     }
 
     [Fact]
+    public async Task Public_root_excludes_default_template_presentation()
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            await page.GotoAsync(baseAddress.AbsoluteUri);
+
+            await Assertions.Expect(page.Locator("link[rel='stylesheet'][href*='bootstrap']")).ToHaveCountAsync(0);
+            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Home", Exact = true })).ToHaveCountAsync(0);
+            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Counter", Exact = true })).ToHaveCountAsync(0);
+            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Weather", Exact = true })).ToHaveCountAsync(0);
+            await Assertions.Expect(page.GetByText("Hello, world!", new() { Exact = true })).ToHaveCountAsync(0);
+            await Assertions.Expect(page.GetByText("ChronicleOfHeros.Web", new() { Exact = true })).ToHaveCountAsync(0);
+        });
+    }
+
+    [Fact]
     public async Task Public_root_explains_the_character_management_journey_through_on_page_navigation()
     {
         await WithPublicPageAsync(async (page, baseAddress) =>
@@ -205,6 +221,20 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "This page is missing from the record." })).ToBeVisibleAsync();
             await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Return to the character sheet" })).ToHaveAttributeAsync("href", "/");
             await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Not Found", Exact = true })).ToHaveCountAsync(0);
+        });
+    }
+
+    [Theory]
+    [InlineData("/counter")]
+    [InlineData("/weather")]
+    public async Task Public_demo_routes_are_absent(string route)
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            await page.GotoAsync(new Uri(baseAddress, route).AbsoluteUri);
+
+            await Assertions.Expect(page).ToHaveTitleAsync("Page not found | ChronicleOfHeros");
+            await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "This page is missing from the record." })).ToBeVisibleAsync();
         });
     }
 
