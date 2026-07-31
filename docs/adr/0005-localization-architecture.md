@@ -1,0 +1,5 @@
+# Localization with server-applied culture and component-owned resources
+
+ChronicleOfHeros uses global InteractiveAuto rendering, so the display language must be available when the Web host renders the initial document rather than only after browser hydration. We will resolve the best supported browser language unless a durable first-party cookie records an explicit choice; the selector changes that preference through an antiforgery-protected same-origin POST and redirects to a validated local return path. This preserves a consistent server-rendered and interactive UI, including the document language.
+
+Translation resources are owned by the page or reusable component that renders their text, with a small shared resource for cross-cutting strings. English is the canonical key set and fallback for a missing localized key; all supported languages must retain key parity. This avoids a monolithic project-wide resource file while keeping translation ownership close to the UI and allowing automated completeness checks.
