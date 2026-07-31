@@ -7,5 +7,6 @@
 
   <ItemGroup>
     <ProjectReference Include="../ChronicleOfHeros.ServiceDefaults/ChronicleOfHeros.ServiceDefaults.csproj" />
+    <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 </Project>
