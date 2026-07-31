@@ -11,6 +11,7 @@
     <ProjectReference Include="../ChronicleOfHeros.Web.Client/ChronicleOfHeros.Web.Client.csproj" />
     <ProjectReference Include="../ChronicleOfHeros.ServiceDefaults/ChronicleOfHeros.ServiceDefaults.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
+    <PackageReference Include="Microsoft.Extensions.ServiceDiscovery.Yarp" />
   </ItemGroup>
 
 </Project>

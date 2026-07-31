@@ -57,7 +57,7 @@ Iterate until the user approves the breakdown.
 
 ### 5. Publish the tickets to the configured tracker
 
-Publish the approved tickets. **How** is described in [`issue-tracker.md`](../../../docs/agents/issue-tracker.md) — the shape of the blocking edges should be provided by publishing one issue per ticket in dependency order (blockers first) so each ticket's blocking edges can reference real identifiers. Use GitHub's native blocking / sub-issue relationship. Apply the `ready-for-agent` triage label unless instructed otherwise — the tickets are agent-grabbable by construction.
+Publish the approved tickets. **How** is described in [`issue-tracker.md`](../../../docs/agents/issue-tracker.md) — the shape of the blocking edges should be provided by publishing one issue per ticket in dependency order (blockers first) so each ticket's blocking edges can reference real identifiers. Use GitHub's native blocking / sub-issue relationship. Apply the `ready-for-agent` and `ticket` triage labels unless instructed otherwise — the tickets are agent-grabbable by construction.
 
 Work the **frontier**: any ticket whose blockers are all done. For a purely linear chain that means top to bottom.
 

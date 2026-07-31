@@ -1,7 +1,56 @@
 ﻿@page "/"
 
+@using ChronicleOfHeros.Web.Client.Services.Abstractions.HealthReportService;
+
+@implements IDisposable
+
+@inject IHealthReportService HealthReportService
+
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Application Health</h1>
 
-Welcome to your new app.
+<p>Current readiness status for the Web application and API.</p>
+
+@if (isLoading)
+{
+	<p>Checking health status...</p>
+}
+else
+{
+	<ul class="list-group">
+		<li class="list-group-item d-flex justify-content-between align-items-center">
+			Web application
+			<span class="badge @GetStatusClass(webIsHealthy)">@GetStatusText(webIsHealthy)</span>
+		</li>
+		<li class="list-group-item d-flex justify-content-between align-items-center">
+			API
+			<span class="badge @GetStatusClass(apiIsHealthy)">@GetStatusText(apiIsHealthy)</span>
+		</li>
+	</ul>
+}
+
+@code {
+	private readonly CancellationTokenSource cancellationTokenSource = new();
+
+	private bool isLoading = true;
+	private bool webIsHealthy;
+	private bool apiIsHealthy;
+
+	protected override async Task OnInitializedAsync()
+	{
+		webIsHealthy = await HealthReportService.IsHealthyAsync(cancellationTokenSource.Token);
+		apiIsHealthy = await HealthReportService.IsApiHealthyAsync(cancellationTokenSource.Token);
+		isLoading = false;
+	}
+
+	public void Dispose()
+	{
+		cancellationTokenSource.Cancel();
+		cancellationTokenSource.Dispose();
+	}
+
+	private static string GetStatusText(bool isHealthy) => isHealthy ? "Healthy" : "Unavailable";
+
+	private static string GetStatusClass(bool isHealthy) => isHealthy ? "text-bg-success" : "text-bg-danger";
+}

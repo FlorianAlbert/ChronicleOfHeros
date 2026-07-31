@@ -1,0 +1,3 @@
+# Same-origin Web-to-API gateway
+
+The browser cannot use Aspire service discovery to call `Api`, and exposing `Api` directly would require a public endpoint, CORS policy, and a browser-facing authentication contract. We decided that `ChronicleOfHeros.Web` is the sole browser-facing origin and proxies `/api` to the internal API, allowing both Server and WebAssembly rendering modes to use a stable same-origin API path. The proxied API health endpoint is the initial end-to-end integration check; PostgreSQL connectivity is included through the API's EF Core health check.
