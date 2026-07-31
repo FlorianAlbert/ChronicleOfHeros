@@ -7,12 +7,20 @@
 <div class="landing-page">
     <header>
         <a class="wordmark" href="/">ChronicleOfHeros</a>
-        <nav aria-label="Primary navigation">
+        <nav class="desktop-navigation" aria-label="Primary navigation">
             <a href="#character-sheet">Character Sheets</a>
             <a href="#how-it-works">How It Works</a>
             <a href="#about">About</a>
         </nav>
-        <button type="button" disabled>Coming soon</button>
+        <details class="navigation-disclosure">
+            <summary title="Navigation menu" aria-label="Navigation menu"><span aria-hidden="true"></span></summary>
+            <nav aria-label="Primary navigation">
+                <a href="#character-sheet">Character Sheets</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="#about">About</a>
+            </nav>
+        </details>
+        <button class="coming-soon" type="button" disabled>Coming soon</button>
     </header>
     <main>
         <section class="field-hero" aria-labelledby="landing-title">

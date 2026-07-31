@@ -56,6 +56,15 @@
     gap: 1.75rem;
 }
 
+.navigation-disclosure {
+    display: none;
+    justify-self: center;
+}
+
+.navigation-disclosure summary {
+    display: none;
+}
+
 .landing-page nav a,
 .field-hero > div > a {
     text-decoration-color: transparent;
@@ -71,7 +80,7 @@
     text-decoration-line: underline;
 }
 
-.landing-page button {
+.coming-soon {
     background: var(--signal);
     border: 0;
     color: #ffffff;
@@ -268,9 +277,82 @@
         gap: 1rem;
         grid-template-columns: 1fr auto;
         padding: 1rem 1.25rem;
+        position: relative;
     }
 
     .landing-page nav {
+        background: var(--paper-raised);
+        border: 1px solid var(--ink);
+        display: none;
+        flex-direction: column;
+        gap: 0;
+        grid-column: 1 / -1;
+        padding: 0.25rem 0;
+        width: 100%;
+    }
+
+    .navigation-disclosure[open] nav {
+        display: flex;
+    }
+
+    .landing-page nav a {
+        padding: 0.9rem 1rem;
+    }
+
+    .navigation-disclosure {
+        display: block;
+        justify-self: end;
+        position: relative;
+    }
+
+    .navigation-disclosure summary {
+        align-items: center;
+        appearance: none;
+        background: transparent;
+        border: 1px solid var(--ink);
+        color: var(--ink);
+        cursor: pointer;
+        display: inline-flex;
+        height: 2.75rem;
+        justify-content: center;
+        padding: 0;
+        width: 2.75rem;
+    }
+
+    .navigation-disclosure summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .navigation-disclosure nav {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 1rem);
+        width: calc(100vw - 2.5rem);
+        z-index: 1;
+    }
+
+    .navigation-disclosure summary span,
+    .navigation-disclosure summary span::before,
+    .navigation-disclosure summary span::after {
+        background: currentColor;
+        content: "";
+        display: block;
+        height: 2px;
+        position: relative;
+        width: 1.25rem;
+    }
+
+    .navigation-disclosure summary span::before {
+        position: absolute;
+        top: -0.4rem;
+    }
+
+    .navigation-disclosure summary span::after {
+        position: absolute;
+        top: 0.4rem;
+    }
+
+    .coming-soon {
         display: none;
     }
 
@@ -307,10 +389,6 @@
 @media (max-width: 380px) {
     .wordmark {
         font-size: 1.05rem;
-    }
-
-    .landing-page button {
-        padding: 0.65rem 0.75rem;
     }
 
     .landing-page h1 {

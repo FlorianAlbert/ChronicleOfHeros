@@ -1,12 +1,18 @@
-using Aspire.Hosting.ApplicationModel;
-using Aspire.Hosting.Testing;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Playwright;
+using System.Text.RegularExpressions;
 
 namespace ChronicleOfHeros.AppHost.Tests;
 
-public class LandingPageBrowserTests
+[Collection("AppHost integration")]
+public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
 {
+    private readonly LandingPageFixture _fixture;
+
+    public LandingPageBrowserTests(LandingPageFixture fixture)
+    {
+        _fixture = fixture;
+    }
+
     [Fact]
     public async Task Public_root_presents_the_field_notes_landing_core_in_a_browser()
     {
@@ -43,6 +49,151 @@ public class LandingPageBrowserTests
     }
 
     [Fact]
+    public async Task Narrow_header_navigation_opens_from_the_keyboard()
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            await page.SetViewportSizeAsync(320, 800);
+            await page.GotoAsync(baseAddress.AbsoluteUri);
+
+            var navigation = page.GetByRole(AriaRole.Navigation, new() { Name = "Primary navigation" });
+            var menuButton = page.GetByLabel("Navigation menu");
+
+            await Assertions.Expect(navigation).ToBeHiddenAsync();
+
+            await menuButton.FocusAsync();
+            await page.Keyboard.PressAsync("Enter");
+
+            await Assertions.Expect(navigation).ToBeVisibleAsync();
+
+            await page.Keyboard.PressAsync("Enter");
+
+            await Assertions.Expect(navigation).ToBeHiddenAsync();
+
+            await page.Keyboard.PressAsync("Enter");
+            await page.Keyboard.PressAsync("Tab");
+            await page.Keyboard.PressAsync("Enter");
+
+            await Assertions.Expect(page).ToHaveURLAsync(new Regex("#character-sheet$"));
+        }, javaScriptEnabled: false);
+    }
+
+    [Fact]
+    public async Task Narrow_header_navigation_has_visible_keyboard_focus()
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            await page.SetViewportSizeAsync(320, 800);
+            await page.GotoAsync(baseAddress.AbsoluteUri);
+
+            var menuButton = page.GetByLabel("Navigation menu");
+
+            await page.Keyboard.PressAsync("Tab");
+            await page.Keyboard.PressAsync("Tab");
+
+            await Assertions.Expect(menuButton).ToBeFocusedAsync();
+            Assert.True(await HasVisibleFocusAsync(menuButton));
+
+            await page.Keyboard.PressAsync("Enter");
+            await page.Keyboard.PressAsync("Tab");
+
+            var firstNavigationLink = page.GetByRole(AriaRole.Navigation, new() { Name = "Primary navigation" })
+                .GetByRole(AriaRole.Link, new() { Name = "Character Sheets" });
+            await Assertions.Expect(firstNavigationLink).ToBeFocusedAsync();
+            Assert.True(await HasVisibleFocusAsync(firstNavigationLink));
+        }, javaScriptEnabled: false);
+    }
+
+    [Fact]
+    public async Task Public_root_reduces_nonessential_motion_when_requested()
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            await page.GotoAsync(baseAddress.AbsoluteUri);
+
+            var navigationLink = page.GetByRole(AriaRole.Link, new() { Name = "Character Sheets" });
+
+            await page.EmulateMediaAsync(new() { ReducedMotion = ReducedMotion.Reduce });
+
+            var reducedMotionRequested = await page.EvaluateAsync<bool>(
+                "() => matchMedia('(prefers-reduced-motion: reduce)').matches");
+            var reducedTransitionMilliseconds = await TransitionDurationMillisecondsAsync(navigationLink);
+            var reducedMotionDiagnostics = await navigationLink.EvaluateAsync<string>(
+                "element => { const style = getComputedStyle(element); return JSON.stringify({ transitionProperty: style.transitionProperty, transitionDuration: style.transitionDuration, scopeAttributes: [...element.attributes].map(attribute => attribute.name).filter(name => name.startsWith('b-')) }); }");
+            Assert.True(reducedMotionRequested);
+            Assert.True(reducedTransitionMilliseconds <= 1, reducedMotionDiagnostics);
+        }, javaScriptEnabled: false);
+    }
+
+    [Fact]
+    public async Task Public_root_text_and_compact_control_have_sufficient_contrast()
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            await page.SetViewportSizeAsync(320, 800);
+            await page.GotoAsync(baseAddress.AbsoluteUri);
+
+            var contrastRatios = await page.EvaluateAsync<double[]>(
+                """
+                () => {
+                    const parseColor = value => value.match(/\d+(?:\.\d+)?/g).slice(0, 3).map(Number);
+                    const luminance = color => color
+                        .map(channel => channel / 255)
+                        .map(channel => channel <= 0.04045 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4))
+                        .reduce((total, channel, index) => total + channel * [0.2126, 0.7152, 0.0722][index], 0);
+                    const ratio = (foreground, background) => {
+                        const values = [luminance(foreground), luminance(background)].sort((left, right) => right - left);
+                        return (values[0] + 0.05) / (values[1] + 0.05);
+                    };
+                    const paper = parseColor(getComputedStyle(document.querySelector('.landing-page')).backgroundColor);
+                    const selectors = ['.landing-page h1', '.field-hero > div > p:not(.eyebrow)', '.eyebrow'];
+                    const textRatios = selectors.map(selector => ratio(parseColor(getComputedStyle(document.querySelector(selector)).color), paper));
+                    const controlRatio = ratio(parseColor(getComputedStyle(document.querySelector('.navigation-disclosure summary')).color), paper);
+                    return [...textRatios, controlRatio];
+                }
+                """);
+
+            Assert.All(contrastRatios.Take(3), ratio => Assert.True(ratio >= 4.5, $"Expected text contrast of at least 4.5:1, but found {ratio:F2}:1."));
+            Assert.True(contrastRatios[3] >= 3, $"Expected control contrast of at least 3:1, but found {contrastRatios[3]:F2}:1.");
+        });
+    }
+
+    [Theory]
+    [InlineData(320)]
+    [InlineData(768)]
+    [InlineData(1440)]
+    public async Task Public_root_remains_coherent_at_supported_viewport_widths(int viewportWidth)
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            await page.SetViewportSizeAsync(viewportWidth, 1000);
+            await page.GotoAsync(baseAddress.AbsoluteUri);
+
+            var hasHorizontalOverflow = await page.EvaluateAsync<bool>(
+                "() => document.documentElement.scrollWidth > document.documentElement.clientWidth");
+            var clippedElementCount = await page.Locator(".landing-page *:visible").EvaluateAllAsync<int>(
+                "(elements, width) => elements.filter(element => { const bounds = element.getBoundingClientRect(); return bounds.left < 0 || bounds.right > width; }).length",
+                viewportWidth);
+            var recordValues = page.Locator("#character-sheet dl > div");
+
+            Assert.False(hasHorizontalOverflow);
+            Assert.Equal(0, clippedElementCount);
+            await Assertions.Expect(recordValues).ToHaveCountAsync(3);
+
+            var valuePositions = await recordValues.EvaluateAllAsync<float[]>(
+                "elements => elements.map(element => element.getBoundingClientRect().top)");
+            Assert.All(valuePositions, position => Assert.Equal(valuePositions[0], position));
+
+            if (viewportWidth == 320)
+            {
+                var contentPositions = await page.Locator("#landing-title, #character-sheet, #how-it-works, #about")
+                    .EvaluateAllAsync<float[]>("elements => elements.map(element => element.getBoundingClientRect().top)");
+                Assert.Equal(contentPositions.Order(), contentPositions);
+            }
+        });
+    }
+
+    [Fact]
     public async Task Invalid_url_presents_a_branded_way_back_to_the_public_root()
     {
         await WithPublicPageAsync(async (page, baseAddress) =>
@@ -57,23 +208,16 @@ public class LandingPageBrowserTests
         });
     }
 
-    private static async Task WithPublicPageAsync(Func<IPage, Uri, Task> exercisePage)
-    {
-        var appHost = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.ChronicleOfHeros_AppHost>(TestContext.Current.CancellationToken);
+    private Task WithPublicPageAsync(
+        Func<IPage, Uri, Task> exercisePage,
+        bool javaScriptEnabled = true) =>
+        _fixture.WithPublicPageAsync(exercisePage, javaScriptEnabled);
 
-        await using var app = await appHost.BuildAsync(TestContext.Current.CancellationToken);
-        await app.StartAsync(TestContext.Current.CancellationToken);
+    private static Task<double> TransitionDurationMillisecondsAsync(ILocator locator) =>
+        locator.EvaluateAsync<double>(
+            "element => Math.max(...getComputedStyle(element).transitionDuration.split(',').map(value => value.endsWith('ms') ? parseFloat(value) : parseFloat(value) * 1000))");
 
-        var resourceNotifications = app.Services.GetRequiredService<ResourceNotificationService>();
-
-        await resourceNotifications.WaitForResourceHealthyAsync("web", TestContext.Current.CancellationToken);
-
-        using var webClient = app.CreateHttpClient("web");
-        using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync();
-        var page = await browser.NewPageAsync();
-
-        await exercisePage(page, webClient.BaseAddress!);
-    }
+    private static Task<bool> HasVisibleFocusAsync(ILocator locator) =>
+        locator.EvaluateAsync<bool>(
+            "element => { const style = getComputedStyle(element); return style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) >= 2; }");
 }

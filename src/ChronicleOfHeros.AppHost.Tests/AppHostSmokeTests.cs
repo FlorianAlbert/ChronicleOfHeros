@@ -5,6 +5,7 @@ using System.Net;
 
 namespace ChronicleOfHeros.AppHost.Tests;
 
+[Collection("AppHost integration")]
 public class AppHostSmokeTests
 {
     private static readonly TimeSpan HealthRequestTimeout = TimeSpan.FromSeconds(90);
