@@ -1,4 +1,5 @@
 using ChronicleOfHeros.Web.Components;
+using ChronicleOfHeros.Web.Services.Localization;
 using ChronicleOfHeros.Web.Services.ServerHealthReportService;
 using Microsoft.Extensions.Http.Resilience;
 using Yarp.ReverseProxy.Forwarder;
@@ -20,6 +21,20 @@ builder.Services.AddHttpForwarderWithServiceDiscovery()
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
+builder.Services.AddLocalization();
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var supportedCultures = new[] { "en-US", "de-DE" };
+
+    options.SetDefaultCulture("en-US")
+        .AddSupportedCultures(supportedCultures)
+        .AddSupportedUICultures(supportedCultures);
+    options.RequestCultureProviders =
+    [
+        new DisplayLanguageRequestCultureProvider(supportedCultures),
+    ];
+    options.ApplyCurrentCultureToResponseHeaders = true;
+});
 
 var app = builder.Build();
 
@@ -36,6 +51,7 @@ else
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
+app.UseRequestLocalization();
 
 app.UseAntiforgery();
 

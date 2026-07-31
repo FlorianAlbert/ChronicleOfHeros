@@ -1,59 +1,60 @@
 ﻿@page "/"
 
 @rendermode InteractiveAuto
+@inject IStringLocalizer<Home> Localizer
 
-<PageTitle>ChronicleOfHeros</PageTitle>
+<PageTitle>@Localizer["PageTitle"]</PageTitle>
 
 <div class="landing-page">
     <header>
         <a class="wordmark" href="/">ChronicleOfHeros</a>
-        <nav class="desktop-navigation" aria-label="Primary navigation">
-            <a href="#character-sheet">Character Sheets</a>
-            <a href="#how-it-works">How It Works</a>
-            <a href="#about">About</a>
+        <nav class="desktop-navigation" aria-label="@Localizer["PrimaryNavigation"]">
+            <a href="#character-sheet">@Localizer["CharacterSheets"]</a>
+            <a href="#how-it-works">@Localizer["HowItWorks"]</a>
+            <a href="#about">@Localizer["About"]</a>
         </nav>
         <details class="navigation-disclosure">
-            <summary title="Navigation menu" aria-label="Navigation menu"><span aria-hidden="true"></span></summary>
-            <nav aria-label="Primary navigation">
-                <a href="#character-sheet">Character Sheets</a>
-                <a href="#how-it-works">How It Works</a>
-                <a href="#about">About</a>
+            <summary title="@Localizer["NavigationMenu"]" aria-label="@Localizer["NavigationMenu"]"><span aria-hidden="true"></span></summary>
+            <nav aria-label="@Localizer["PrimaryNavigation"]">
+                <a href="#character-sheet">@Localizer["CharacterSheets"]</a>
+                <a href="#how-it-works">@Localizer["HowItWorks"]</a>
+                <a href="#about">@Localizer["About"]</a>
             </nav>
         </details>
-        <button class="coming-soon" type="button" disabled>Coming soon</button>
+        <button class="coming-soon" type="button" disabled>@Localizer["ComingSoon"]</button>
     </header>
     <main>
         <section class="field-hero" aria-labelledby="landing-title">
             <div>
-                <p class="eyebrow">Built for players at the table</p>
-                <h1 id="landing-title">An accurate character sheet, ready at the table.</h1>
-                <p>ChronicleOfHeros turns your 5e character into a clear, trustworthy working record: choices in, useful values out.</p>
-                <a href="#how-it-works">See how the record works</a>
+                <p class="eyebrow">@Localizer["HeroEyebrow"]</p>
+                <h1 id="landing-title">@Localizer["HeroTitle"]</h1>
+                <p>@Localizer["HeroDescription"]</p>
+                <a href="#how-it-works">@Localizer["SeeHowTheRecordWorks"]</a>
             </div>
             <div class="sheet" id="character-sheet">
-                <p>Character record</p>
+                <p>@Localizer["CharacterRecord"]</p>
                 <h2>Elian Thorn</h2>
-                <span>Human fighter · Level 4</span>
+                <span>@Localizer["ExampleCharacterSummary"]</span>
                 <dl>
-                    <div><dt>Armor</dt><dd>17</dd></div>
-                    <div><dt>Initiative</dt><dd>+1</dd></div>
-                    <div><dt>Speed</dt><dd>30 ft.</dd></div>
+                    <div><dt>@Localizer["Armor"]</dt><dd>17</dd></div>
+                    <div><dt>@Localizer["Initiative"]</dt><dd>+1</dd></div>
+                    <div><dt>@Localizer["Speed"]</dt><dd>30 ft.</dd></div>
                 </dl>
-                <p>Strength 16 +3</p>
-                <p>Constitution 14 +2</p>
-                <p>Wisdom 12 +1</p>
+                <p>@Localizer["Strength"] 16 +3</p>
+                <p>@Localizer["Constitution"] 14 +2</p>
+                <p>@Localizer["Wisdom"] 12 +1</p>
             </div>
         </section>
-        <section class="path" id="how-it-works" aria-label="How it works">
-            <article><b>01</b><h2>Build</h2><p>Record the choices, abilities, and equipment that define the character.</p></article>
-            <article><b>02</b><h2>Understand</h2><p>Trace derived values back to the choices and rules behind them.</p></article>
-            <article><b>03</b><h2>Progress</h2><p>Apply each new level while keeping what changed, and why, clear.</p></article>
+        <section class="path" id="how-it-works" aria-label="@Localizer["HowItWorks"]">
+            <article><b>01</b><h2>@Localizer["Build"]</h2><p>@Localizer["BuildDescription"]</p></article>
+            <article><b>02</b><h2>@Localizer["Understand"]</h2><p>@Localizer["UnderstandDescription"]</p></article>
+            <article><b>03</b><h2>@Localizer["Progress"]</h2><p>@Localizer["ProgressDescription"]</p></article>
         </section>
         <section class="about" id="about" aria-labelledby="about-title">
-            <p class="eyebrow">A record you can trust</p>
+            <p class="eyebrow">@Localizer["AboutEyebrow"]</p>
             <div>
-                <h2 id="about-title">About ChronicleOfHeros</h2>
-                <p>A digital-first Dungeons &amp; Dragons 5e character manager built to keep choices, rules, and current capabilities together at the table.</p>
+                <h2 id="about-title">@Localizer["AboutHeading"]</h2>
+                <p>@Localizer["AboutDescription"]</p>
             </div>
         </section>
     </main>

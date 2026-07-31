@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="@CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
 
 <head>
     <meta charset="utf-8" />
@@ -16,7 +16,14 @@
 <body>
     <Routes @rendermode="InteractiveAuto" />
     <ReconnectModal />
-    <script src="@Assets["_framework/blazor.web.js"]"></script>
+    <script src="@Assets["_framework/blazor.web.js"]" autostart="false"></script>
+    <script>
+        Blazor.start({
+            webAssembly: {
+                applicationCulture: '@CultureInfo.CurrentCulture.Name'
+            }
+        });
+    </script>
 </body>
 
 </html>

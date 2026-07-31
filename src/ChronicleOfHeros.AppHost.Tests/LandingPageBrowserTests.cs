@@ -1,4 +1,5 @@
 using Microsoft.Playwright;
+using System.Net;
 using System.Text.RegularExpressions;
 
 namespace ChronicleOfHeros.AppHost.Tests;
@@ -20,7 +21,7 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         {
             await page.GotoAsync(baseAddress.AbsoluteUri);
 
-            await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros");
+            await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros | Your character sheet at the table");
             await Assertions.Expect(page.Locator("link[rel='icon']")).ToHaveAttributeAsync("href", "favicon.svg");
             await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "An accurate character sheet, ready at the table." })).ToBeVisibleAsync();
             await Assertions.Expect(page.GetByText("Armor", new() { Exact = true })).ToBeVisibleAsync();
@@ -29,6 +30,97 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Coming soon" })).ToBeDisabledAsync();
             await Assertions.Expect(page.GetByLabel("Prototype variant selector")).ToHaveCountAsync(0);
         });
+    }
+
+    [Theory]
+    [InlineData("de")]
+    [InlineData("de-AT")]
+    [InlineData("de-CH")]
+    [InlineData("de-DE")]
+    [InlineData("fr-FR, de-CH;q=0.9, en-US;q=0.8")]
+    public async Task Public_root_renders_German_for_a_German_browser_preference(string browserLanguage)
+    {
+        using var webClient = _fixture.CreateHttpClient();
+        webClient.DefaultRequestHeaders.AcceptLanguage.ParseAdd(browserLanguage);
+
+        using var response = await webClient.GetAsync("/", TestContext.Current.CancellationToken);
+        var landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var decodedLandingPage = WebUtility.HtmlDecode(landingPage);
+
+        Assert.Equal(["de-DE"], response.Content.Headers.ContentLanguage);
+        Assert.Contains("<html lang=\"de\">", landingPage);
+        Assert.Contains("<title>ChronicleOfHeros | Dein Charakterbogen am Spieltisch</title>", landingPage);
+        Assert.Contains("aria-label=\"Hauptnavigation\"", landingPage);
+        Assert.Contains("Ein präziser Charakterbogen, bereit für den Spieltisch.", decodedLandingPage);
+        Assert.Contains(">Rüstungsklasse<", decodedLandingPage);
+        Assert.Contains(">30 ft.<", decodedLandingPage);
+        Assert.DoesNotContain("An accurate character sheet, ready at the table.", decodedLandingPage);
+    }
+
+    [Fact]
+    public async Task Public_root_uses_English_for_English_and_unsupported_browser_preferences()
+    {
+        using var webClient = _fixture.CreateHttpClient();
+
+        foreach (var browserLanguage in new string?[] { null, "en", "en-US", "en-GB", "fr-FR" })
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/");
+            if (browserLanguage is not null)
+            {
+                request.Headers.AcceptLanguage.ParseAdd(browserLanguage);
+            }
+
+            using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+            var landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+            Assert.Equal(["en-US"], response.Content.Headers.ContentLanguage);
+            Assert.Contains("<html lang=\"en\">", landingPage);
+            Assert.Contains("<title>ChronicleOfHeros | Your character sheet at the table</title>", landingPage);
+            Assert.Contains("aria-label=\"Primary navigation\"", landingPage);
+            Assert.Contains("An accurate character sheet, ready at the table.", landingPage);
+            Assert.Contains(">Armor<", landingPage);
+            Assert.DoesNotContain("Ein präziser Charakterbogen, bereit für den Spieltisch.", landingPage);
+        }
+    }
+
+    [Fact]
+    public async Task Public_root_initial_document_presents_the_landing_experience_in_German()
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            await page.GotoAsync(baseAddress.AbsoluteUri);
+
+            await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros | Dein Charakterbogen am Spieltisch");
+            await Assertions.Expect(page.Locator("html")).ToHaveAttributeAsync("lang", "de");
+            await Assertions.Expect(page.GetByRole(AriaRole.Navigation, new() { Name = "Hauptnavigation" }).First).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByLabel("Navigationsmenü")).ToBeAttachedAsync();
+            await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Ein präziser Charakterbogen, bereit für den Spieltisch." })).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Demnächst" })).ToBeDisabledAsync();
+            await Assertions.Expect(page.GetByText("Rüstungsklasse", new() { Exact = true })).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByText("Bewegungsrate", new() { Exact = true })).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByText("30 ft.", new() { Exact = true })).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator("#how-it-works").GetByRole(AriaRole.Heading, new() { Name = "Verstehen" })).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator("#about").GetByRole(AriaRole.Heading, new() { Name = "Über ChronicleOfHeros" })).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator("body")).Not.ToContainTextAsync("Character Sheets");
+        }, javaScriptEnabled: false, locale: "de-CH");
+    }
+
+    [Fact]
+    public async Task Public_root_keeps_German_when_the_interactive_UI_starts()
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            await page.GotoAsync(baseAddress.AbsoluteUri);
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+            await page.ReloadAsync();
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+            await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros | Dein Charakterbogen am Spieltisch");
+            await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Ein präziser Charakterbogen, bereit für den Spieltisch." })).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByRole(AriaRole.Navigation, new() { Name = "Hauptnavigation" }).First).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator("body")).Not.ToContainTextAsync("An accurate character sheet, ready at the table.");
+        }, locale: "de-CH");
     }
 
     [Fact]
@@ -240,8 +332,9 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
 
     private Task WithPublicPageAsync(
         Func<IPage, Uri, Task> exercisePage,
-        bool javaScriptEnabled = true) =>
-        _fixture.WithPublicPageAsync(exercisePage, javaScriptEnabled);
+        bool javaScriptEnabled = true,
+        string? locale = null) =>
+        _fixture.WithPublicPageAsync(exercisePage, javaScriptEnabled, locale);
 
     private static Task<double> TransitionDurationMillisecondsAsync(ILocator locator) =>
         locator.EvaluateAsync<double>(

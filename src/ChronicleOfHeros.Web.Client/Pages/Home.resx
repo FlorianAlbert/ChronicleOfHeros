@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Armor" xml:space="preserve">
+    <value>Armor</value>
+  </data>
+  <data name="About" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="AboutDescription" xml:space="preserve">
+    <value>A digital-first Dungeons &amp; Dragons 5e character manager built to keep choices, rules, and current capabilities together at the table.</value>
+  </data>
+  <data name="AboutEyebrow" xml:space="preserve">
+    <value>A record you can trust</value>
+  </data>
+  <data name="AboutHeading" xml:space="preserve">
+    <value>About ChronicleOfHeros</value>
+  </data>
+  <data name="Build" xml:space="preserve">
+    <value>Build</value>
+  </data>
+  <data name="BuildDescription" xml:space="preserve">
+    <value>Record the choices, abilities, and equipment that define the character.</value>
+  </data>
+  <data name="CharacterRecord" xml:space="preserve">
+    <value>Character record</value>
+  </data>
+  <data name="CharacterSheets" xml:space="preserve">
+    <value>Character Sheets</value>
+  </data>
+  <data name="ComingSoon" xml:space="preserve">
+    <value>Coming soon</value>
+  </data>
+  <data name="Constitution" xml:space="preserve">
+    <value>Constitution</value>
+  </data>
+  <data name="ExampleCharacterSummary" xml:space="preserve">
+    <value>Human fighter · Level 4</value>
+  </data>
+  <data name="HeroDescription" xml:space="preserve">
+    <value>ChronicleOfHeros turns your 5e character into a clear, trustworthy working record: choices in, useful values out.</value>
+  </data>
+  <data name="HeroEyebrow" xml:space="preserve">
+    <value>Built for players at the table</value>
+  </data>
+  <data name="HeroTitle" xml:space="preserve">
+    <value>An accurate character sheet, ready at the table.</value>
+  </data>
+  <data name="HowItWorks" xml:space="preserve">
+    <value>How It Works</value>
+  </data>
+  <data name="Initiative" xml:space="preserve">
+    <value>Initiative</value>
+  </data>
+  <data name="NavigationMenu" xml:space="preserve">
+    <value>Navigation menu</value>
+  </data>
+  <data name="PageTitle" xml:space="preserve">
+    <value>ChronicleOfHeros | Your character sheet at the table</value>
+  </data>
+  <data name="PrimaryNavigation" xml:space="preserve">
+    <value>Primary navigation</value>
+  </data>
+  <data name="Progress" xml:space="preserve">
+    <value>Progress</value>
+  </data>
+  <data name="ProgressDescription" xml:space="preserve">
+    <value>Apply each new level while keeping what changed, and why, clear.</value>
+  </data>
+  <data name="SeeHowTheRecordWorks" xml:space="preserve">
+    <value>See how the record works</value>
+  </data>
+  <data name="Speed" xml:space="preserve">
+    <value>Speed</value>
+  </data>
+  <data name="Strength" xml:space="preserve">
+    <value>Strength</value>
+  </data>
+  <data name="Understand" xml:space="preserve">
+    <value>Understand</value>
+  </data>
+  <data name="UnderstandDescription" xml:space="preserve">
+    <value>Trace derived values back to the choices and rules behind them.</value>
+  </data>
+  <data name="Wisdom" xml:space="preserve">
+    <value>Wisdom</value>
+  </data>
+</root>

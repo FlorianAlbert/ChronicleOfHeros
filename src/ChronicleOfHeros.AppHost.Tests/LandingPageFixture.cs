@@ -9,6 +9,7 @@ public sealed class LandingPageFixture : IAsyncLifetime
 {
     private readonly SemaphoreSlim _pageGate = new(1, 1);
     private IAsyncDisposable? _app;
+    private Func<HttpClient>? _createWebClient;
 
     private Uri BaseAddress { get; set; } = null!;
 
@@ -19,6 +20,7 @@ public sealed class LandingPageFixture : IAsyncLifetime
 
         var app = await appHost.BuildAsync();
         _app = app;
+        _createWebClient = () => app.CreateHttpClient("web");
 
         await app.StartAsync();
 
@@ -29,9 +31,17 @@ public sealed class LandingPageFixture : IAsyncLifetime
         BaseAddress = webClient.BaseAddress!;
     }
 
+    public HttpClient CreateHttpClient()
+    {
+        var webClient = _createWebClient!();
+        webClient.Timeout = TimeSpan.FromSeconds(90);
+        return webClient;
+    }
+
     public async Task WithPublicPageAsync(
         Func<IPage, Uri, Task> exercisePage,
-        bool javaScriptEnabled = true)
+        bool javaScriptEnabled = true,
+        string? locale = null)
     {
         await _pageGate.WaitAsync();
 
@@ -42,6 +52,7 @@ public sealed class LandingPageFixture : IAsyncLifetime
             await using var context = await browser.NewContextAsync(new()
             {
                 JavaScriptEnabled = javaScriptEnabled,
+                Locale = locale,
                 ReducedMotion = ReducedMotion.NoPreference,
             });
             var page = await context.NewPageAsync();

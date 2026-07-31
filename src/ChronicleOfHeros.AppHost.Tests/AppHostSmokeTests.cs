@@ -28,7 +28,7 @@ public class AppHostSmokeTests
 
         var landingPage = await webClient.GetStringAsync("/", TestContext.Current.CancellationToken);
 
-        Assert.Contains("<title>ChronicleOfHeros</title>", landingPage);
+        Assert.Contains("<title>ChronicleOfHeros | Your character sheet at the table</title>", landingPage);
         Assert.Contains("An accurate character sheet, ready at the table.", landingPage);
         Assert.Contains(">Armor<", landingPage);
         Assert.Contains(">Initiative<", landingPage);

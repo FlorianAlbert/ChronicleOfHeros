@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Armor" xml:space="preserve">
+    <value>Rüstungsklasse</value>
+  </data>
+  <data name="About" xml:space="preserve">
+    <value>Über uns</value>
+  </data>
+  <data name="AboutDescription" xml:space="preserve">
+    <value>Ein digitaler Dungeons-&amp;-Dragons-5e-Charaktermanager, der Entscheidungen, Regeln und aktuelle Fähigkeiten am Spieltisch zusammenhält.</value>
+  </data>
+  <data name="AboutEyebrow" xml:space="preserve">
+    <value>Ein Charakterbogen, dem du vertrauen kannst</value>
+  </data>
+  <data name="AboutHeading" xml:space="preserve">
+    <value>Über ChronicleOfHeros</value>
+  </data>
+  <data name="Build" xml:space="preserve">
+    <value>Erstellen</value>
+  </data>
+  <data name="BuildDescription" xml:space="preserve">
+    <value>Halte die Entscheidungen, Attribute und Ausrüstung fest, die deinen Charakter ausmachen.</value>
+  </data>
+  <data name="CharacterRecord" xml:space="preserve">
+    <value>Charakterbogen</value>
+  </data>
+  <data name="CharacterSheets" xml:space="preserve">
+    <value>Charakterbögen</value>
+  </data>
+  <data name="ComingSoon" xml:space="preserve">
+    <value>Demnächst</value>
+  </data>
+  <data name="Constitution" xml:space="preserve">
+    <value>Konstitution</value>
+  </data>
+  <data name="ExampleCharacterSummary" xml:space="preserve">
+    <value>Mensch · Kämpfer · Stufe 4</value>
+  </data>
+  <data name="HeroDescription" xml:space="preserve">
+    <value>ChronicleOfHeros macht aus deinem 5e-Charakter eine klare, verlässliche Übersicht: Entscheidungen rein, nützliche Werte raus.</value>
+  </data>
+  <data name="HeroEyebrow" xml:space="preserve">
+    <value>Für dich am Spieltisch entwickelt</value>
+  </data>
+  <data name="HeroTitle" xml:space="preserve">
+    <value>Ein präziser Charakterbogen, bereit für den Spieltisch.</value>
+  </data>
+  <data name="HowItWorks" xml:space="preserve">
+    <value>So funktioniert es</value>
+  </data>
+  <data name="Initiative" xml:space="preserve">
+    <value>Initiative</value>
+  </data>
+  <data name="NavigationMenu" xml:space="preserve">
+    <value>Navigationsmenü</value>
+  </data>
+  <data name="PageTitle" xml:space="preserve">
+    <value>ChronicleOfHeros | Dein Charakterbogen am Spieltisch</value>
+  </data>
+  <data name="PrimaryNavigation" xml:space="preserve">
+    <value>Hauptnavigation</value>
+  </data>
+  <data name="Progress" xml:space="preserve">
+    <value>Weiterentwickeln</value>
+  </data>
+  <data name="ProgressDescription" xml:space="preserve">
+    <value>Wende jede neue Stufe an und behalte klar im Blick, was sich geändert hat und warum.</value>
+  </data>
+  <data name="SeeHowTheRecordWorks" xml:space="preserve">
+    <value>Sieh dir an, wie der Charakterbogen funktioniert</value>
+  </data>
+  <data name="Speed" xml:space="preserve">
+    <value>Bewegungsrate</value>
+  </data>
+  <data name="Strength" xml:space="preserve">
+    <value>Stärke</value>
+  </data>
+  <data name="Understand" xml:space="preserve">
+    <value>Verstehen</value>
+  </data>
+  <data name="UnderstandDescription" xml:space="preserve">
+    <value>Verfolge abgeleitete Werte bis zu den Entscheidungen und Regeln zurück, auf denen sie beruhen.</value>
+  </data>
+  <data name="Wisdom" xml:space="preserve">
+    <value>Weisheit</value>
+  </data>
+</root>

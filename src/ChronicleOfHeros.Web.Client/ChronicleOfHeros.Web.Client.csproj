@@ -13,6 +13,7 @@
     <ProjectReference Include="../ChronicleOfHeros.ServiceDefaults/ChronicleOfHeros.ServiceDefaults.csproj" ReferenceOutputAssembly="false" Condition="'$(RuntimeIdentifier)' != 'browser-wasm'" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
     <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Localization" />
   </ItemGroup>
 
 </Project>
