@@ -211,6 +211,33 @@
     max-width: 17rem;
 }
 
+.about {
+    border-top: 1px solid var(--rule);
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: minmax(10rem, 0.45fr) minmax(0, 1fr);
+    margin: 3rem auto 0;
+    max-width: 1200px;
+    padding: clamp(3rem, 6vw, 5rem) 2rem;
+}
+
+.about > p {
+    align-self: start;
+}
+
+.about h2 {
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 500;
+    margin: 0 0 1rem;
+}
+
+.about div p {
+    color: var(--ink-muted);
+    font: 1rem/1.7 "Trebuchet MS", sans-serif;
+    margin: 0;
+    max-width: 38rem;
+}
+
 .landing-page :focus-visible {
     outline: 2px solid var(--signal);
     outline-offset: 4px;
@@ -267,6 +294,13 @@
 
     .path article + article {
         border-left: 0;
+    }
+
+    .about {
+        gap: 1.25rem;
+        grid-template-columns: 1fr;
+        margin: 2rem 1.25rem 0;
+        padding: 3rem 0;
     }
 }
 
