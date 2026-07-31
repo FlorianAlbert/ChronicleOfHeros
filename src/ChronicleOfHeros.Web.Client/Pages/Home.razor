@@ -1,50 +1,45 @@
 ﻿@page "/"
 
-@* PROTOTYPE: Three landing-page visual systems, switchable via ?variant=field-notes|journal|table on /. *@
-
 @rendermode InteractiveAuto
 
-@inject NavigationManager Navigation
+<PageTitle>ChronicleOfHeros</PageTitle>
 
-<PageTitle>ChronicleOfHeros Visual Prototype</PageTitle>
-
-@if (CurrentVariant == "journal")
-{
-    <div class="prototype journal">
-        <header><a class="wordmark" href="/">ChronicleOfHeros</a><nav><a href="#sheets">Character Sheets</a><a href="#how-it-works">How It Works</a><a href="#about">About</a></nav></header>
-        <main><section class="hero" aria-labelledby="prototype-title"><p class="eyebrow">A better record for the adventure</p><h1 id="prototype-title">An accurate character sheet, ready at the table.</h1><p>Every modifier, saving throw, and choice gets a calm place to live. Spend less time checking the margins and more time playing your character.</p><button type="button">Coming soon</button><div class="sample" id="sheets"><span>5e</span><h2>Kaelin of the Dawn</h2><p>Ranger 5 · Armor 16 · Speed 30 ft.</p></div></section><section class="path" id="how-it-works"><article><b>01</b><h2>Build</h2><p>Give your character a complete foundation.</p></article><article><b>02</b><h2>Understand</h2><p>Keep the logic behind every value close at hand.</p></article><article><b>03</b><h2>Progress</h2><p>Carry your choices forward as the character changes.</p></article></section></main>
-    </div>
-}
-else if (CurrentVariant == "table")
-{
-    <div class="prototype table">
-        <header><a class="wordmark" href="/">ChronicleOfHeros</a><nav><a href="#sheets">Character Sheets</a><a href="#how-it-works">How It Works</a><a href="#about">About</a></nav><button type="button">Coming soon</button></header>
-        <main><section class="table-intro" aria-labelledby="prototype-title"><p class="eyebrow">The player's working record</p><h1 id="prototype-title">Your character, in fighting order.</h1><p>One deliberate workspace for the choices, numbers, and next level a 5e player checks most.</p></section><section class="board" id="sheets"><article><p>CHARACTER</p><h2>Maris Vell</h2><span>Level 7 cleric</span><strong>+3</strong><small>Proficiency bonus</small></article><article><p>ABILITY CHECKS</p><dl><div><dt>Strength</dt><dd>10 +0</dd></div><div><dt>Wisdom</dt><dd>18 +4</dd></div><div><dt>Charisma</dt><dd>14 +2</dd></div></dl></article><article><p>TABLE READY</p><dl><div><dt>Armor Class</dt><dd>18</dd></div><div><dt>Initiative</dt><dd>+2</dd></div><div><dt>Spell Save DC</dt><dd>15</dd></div></dl></article></section><section class="path" id="how-it-works"><article><b>01 / BUILD</b><h2>Start with choices that hold together.</h2></article><article><b>02 / UNDERSTAND</b><h2>Keep derived values legible.</h2></article><article><b>03 / PROGRESS</b><h2>Make the next level manageable.</h2></article></section></main>
-    </div>
-}
-else
-{
-    <div class="prototype field-notes">
-        <header><a class="wordmark" href="/">ChronicleOfHeros</a><nav><a href="#sheets">Character Sheets</a><a href="#how-it-works">How It Works</a><a href="#about">About</a></nav><button type="button">Coming soon</button></header>
-        <main><section class="field-hero" aria-labelledby="prototype-title"><div><p class="eyebrow">Built for players at the table</p><h1 id="prototype-title">An accurate character sheet, ready at the table.</h1><p>ChronicleOfHeros turns your 5e character into a clear, trustworthy working record: choices in, useful values out.</p><a href="#how-it-works">See how the record works →</a></div><div class="sheet" id="sheets"><p>CHARACTER RECORD</p><h2>Elian Thorn</h2><span>Human fighter · Level 4</span><dl><div><dt>Armor</dt><dd>17</dd></div><div><dt>Initiative</dt><dd>+1</dd></div><div><dt>Speed</dt><dd>30</dd></div></dl><p>Strength 16 +3</p><p>Constitution 14 +2</p><p>Wisdom 12 +1</p></div></section><section class="path" id="how-it-works"><article><b>01</b><h2>Build</h2><p>Set down the choices that define the character.</p></article><article><b>02</b><h2>Understand</h2><p>Read the values those choices produce.</p></article><article><b>03</b><h2>Progress</h2><p>Keep a clean account as the story advances.</p></article></section></main>
-    </div>
-}
-
-<aside class="prototype-switcher" aria-label="Prototype variant selector">
-    <button type="button" title="Previous variant" aria-label="Previous variant" data-prototype-nav="previous" @onclick="PreviousVariant">←</button>
-    <span><strong>@VariantKey</strong> — @VariantName</span>
-    <button type="button" title="Next variant" aria-label="Next variant" data-prototype-nav="next" @onclick="NextVariant">→</button>
-</aside>
-
-@code {
-    [SupplyParameterFromQuery(Name = "variant")]
-    public string? Variant { get; set; }
-
-    private string CurrentVariant => Variant is "field-notes" or "journal" or "table" ? Variant : "field-notes";
-    private string VariantKey => CurrentVariant switch { "journal" => "B", "table" => "C", _ => "A" };
-    private string VariantName => CurrentVariant switch { "journal" => "Journal", "table" => "Table", _ => "Field notes" };
-
-    private void PreviousVariant() => NavigateTo(CurrentVariant switch { "field-notes" => "table", "journal" => "field-notes", _ => "journal" });
-    private void NextVariant() => NavigateTo(CurrentVariant switch { "field-notes" => "journal", "journal" => "table", _ => "field-notes" });
-    private void NavigateTo(string variant) => Navigation.NavigateTo($"/?variant={variant}");
-}
+<div class="landing-page">
+    <header>
+        <a class="wordmark" href="/">ChronicleOfHeros</a>
+        <nav aria-label="Primary navigation">
+            <a href="#character-sheet">Character Sheets</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="#about">About</a>
+        </nav>
+        <button type="button" disabled>Coming soon</button>
+    </header>
+    <main>
+        <section class="field-hero" aria-labelledby="landing-title">
+            <div>
+                <p class="eyebrow">Built for players at the table</p>
+                <h1 id="landing-title">An accurate character sheet, ready at the table.</h1>
+                <p>ChronicleOfHeros turns your 5e character into a clear, trustworthy working record: choices in, useful values out.</p>
+                <a href="#how-it-works">See how the record works</a>
+            </div>
+            <div class="sheet" id="character-sheet">
+                <p>Character record</p>
+                <h2>Elian Thorn</h2>
+                <span>Human fighter · Level 4</span>
+                <dl>
+                    <div><dt>Armor</dt><dd>17</dd></div>
+                    <div><dt>Initiative</dt><dd>+1</dd></div>
+                    <div><dt>Speed</dt><dd>30 ft.</dd></div>
+                </dl>
+                <p>Strength 16 +3</p>
+                <p>Constitution 14 +2</p>
+                <p>Wisdom 12 +1</p>
+            </div>
+        </section>
+        <section class="path" id="how-it-works" aria-label="How it works">
+            <article><b>01</b><h2>Build</h2><p>Set down the choices that define the character.</p></article>
+            <article><b>02</b><h2>Understand</h2><p>Read the values those choices produce.</p></article>
+            <article id="about"><b>03</b><h2>Progress</h2><p>Keep a clean account as the story advances.</p></article>
+        </section>
+    </main>
+</div>

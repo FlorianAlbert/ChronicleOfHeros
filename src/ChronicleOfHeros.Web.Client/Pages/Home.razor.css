@@ -1,1 +1,304 @@
-.prototype { box-sizing:border-box; min-height:100vh; font-family:Manrope,sans-serif; }.prototype * { box-sizing:inherit; }.prototype a { color:inherit; text-decoration:none; }.prototype header { align-items:center; display:flex; justify-content:space-between; margin:auto; max-width:1200px; padding:1.4rem 2rem; }.wordmark,h1,h2 { font-family:Fraunces,Georgia,serif; letter-spacing:0; }.wordmark { font-size:1.2rem; font-weight:600; }.prototype nav { display:flex; font-size:.8rem; gap:1.6rem; }.prototype button { border:0; cursor:pointer; font:700 .8rem Manrope,sans-serif; padding:.75rem 1rem; }.eyebrow,.prototype b,.sample span { font-family:"DM Mono",monospace; font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; }.field-notes { background:#f5f6f2; color:#1d2630; }.field-notes header { border-bottom:1px solid #cbd1c9; }.field-notes button { background:#ce4c30; color:#fff; }.field-hero { display:grid; gap:4rem; grid-template-columns:1.1fr .9fr; margin:auto; max-width:1200px; padding:8rem 2rem 6rem; }.prototype h1 { font-size:clamp(3.2rem,6vw,5.8rem); font-weight:500; line-height:.98; margin:1.1rem 0; }.field-hero > div > p:not(.eyebrow),.journal .hero > p { font-size:1.05rem; line-height:1.7; max-width:540px; }.field-hero a { border-bottom:1px solid; display:inline-block; font: .75rem "DM Mono",monospace; margin-top:1.5rem; padding-bottom:.4rem; }.sheet { align-self:center; background:#fff; border:1px solid; box-shadow:12px 12px #d9ded5; padding:1.5rem; }.sheet h2 { font-size:2.5rem; margin:2.5rem 0 .2rem; }.sheet > p,.sheet dl { border-bottom:1px solid #cbd1c9; padding:.7rem 0; }.sheet dl { display:flex; gap:1rem; }.sheet dl div { flex:1; }.sheet dt { font: .6rem "DM Mono",monospace; text-transform:uppercase; }.sheet dd { font:1.5rem Fraunces,serif; margin:.3rem 0; }.path { display:grid; grid-template-columns:repeat(3,1fr); margin:auto; max-width:1200px; }.path article { border-top:1px solid currentColor; min-height:230px; padding:1.5rem 2rem; }.path article + article { border-left:1px solid currentColor; }.path h2 { font-size:2rem; font-weight:500; margin:3.5rem 0 .5rem; }.path p { font-size:.85rem; line-height:1.6; max-width:260px; }.journal { background:#f7f0e5; color:#30281f; text-align:center; }.journal header { border-bottom:1px solid #b9aa93; }.journal .hero { margin:auto; max-width:900px; padding:7rem 2rem; }.journal .hero > p { margin:auto; }.journal button { background:#30281f; color:#f7f0e5; margin:2rem 0 4rem; }.sample { background:#ebe0cf; border:1px solid #9c8b72; margin:auto; max-width:500px; padding:2rem; text-align:left; }.sample span { border:1px solid; border-radius:50%; float:right; padding:.55rem .3rem; }.sample h2 { font-size:2.2rem; }.journal .path { max-width:none; text-align:left; }.table { background:#e9ece7; color:#1e2826; }.table header { border-bottom:1px solid #9ca8a1; }.table button { background:#e6b344; }.table main { margin:auto; max-width:1200px; padding:5rem 2rem; }.table-intro { display:grid; gap:2rem; grid-template-columns:.6fr 1fr; margin-bottom:4rem; }.table-intro > p:last-child { align-self:end; line-height:1.7; }.board { border:1px solid; display:grid; grid-template-columns:1.15fr 1fr .85fr; }.board article { min-height:280px; padding:1.5rem; }.board article + article { border-left:1px solid; }.board p { font:.68rem "DM Mono",monospace; letter-spacing:.08em; }.board article:first-child { background:#1e2826; color:#f1f1eb; display:flex; flex-direction:column; }.board article:first-child h2 { font-size:2.5rem; margin:auto 0 .3rem; }.board strong { color:#e6b344; font:4rem Fraunces,serif; line-height:1; margin-top:1.5rem; }.board dl { margin-top:2rem; }.board dl div { border-bottom:1px solid #9ca8a1; display:flex; justify-content:space-between; padding:.8rem 0; }.board dd { font-family:"DM Mono",monospace; margin:0; }.table .path { margin-top:4rem; }.prototype-switcher { align-items:center; background:#151b1b; bottom:1rem; box-shadow:0 5px 20px #0004; color:#fff; display:flex; font:.78rem Manrope,sans-serif; gap:.8rem; left:50%; padding:.4rem; position:fixed; transform:translateX(-50%); z-index:10; }.prototype-switcher button { background:#dce4dc; border:0; color:#151b1b; cursor:pointer; font-size:1rem; height:2rem; width:2rem; }.prototype-switcher span { min-width:145px; text-align:center; }.prototype-switcher strong { color:#e6b344; } @media(max-width:700px){.prototype header{padding:1rem;}.prototype nav{display:none;}.field-hero,.table-intro{grid-template-columns:1fr;padding:4rem 1.25rem;}.path,.board{grid-template-columns:1fr;}.path article{min-height:auto;padding:1.5rem 1.25rem;}.path article+.path article,.path article+article,.board article+article{border-left:0;border-top:1px solid currentColor;}.path h2{margin:2rem 0 .5rem;}.journal .hero{padding:4rem 1.25rem;}.table main{padding:4rem 1.25rem;}.sheet{width:92%;}}
+.landing-page {
+    --paper: #f5f6f2;
+    --paper-raised: #ffffff;
+    --ink: #1d2630;
+    --ink-muted: #586169;
+    --rule: #cbd1c9;
+    --signal: #b9412a;
+    background:
+        linear-gradient(rgba(29, 38, 48, 0.025) 1px, transparent 1px) 0 0 / 100% 2rem,
+        var(--paper);
+    box-sizing: border-box;
+    color: var(--ink);
+    min-height: 100vh;
+}
+
+.landing-page *,
+.landing-page *::before,
+.landing-page *::after {
+    box-sizing: inherit;
+}
+
+.landing-page a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.landing-page header {
+    align-items: center;
+    border-bottom: 1px solid var(--rule);
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: 1fr auto 1fr;
+    margin: 0 auto;
+    max-width: 1200px;
+    padding: 1.25rem 2rem;
+}
+
+.wordmark,
+.landing-page h1,
+.landing-page h2,
+.sheet dd {
+    font-family: Georgia, "Times New Roman", serif;
+    letter-spacing: 0;
+}
+
+.wordmark {
+    font-size: 1.25rem;
+    font-weight: 700;
+    justify-self: start;
+}
+
+.landing-page nav {
+    display: flex;
+    font-family: "Trebuchet MS", sans-serif;
+    font-size: 0.78rem;
+    gap: 1.75rem;
+}
+
+.landing-page nav a,
+.field-hero > div > a {
+    text-decoration-color: transparent;
+    text-underline-offset: 0.35rem;
+    transition: text-decoration-color 150ms ease;
+}
+
+.landing-page nav a:hover,
+.landing-page nav a:focus-visible,
+.field-hero > div > a:hover,
+.field-hero > div > a:focus-visible {
+    text-decoration-color: currentColor;
+    text-decoration-line: underline;
+}
+
+.landing-page button {
+    background: var(--signal);
+    border: 0;
+    color: #ffffff;
+    cursor: not-allowed;
+    font: 700 0.78rem "Trebuchet MS", sans-serif;
+    justify-self: end;
+    opacity: 0.72;
+    padding: 0.75rem 1rem;
+}
+
+.field-hero {
+    align-items: center;
+    display: grid;
+    gap: clamp(3rem, 7vw, 6rem);
+    grid-template-columns: minmax(0, 1.05fr) minmax(28rem, 0.95fr);
+    margin: 0 auto;
+    max-width: 1200px;
+    padding: clamp(5rem, 10vw, 8rem) 2rem clamp(4rem, 8vw, 6rem);
+}
+
+.eyebrow,
+.sheet > p:first-child,
+.sheet dt,
+.path b {
+    font-family: "Courier New", monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.eyebrow {
+    color: var(--signal);
+    margin: 0;
+}
+
+.landing-page h1 {
+    font-size: clamp(3.25rem, 6vw, 5.8rem);
+    font-weight: 500;
+    line-height: 0.98;
+    margin: 1.1rem 0 1.5rem;
+    max-width: 12ch;
+}
+
+.field-hero > div > p:not(.eyebrow) {
+    color: var(--ink-muted);
+    font: 1.05rem/1.7 "Trebuchet MS", sans-serif;
+    max-width: 34rem;
+}
+
+.field-hero > div > a {
+    border-bottom: 1px solid currentColor;
+    display: inline-block;
+    font: 700 0.75rem "Courier New", monospace;
+    margin-top: 1.5rem;
+    padding-bottom: 0.4rem;
+}
+
+.field-hero > div > a::after {
+    content: " →";
+}
+
+.sheet {
+    align-self: center;
+    background: var(--paper-raised);
+    border: 1px solid var(--ink);
+    box-shadow: 12px 12px 0 #d9ded5;
+    min-width: 0;
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+}
+
+.sheet h2 {
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    font-weight: 500;
+    margin: 2.5rem 0 0.2rem;
+}
+
+.sheet span {
+    color: var(--ink-muted);
+    font: 0.85rem "Trebuchet MS", sans-serif;
+}
+
+.sheet > p,
+.sheet dl {
+    border-bottom: 1px solid var(--rule);
+    margin: 0;
+    padding: 0.7rem 0;
+}
+
+.sheet dl {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 1.5rem;
+}
+
+.sheet dl div + div {
+    border-left: 1px solid var(--rule);
+    padding-left: 1rem;
+}
+
+.sheet dd {
+    font-size: 1.5rem;
+    margin: 0.3rem 0 0;
+}
+
+.sheet > p:not(:first-child) {
+    font: 0.78rem "Courier New", monospace;
+}
+
+.path {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 0 auto;
+    max-width: 1200px;
+}
+
+.path article {
+    border-top: 1px solid var(--ink);
+    min-height: 230px;
+    padding: 1.5rem 2rem;
+}
+
+.path article + article {
+    border-left: 1px solid var(--rule);
+}
+
+.path h2 {
+    font-size: 1.8rem;
+    font-weight: 500;
+    margin: 2.5rem 0 0.75rem;
+}
+
+.path p {
+    color: var(--ink-muted);
+    font: 0.9rem/1.6 "Trebuchet MS", sans-serif;
+    max-width: 17rem;
+}
+
+.landing-page :focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 4px;
+}
+
+.landing-page h1:focus {
+    outline: none;
+}
+
+@media (max-width: 900px) {
+    .field-hero {
+        gap: 3rem;
+        grid-template-columns: 1fr;
+    }
+
+    .landing-page h1 {
+        max-width: 14ch;
+    }
+
+    .sheet {
+        justify-self: stretch;
+        width: min(100%, 42rem);
+    }
+}
+
+@media (max-width: 700px) {
+    .landing-page header {
+        gap: 1rem;
+        grid-template-columns: 1fr auto;
+        padding: 1rem 1.25rem;
+    }
+
+    .landing-page nav {
+        display: none;
+    }
+
+    .field-hero {
+        padding: 4rem 1.25rem 3.5rem;
+    }
+
+    .landing-page h1 {
+        font-size: 3.2rem;
+    }
+
+    .path {
+        grid-template-columns: 1fr;
+        padding: 0 1.25rem;
+    }
+
+    .path article {
+        min-height: 0;
+        padding: 1.5rem 0 2.5rem;
+    }
+
+    .path article + article {
+        border-left: 0;
+    }
+}
+
+@media (max-width: 380px) {
+    .wordmark {
+        font-size: 1.05rem;
+    }
+
+    .landing-page button {
+        padding: 0.65rem 0.75rem;
+    }
+
+    .landing-page h1 {
+        font-size: 2.75rem;
+    }
+
+    .sheet dl {
+        gap: 0.65rem;
+    }
+
+    .sheet dl div + div {
+        padding-left: 0.65rem;
+    }
+
+    .sheet dd {
+        font-size: 1.25rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .landing-page * {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+}
