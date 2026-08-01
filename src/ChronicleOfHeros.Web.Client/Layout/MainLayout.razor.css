@@ -1,4 +1,22 @@
-.page {
+.application-header {
+    background: #f5f6f2;
+    border-bottom: 1px solid #cbd1c9;
+}
+
+.application-header > div {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 auto;
+    max-width: 1200px;
+    padding: 0.75rem 2rem;
+}
+
+@media (max-width: 700px) {
+    .application-header > div {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+    }
+}.page {
     position: relative;
     display: flex;
     flex-direction: column;

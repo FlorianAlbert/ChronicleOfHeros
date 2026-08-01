@@ -31,8 +31,21 @@ public sealed class LandingPageFixture : IAsyncLifetime
         BaseAddress = webClient.BaseAddress!;
     }
 
-    public HttpClient CreateHttpClient()
+    public HttpClient CreateHttpClient(bool allowAutoRedirect = true)
     {
+        if (!allowAutoRedirect)
+        {
+            return new HttpClient(new HttpClientHandler
+            {
+                AllowAutoRedirect = false,
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+            })
+            {
+                BaseAddress = BaseAddress,
+                Timeout = TimeSpan.FromSeconds(90),
+            };
+        }
+
         var webClient = _createWebClient!();
         webClient.Timeout = TimeSpan.FromSeconds(90);
         return webClient;

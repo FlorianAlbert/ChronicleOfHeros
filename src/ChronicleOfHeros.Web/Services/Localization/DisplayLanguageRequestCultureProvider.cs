@@ -6,6 +6,8 @@ namespace ChronicleOfHeros.Web.Services.Localization;
 public sealed class DisplayLanguageRequestCultureProvider(IEnumerable<string> supportedCultureNames)
     : RequestCultureProvider
 {
+    public const string PreferenceCookieName = "ChronicleOfHeros.DisplayLanguage";
+
     private readonly CultureInfo[] _supportedCultures = supportedCultureNames
         .Select(CultureInfo.GetCultureInfo)
         .ToArray();
@@ -13,6 +15,12 @@ public sealed class DisplayLanguageRequestCultureProvider(IEnumerable<string> su
     public override Task<ProviderCultureResult?> DetermineProviderCultureResult(HttpContext httpContext)
     {
         ArgumentNullException.ThrowIfNull(httpContext);
+
+        var preferredCulture = FindSupportedConcreteCulture(httpContext.Request.Cookies[PreferenceCookieName]);
+        if (preferredCulture is not null)
+        {
+            return Task.FromResult<ProviderCultureResult?>(new(preferredCulture.Name));
+        }
 
         var browserLanguages = httpContext.Request.GetTypedHeaders().AcceptLanguage;
         if (browserLanguages is null)
@@ -37,14 +45,7 @@ public sealed class DisplayLanguageRequestCultureProvider(IEnumerable<string> su
                 continue;
             }
 
-            var supportedCulture = _supportedCultures.FirstOrDefault(culture =>
-                string.Equals(culture.Name, requestedCulture.Name, StringComparison.OrdinalIgnoreCase));
-
-            supportedCulture ??= _supportedCultures.FirstOrDefault(culture =>
-                string.Equals(
-                    culture.TwoLetterISOLanguageName,
-                    requestedCulture.TwoLetterISOLanguageName,
-                    StringComparison.OrdinalIgnoreCase));
+            var supportedCulture = FindSupportedCulture(requestedCulture);
 
             if (supportedCulture is not null)
             {
@@ -53,5 +54,23 @@ public sealed class DisplayLanguageRequestCultureProvider(IEnumerable<string> su
         }
 
         return Task.FromResult<ProviderCultureResult?>(null);
+    }
+
+    private CultureInfo? FindSupportedConcreteCulture(string? cultureName) =>
+        string.IsNullOrWhiteSpace(cultureName)
+            ? null
+            : _supportedCultures.FirstOrDefault(culture =>
+                string.Equals(culture.Name, cultureName, StringComparison.OrdinalIgnoreCase));
+
+    private CultureInfo? FindSupportedCulture(CultureInfo requestedCulture)
+    {
+        var exactCulture = _supportedCultures.FirstOrDefault(culture =>
+            string.Equals(culture.Name, requestedCulture.Name, StringComparison.OrdinalIgnoreCase));
+
+        return exactCulture ?? _supportedCultures.FirstOrDefault(culture =>
+            string.Equals(
+                culture.TwoLetterISOLanguageName,
+                requestedCulture.TwoLetterISOLanguageName,
+                StringComparison.OrdinalIgnoreCase));
     }
 }

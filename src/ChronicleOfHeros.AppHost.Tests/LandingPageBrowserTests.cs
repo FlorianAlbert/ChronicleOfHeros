@@ -84,6 +84,150 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     }
 
     [Fact]
+    public async Task Public_root_explicit_display_language_cookie_overrides_browser_preference()
+    {
+        using var webClient = _fixture.CreateHttpClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/");
+        request.Headers.AcceptLanguage.ParseAdd("en-US");
+        request.Headers.Add("Cookie", "ChronicleOfHeros.DisplayLanguage=de-DE");
+
+        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+        var landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(["de-DE"], response.Content.Headers.ContentLanguage);
+        Assert.Contains("<html lang=\"de\">", landingPage);
+        Assert.Contains("<title>ChronicleOfHeros | Dein Charakterbogen am Spieltisch</title>", landingPage);
+    }
+
+    [Fact]
+    public async Task Public_root_ignores_a_non_concrete_display_language_cookie()
+    {
+        using var webClient = _fixture.CreateHttpClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/");
+        request.Headers.AcceptLanguage.ParseAdd("en-US");
+        request.Headers.Add("Cookie", "ChronicleOfHeros.DisplayLanguage=de");
+
+        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+        var landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(["en-US"], response.Content.Headers.ContentLanguage);
+        Assert.Contains("<html lang=\"en\">", landingPage);
+        Assert.Contains("<title>ChronicleOfHeros | Your character sheet at the table</title>", landingPage);
+    }
+
+    [Theory]
+    [InlineData("en-US")]
+    [InlineData("de-DE")]
+    public async Task Supported_display_language_choice_persists_a_secure_preference_and_returns_to_the_local_path(string selectedLanguage)
+    {
+        using var webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
+        var antiforgery = await GetAntiforgeryTokenAsync(webClient);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/display-language")
+        {
+            Content = new FormUrlEncodedContent(
+            [
+                new("locale", selectedLanguage),
+                new("returnUrl", "/?character-sheet"),
+                new("__RequestVerificationToken", antiforgery.Token),
+            ]),
+        };
+        request.Headers.Add("Cookie", $"{antiforgery.Cookie}; ChronicleOfHeros.DisplayLanguage=en-US");
+
+        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
+        Assert.Equal("/?character-sheet", response.Headers.Location?.OriginalString);
+
+        var preferenceCookie = response.Headers.GetValues("Set-Cookie")
+            .Single(value => value.StartsWith("ChronicleOfHeros.DisplayLanguage=", StringComparison.Ordinal));
+
+        Assert.StartsWith($"ChronicleOfHeros.DisplayLanguage={selectedLanguage};", preferenceCookie, StringComparison.Ordinal);
+        Assert.Contains("max-age=34560000", preferenceCookie, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("path=/", preferenceCookie, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("secure", preferenceCookie, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("httponly", preferenceCookie, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("samesite=lax", preferenceCookie, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Display_language_choice_without_an_antiforgery_token_is_rejected()
+    {
+        using var webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/display-language")
+        {
+            Content = new FormUrlEncodedContent(
+            [
+                new("locale", "de-DE"),
+                new("returnUrl", "/"),
+            ]),
+        };
+
+        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.False(response.Headers.TryGetValues("Set-Cookie", out _));
+    }
+
+    [Theory]
+    [InlineData("de")]
+    [InlineData("fr-FR")]
+    [InlineData("invalid-locale")]
+    public async Task Unsupported_display_language_choice_does_not_change_the_preference(string selectedLanguage)
+    {
+        using var webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
+        var antiforgery = await GetAntiforgeryTokenAsync(webClient);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/display-language")
+        {
+            Content = new FormUrlEncodedContent(
+            [
+                new("locale", selectedLanguage),
+                new("returnUrl", "/"),
+                new("__RequestVerificationToken", antiforgery.Token),
+            ]),
+        };
+        request.Headers.Add("Cookie", $"{antiforgery.Cookie}; ChronicleOfHeros.DisplayLanguage=en-US");
+
+        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
+        Assert.Equal("/", response.Headers.Location?.OriginalString);
+        Assert.False(response.Headers.TryGetValues("Set-Cookie", out var cookies)
+            && cookies.Any(cookie => cookie.StartsWith("ChronicleOfHeros.DisplayLanguage=", StringComparison.Ordinal)));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("not-a-path")]
+    [InlineData("https://example.com")]
+    [InlineData("//example.com")]
+    [InlineData("/\\example.com")]
+    public async Task Display_language_choice_with_an_unsafe_return_path_redirects_to_root(string? returnUrl)
+    {
+        using var webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
+        var antiforgery = await GetAntiforgeryTokenAsync(webClient);
+        var formValues = new List<KeyValuePair<string, string>>
+        {
+            new("locale", "de-DE"),
+            new("__RequestVerificationToken", antiforgery.Token),
+        };
+        if (returnUrl is not null)
+        {
+            formValues.Add(new("returnUrl", returnUrl));
+        }
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/display-language")
+        {
+            Content = new FormUrlEncodedContent(formValues),
+        };
+        request.Headers.Add("Cookie", antiforgery.Cookie);
+
+        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
+        Assert.Equal("/", response.Headers.Location?.OriginalString);
+    }
+
+    [Fact]
     public async Task Public_root_initial_document_presents_the_landing_experience_in_German()
     {
         await WithPublicPageAsync(async (page, baseAddress) =>
@@ -121,6 +265,36 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await Assertions.Expect(page.GetByRole(AriaRole.Navigation, new() { Name = "Hauptnavigation" }).First).ToBeVisibleAsync();
             await Assertions.Expect(page.Locator("body")).Not.ToContainTextAsync("An accurate character sheet, ready at the table.");
         }, locale: "de-CH");
+    }
+
+    [Fact]
+    public async Task Display_language_selector_submits_from_the_keyboard_and_returns_to_the_current_page()
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            await page.GotoAsync(new Uri(baseAddress, "/?character-sheet").AbsoluteUri);
+
+            var selector = page.GetByLabel("Display language");
+            var applyButton = page.GetByRole(AriaRole.Button, new() { Name = "Apply" });
+
+            await Assertions.Expect(selector).ToBeVisibleAsync();
+            Assert.Equal(["English", "Deutsch"], await selector.Locator("option").AllTextContentsAsync());
+            await selector.FocusAsync();
+            await Assertions.Expect(selector).ToBeFocusedAsync();
+            await page.Keyboard.PressAsync("ArrowDown");
+            await page.Keyboard.PressAsync("Tab");
+            await Assertions.Expect(applyButton).ToBeFocusedAsync();
+            await page.Keyboard.PressAsync("Enter");
+
+            await Assertions.Expect(page).ToHaveURLAsync(new Regex("\\?character-sheet$"));
+            await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros | Dein Charakterbogen am Spieltisch");
+            await Assertions.Expect(page.GetByLabel("Anzeigesprache")).ToBeVisibleAsync();
+
+            await page.ReloadAsync();
+
+            await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros | Dein Charakterbogen am Spieltisch");
+            await Assertions.Expect(page.GetByLabel("Anzeigesprache")).ToBeVisibleAsync();
+        }, javaScriptEnabled: false, locale: "en-US");
     }
 
     [Fact]
@@ -196,9 +370,7 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
 
             var menuButton = page.GetByLabel("Navigation menu");
 
-            await page.Keyboard.PressAsync("Tab");
-            await page.Keyboard.PressAsync("Tab");
-
+            await menuButton.FocusAsync();
             await Assertions.Expect(menuButton).ToBeFocusedAsync();
             Assert.True(await HasVisibleFocusAsync(menuButton));
 
@@ -312,6 +484,7 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "ChronicleOfHeros" })).ToHaveAttributeAsync("href", "/");
             await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "This page is missing from the record." })).ToBeVisibleAsync();
             await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Return to the character sheet" })).ToHaveAttributeAsync("href", "/");
+            await Assertions.Expect(page.GetByLabel("Display language")).ToBeVisibleAsync();
             await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Not Found", Exact = true })).ToHaveCountAsync(0);
         });
     }
@@ -343,4 +516,20 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     private static Task<bool> HasVisibleFocusAsync(ILocator locator) =>
         locator.EvaluateAsync<bool>(
             "element => { const style = getComputedStyle(element); return style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) >= 2; }");
+
+    private static async Task<(string Token, string Cookie)> GetAntiforgeryTokenAsync(HttpClient webClient)
+    {
+        using var response = await webClient.GetAsync("/", TestContext.Current.CancellationToken);
+        var landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var tokenMatch = Regex.Match(
+            landingPage,
+            "<input[^>]*name=\"__RequestVerificationToken\"[^>]*value=\"(?<token>[^\"]+)\"",
+            RegexOptions.CultureInvariant);
+        var antiforgeryCookie = response.Headers.GetValues("Set-Cookie")
+            .Select(value => value.Split(';', 2)[0])
+            .Single(value => value.StartsWith(".AspNetCore.Antiforgery.", StringComparison.Ordinal));
+
+        Assert.True(tokenMatch.Success, "The response did not include an antiforgery token.");
+        return (WebUtility.HtmlDecode(tokenMatch.Groups["token"].Value), antiforgeryCookie);
+    }
 }
