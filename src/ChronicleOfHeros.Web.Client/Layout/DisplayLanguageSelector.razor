@@ -5,11 +5,10 @@
 <form class="display-language-selector" method="post" action="/display-language">
     <AntiforgeryToken />
     <input type="hidden" name="returnUrl" value="@ReturnUrl" />
-    <select name="locale" aria-label="@Localizer["DisplayLanguage"]" title="@Localizer["DisplayLanguage"]">
-        <option value="en-US" selected="@IsCurrentCulture("en-US")">English</option>
-        <option value="de-DE" selected="@IsCurrentCulture("de-DE")">Deutsch</option>
+    <select name="locale" value="@CultureInfo.CurrentUICulture.Name" onchange="this.form.requestSubmit()" aria-label="@Localizer["DisplayLanguage"]" title="@Localizer["DisplayLanguage"]">
+        <option value="en-US">English</option>
+        <option value="de-DE">Deutsch</option>
     </select>
-    <button type="submit">@Localizer["Apply"]</button>
 </form>
 
 @code {
@@ -22,6 +21,4 @@
         }
     }
 
-    private static bool IsCurrentCulture(string cultureName) =>
-        string.Equals(CultureInfo.CurrentUICulture.Name, cultureName, StringComparison.OrdinalIgnoreCase);
 }

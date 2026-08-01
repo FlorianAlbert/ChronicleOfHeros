@@ -11,6 +11,166 @@
     background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") no-repeat center/1.75rem rgba(255, 255, 255, 0.1);
 }
 
+.application-navigation {
+    align-items: center;
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: 1fr auto 1fr;
+}
+
+.wordmark {
+    color: var(--ink, #1d2630);
+    font: 700 1.25rem Georgia, "Times New Roman", serif;
+    justify-self: start;
+    letter-spacing: 0;
+    text-decoration: none;
+}
+
+.primary-navigation {
+    display: flex;
+    font: 0.78rem "Trebuchet MS", sans-serif;
+    gap: 1.75rem;
+}
+
+.navigation-disclosure {
+    display: none;
+    justify-self: center;
+}
+
+.navigation-disclosure summary {
+    display: none;
+}
+
+.primary-navigation ::deep a {
+    color: var(--ink, #1d2630);
+    text-decoration-color: transparent;
+    text-underline-offset: 0.35rem;
+    transition: text-decoration-color 150ms ease;
+}
+
+.primary-navigation ::deep a:hover,
+.primary-navigation ::deep a:focus-visible {
+    text-decoration-color: currentColor;
+    text-decoration-line: underline;
+}
+
+.navigation-actions {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+    justify-self: end;
+}
+
+.application-navigation ::deep :focus-visible {
+    outline: 2px solid var(--signal, #b9412a);
+    outline-offset: 4px;
+}
+
+@media (max-width: 700px) {
+    .application-navigation {
+        gap: 1rem;
+        grid-template-columns: minmax(0, 1fr) auto;
+        position: relative;
+    }
+
+    .navigation-disclosure {
+        display: block;
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: end;
+        position: relative;
+    }
+
+    .navigation-disclosure summary {
+        align-items: center;
+        appearance: none;
+        background: transparent;
+        border: 1px solid var(--ink, #1d2630);
+        color: var(--ink, #1d2630);
+        cursor: pointer;
+        display: inline-flex;
+        height: 2.75rem;
+        justify-content: center;
+        padding: 0;
+        width: 2.75rem;
+    }
+
+    .navigation-disclosure summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .primary-navigation {
+        background: var(--paper-raised, #ffffff);
+        border: 1px solid var(--ink, #1d2630);
+        display: none;
+        flex-direction: column;
+        gap: 0;
+        padding: 0.25rem 0;
+        position: absolute;
+        right: 0;
+        top: calc(100% + 1rem);
+        width: calc(100vw - 2.5rem);
+        z-index: 1;
+    }
+
+    .navigation-disclosure[open] ~ .primary-navigation {
+        display: flex;
+    }
+
+    .primary-navigation ::deep a {
+        padding: 0.9rem 1rem;
+    }
+
+    .navigation-disclosure summary span,
+    .navigation-disclosure summary span::before,
+    .navigation-disclosure summary span::after {
+        background: currentColor;
+        content: "";
+        display: block;
+        height: 2px;
+        position: relative;
+        width: 1.25rem;
+    }
+
+    .navigation-disclosure summary span::before {
+        position: absolute;
+        top: -0.4rem;
+    }
+
+    .navigation-disclosure summary span::after {
+        position: absolute;
+        top: 0.4rem;
+    }
+
+    .navigation-actions {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        justify-self: stretch;
+    }
+
+    .navigation-actions ::deep .display-language-selector {
+        justify-self: stretch;
+        width: 100%;
+    }
+
+    .navigation-actions ::deep .display-language-selector select {
+        flex: 1;
+    }
+}
+
+@media (max-width: 380px) {
+    .wordmark {
+        font-size: 1.05rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .application-navigation ::deep * {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
 .navbar-toggler:checked {
     background-color: rgba(255, 255, 255, 0.5);
 }

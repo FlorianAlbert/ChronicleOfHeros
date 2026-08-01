@@ -268,33 +268,27 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     }
 
     [Fact]
-    public async Task Display_language_selector_submits_from_the_keyboard_and_returns_to_the_current_page()
+    public async Task Display_language_selector_changes_language_when_an_option_is_selected()
     {
         await WithPublicPageAsync(async (page, baseAddress) =>
         {
             await page.GotoAsync(new Uri(baseAddress, "/?character-sheet").AbsoluteUri);
 
             var selector = page.GetByLabel("Display language");
-            var applyButton = page.GetByRole(AriaRole.Button, new() { Name = "Apply" });
 
             await Assertions.Expect(selector).ToBeVisibleAsync();
             Assert.Equal(["English", "Deutsch"], await selector.Locator("option").AllTextContentsAsync());
-            await selector.FocusAsync();
-            await Assertions.Expect(selector).ToBeFocusedAsync();
-            await page.Keyboard.PressAsync("ArrowDown");
-            await page.Keyboard.PressAsync("Tab");
-            await Assertions.Expect(applyButton).ToBeFocusedAsync();
-            await page.Keyboard.PressAsync("Enter");
+            await selector.SelectOptionAsync("de-DE");
 
             await Assertions.Expect(page).ToHaveURLAsync(new Regex("\\?character-sheet$"));
             await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros | Dein Charakterbogen am Spieltisch");
-            await Assertions.Expect(page.GetByLabel("Anzeigesprache")).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByLabel("Anzeigesprache")).ToHaveValueAsync("de-DE");
 
             await page.ReloadAsync();
 
             await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros | Dein Charakterbogen am Spieltisch");
-            await Assertions.Expect(page.GetByLabel("Anzeigesprache")).ToBeVisibleAsync();
-        }, javaScriptEnabled: false, locale: "en-US");
+            await Assertions.Expect(page.GetByLabel("Anzeigesprache")).ToHaveValueAsync("de-DE");
+        }, locale: "en-US");
     }
 
     [Fact]
@@ -305,7 +299,6 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await page.GotoAsync(baseAddress.AbsoluteUri);
 
             await Assertions.Expect(page.Locator("link[rel='stylesheet'][href*='bootstrap']")).ToHaveCountAsync(0);
-            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Home", Exact = true })).ToHaveCountAsync(0);
             await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Counter", Exact = true })).ToHaveCountAsync(0);
             await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Weather", Exact = true })).ToHaveCountAsync(0);
             await Assertions.Expect(page.GetByText("Hello, world!", new() { Exact = true })).ToHaveCountAsync(0);
@@ -354,6 +347,12 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
 
             await page.Keyboard.PressAsync("Enter");
             await page.Keyboard.PressAsync("Tab");
+
+                var homeNavigationLink = page.GetByRole(AriaRole.Navigation, new() { Name = "Primary navigation" })
+                    .GetByRole(AriaRole.Link, new() { Name = "Home", Exact = true });
+                await Assertions.Expect(homeNavigationLink).ToBeFocusedAsync();
+
+                await page.Keyboard.PressAsync("Tab");
             await page.Keyboard.PressAsync("Enter");
 
             await Assertions.Expect(page).ToHaveURLAsync(new Regex("#character-sheet$"));
@@ -377,10 +376,10 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await page.Keyboard.PressAsync("Enter");
             await page.Keyboard.PressAsync("Tab");
 
-            var firstNavigationLink = page.GetByRole(AriaRole.Navigation, new() { Name = "Primary navigation" })
-                .GetByRole(AriaRole.Link, new() { Name = "Character Sheets" });
-            await Assertions.Expect(firstNavigationLink).ToBeFocusedAsync();
-            Assert.True(await HasVisibleFocusAsync(firstNavigationLink));
+                var homeNavigationLink = page.GetByRole(AriaRole.Navigation, new() { Name = "Primary navigation" })
+                    .GetByRole(AriaRole.Link, new() { Name = "Home", Exact = true });
+                await Assertions.Expect(homeNavigationLink).ToBeFocusedAsync();
+                Assert.True(await HasVisibleFocusAsync(homeNavigationLink));
         }, javaScriptEnabled: false);
     }
 
@@ -481,6 +480,8 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await page.GotoAsync(new Uri(baseAddress, "/a-page-that-does-not-exist").AbsoluteUri);
 
             await Assertions.Expect(page).ToHaveTitleAsync("Page not found | ChronicleOfHeros");
+            await Assertions.Expect(page.GetByRole(AriaRole.Navigation, new() { Name = "Primary navigation" })).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Home", Exact = true })).ToHaveAttributeAsync("href", "/");
             await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "ChronicleOfHeros" })).ToHaveAttributeAsync("href", "/");
             await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "This page is missing from the record." })).ToBeVisibleAsync();
             await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Return to the character sheet" })).ToHaveAttributeAsync("href", "/");

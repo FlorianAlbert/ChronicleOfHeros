@@ -63,14 +63,8 @@
   <data name="Initiative" xml:space="preserve">
     <value>Initiative</value>
   </data>
-  <data name="NavigationMenu" xml:space="preserve">
-    <value>Navigation menu</value>
-  </data>
   <data name="PageTitle" xml:space="preserve">
     <value>ChronicleOfHeros | Your character sheet at the table</value>
-  </data>
-  <data name="PrimaryNavigation" xml:space="preserve">
-    <value>Primary navigation</value>
   </data>
   <data name="Progress" xml:space="preserve">
     <value>Progress</value>

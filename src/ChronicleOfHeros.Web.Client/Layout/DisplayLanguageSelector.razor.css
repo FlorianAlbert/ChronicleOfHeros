@@ -5,8 +5,7 @@
     justify-self: end;
 }
 
-.display-language-selector select,
-.display-language-selector button {
+.display-language-selector select {
     background: var(--paper-raised, #ffffff);
     border: 1px solid var(--ink, #1d2630);
     color: var(--ink, #1d2630);
@@ -17,17 +16,6 @@
 .display-language-selector select {
     min-width: 6.75rem;
     padding: 0 0.5rem;
-}
-
-.display-language-selector button {
-    cursor: pointer;
-    padding: 0 0.75rem;
-}
-
-.display-language-selector button:hover,
-.display-language-selector button:focus-visible {
-    background: var(--ink, #1d2630);
-    color: var(--paper-raised, #ffffff);
 }
 
 .display-language-selector :focus-visible {

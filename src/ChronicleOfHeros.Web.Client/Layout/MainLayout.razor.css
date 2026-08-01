@@ -1,18 +1,21 @@
 .application-header {
-    background: #f5f6f2;
-    border-bottom: 1px solid #cbd1c9;
+    --paper: #f5f6f2;
+    --paper-raised: #ffffff;
+    --ink: #1d2630;
+    --rule: #cbd1c9;
+    --signal: #b9412a;
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
 }
 
-.application-header > div {
-    display: flex;
-    justify-content: flex-end;
+.application-header ::deep .application-navigation {
     margin: 0 auto;
     max-width: 1200px;
-    padding: 0.75rem 2rem;
+    padding: 1.25rem 2rem;
 }
 
 @media (max-width: 700px) {
-    .application-header > div {
+    .application-header ::deep .application-navigation {
         padding-left: 1.25rem;
         padding-right: 1.25rem;
     }

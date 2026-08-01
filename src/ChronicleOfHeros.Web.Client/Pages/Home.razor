@@ -3,26 +3,19 @@
 @rendermode InteractiveAuto
 @inject IStringLocalizer<Home> Localizer
 
+<SectionContent SectionName="@NavigationSections.PageLinks">
+    <a href="#character-sheet">@Localizer["CharacterSheets"]</a>
+    <a href="#how-it-works">@Localizer["HowItWorks"]</a>
+    <a href="#about">@Localizer["About"]</a>
+</SectionContent>
+
+<SectionContent SectionName="@NavigationSections.Actions">
+    <button class="coming-soon" type="button" disabled>@Localizer["ComingSoon"]</button>
+</SectionContent>
+
 <PageTitle>@Localizer["PageTitle"]</PageTitle>
 
 <div class="landing-page">
-    <header>
-        <a class="wordmark" href="/">ChronicleOfHeros</a>
-        <nav class="desktop-navigation" aria-label="@Localizer["PrimaryNavigation"]">
-            <a href="#character-sheet">@Localizer["CharacterSheets"]</a>
-            <a href="#how-it-works">@Localizer["HowItWorks"]</a>
-            <a href="#about">@Localizer["About"]</a>
-        </nav>
-        <details class="navigation-disclosure">
-            <summary title="@Localizer["NavigationMenu"]" aria-label="@Localizer["NavigationMenu"]"><span aria-hidden="true"></span></summary>
-            <nav aria-label="@Localizer["PrimaryNavigation"]">
-                <a href="#character-sheet">@Localizer["CharacterSheets"]</a>
-                <a href="#how-it-works">@Localizer["HowItWorks"]</a>
-                <a href="#about">@Localizer["About"]</a>
-            </nav>
-        </details>
-        <button class="coming-soon" type="button" disabled>@Localizer["ComingSoon"]</button>
-    </header>
     <main>
         <section class="field-hero" aria-labelledby="landing-title">
             <div>

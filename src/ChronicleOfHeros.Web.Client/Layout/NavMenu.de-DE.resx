@@ -12,7 +12,13 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="DisplayLanguage" xml:space="preserve">
-    <value>Anzeigesprache</value>
+  <data name="Home" xml:space="preserve">
+    <value>Startseite</value>
+  </data>
+  <data name="NavigationMenu" xml:space="preserve">
+    <value>Navigationsmenü</value>
+  </data>
+  <data name="PrimaryNavigation" xml:space="preserve">
+    <value>Hauptnavigation</value>
   </data>
 </root>
