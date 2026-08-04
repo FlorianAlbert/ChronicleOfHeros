@@ -1,13 +1,15 @@
 ﻿@page "/not-found"
 @layout MainLayout
 
-<PageTitle>Page not found | ChronicleOfHeros</PageTitle>
+@inject IStringLocalizer<NotFound> Localizer
+
+<PageTitle>@Localizer["PageTitle"]</PageTitle>
 
 <div class="not-found-page">
 	<section aria-labelledby="not-found-title">
-		<p class="eyebrow">Nothing recorded here</p>
-		<h1 id="not-found-title">This page is missing from the record.</h1>
-		<p>The address may have changed, or the page may never have been part of this character sheet.</p>
-		<a class="return-link" href="/">Return to the character sheet</a>
+		<p class="eyebrow">@Localizer["Eyebrow"]</p>
+		<h1 id="not-found-title">@Localizer["Heading"]</h1>
+		<p>@Localizer["Description"]</p>
+		<a class="return-link" href="/">@Localizer["ReturnToCharacterSheet"]</a>
 	</section>
 </div>

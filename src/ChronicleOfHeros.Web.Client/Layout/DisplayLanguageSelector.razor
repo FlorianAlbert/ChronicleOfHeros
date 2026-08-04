@@ -1,4 +1,5 @@
 @using System.Globalization
+
 @inject NavigationManager NavigationManager
 @inject IStringLocalizer<DisplayLanguageSelector> Localizer
 
@@ -12,10 +13,18 @@
 </form>
 
 @code {
+    [CascadingParameter(Name = "OriginalPathAndQuery")]
+    private string? OriginalPathAndQuery { get; set; }
+
     private string ReturnUrl
     {
         get
         {
+            if (OriginalPathAndQuery is not null)
+            {
+                return OriginalPathAndQuery;
+            }
+
             var currentUri = new Uri(NavigationManager.Uri);
             return currentUri.PathAndQuery + currentUri.Fragment;
         }

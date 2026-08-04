@@ -83,6 +83,35 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         }
     }
 
+    [Theory]
+    [InlineData("en-US", "en-US", "en", "Page not found | ChronicleOfHeros", "This page is missing from the record.", "Return to the character sheet", "Display language")]
+    [InlineData("de-DE", "de-DE", "de", "Seite nicht gefunden | ChronicleOfHeros", "Diese Seite fehlt im Register.", "Zurück zum Charakterbogen", "Anzeigesprache")]
+    public async Task Unknown_local_route_retains_404_status_and_renders_the_localized_not_found_experience(
+        string browserLanguage,
+        string expectedCulture,
+        string expectedDocumentLanguage,
+        string expectedTitle,
+        string expectedHeading,
+        string expectedReturnAction,
+        string expectedDisplayLanguageLabel)
+    {
+        using var webClient = _fixture.CreateHttpClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/a-page-that-does-not-exist");
+        request.Headers.AcceptLanguage.ParseAdd(browserLanguage);
+
+        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+        var notFoundPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var decodedNotFoundPage = WebUtility.HtmlDecode(notFoundPage);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal([expectedCulture], response.Content.Headers.ContentLanguage);
+        Assert.Contains($"<html lang=\"{expectedDocumentLanguage}\">", notFoundPage);
+        Assert.Contains($"<title>{expectedTitle}</title>", notFoundPage);
+        Assert.Contains(expectedHeading, decodedNotFoundPage);
+        Assert.Contains($"aria-label=\"{expectedDisplayLanguageLabel}\"", decodedNotFoundPage);
+        Assert.Contains($">{expectedReturnAction}<", decodedNotFoundPage);
+    }
+
     [Fact]
     public async Task Public_root_explicit_display_language_cookie_overrides_browser_preference()
     {
@@ -201,6 +230,9 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     [InlineData("https://example.com")]
     [InlineData("//example.com")]
     [InlineData("/\\example.com")]
+    [InlineData("/%2F%2Fexample.com")]
+    [InlineData("/%5Cexample.com")]
+    [InlineData("/%252F%252Fexample.com")]
     public async Task Display_language_choice_with_an_unsafe_return_path_redirects_to_root(string? returnUrl)
     {
         using var webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
@@ -289,6 +321,45 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros | Dein Charakterbogen am Spieltisch");
             await Assertions.Expect(page.GetByLabel("Anzeigesprache")).ToHaveValueAsync("de-DE");
         }, locale: "en-US");
+    }
+
+    [Fact]
+    public async Task Display_language_selector_from_an_unknown_local_route_returns_there_with_a_404()
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            const string unknownRoute = "/missing-character?record=unknown";
+            await page.GotoAsync(new Uri(baseAddress, unknownRoute).AbsoluteUri);
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+            var selector = page.GetByLabel("Display language");
+            await Assertions.Expect(selector).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator("input[name='__RequestVerificationToken']")).ToHaveValueAsync(new Regex(".+"));
+            await selector.SelectOptionAsync("de-DE");
+
+            await Assertions.Expect(page).ToHaveURLAsync(new Uri(baseAddress, unknownRoute).AbsoluteUri);
+            var notFoundResponse = await page.ReloadAsync();
+
+            Assert.NotNull(notFoundResponse);
+            Assert.Equal((int)HttpStatusCode.NotFound, notFoundResponse.Status);
+            await Assertions.Expect(page).ToHaveTitleAsync("Seite nicht gefunden | ChronicleOfHeros");
+            await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Diese Seite fehlt im Register." })).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByLabel("Anzeigesprache")).ToHaveValueAsync("de-DE");
+        }, locale: "en-US");
+    }
+
+    [Fact]
+    public async Task Display_language_selector_on_an_unknown_local_route_is_keyboard_focusable()
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            await page.GotoAsync(new Uri(baseAddress, "/missing-character").AbsoluteUri);
+
+            var selector = page.GetByLabel("Display language");
+            await Assertions.Expect(selector).ToBeVisibleAsync();
+            await selector.FocusAsync();
+            await Assertions.Expect(selector).ToBeFocusedAsync();
+        }, javaScriptEnabled: false, locale: "en-US");
     }
 
     [Fact]

@@ -49,7 +49,7 @@ else
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+app.UseStatusCodePagesWithReExecute("/not-found");
 app.UseHttpsRedirection();
 app.UseRequestLocalization();
 
@@ -105,11 +105,34 @@ app.MapDefaultEndpoints();
 app.Run();
 
 static string GetSafeLocalReturnPath(string? returnUrl) =>
-    !string.IsNullOrWhiteSpace(returnUrl)
-    && returnUrl[0] == '/'
-    && !returnUrl.StartsWith("//", StringComparison.Ordinal)
-    && !returnUrl.StartsWith("/\\", StringComparison.Ordinal)
-    && !returnUrl.Contains('\\')
-    && Uri.TryCreate(returnUrl, UriKind.Relative, out _)
-        ? returnUrl
-        : "/";
+    IsSafeLocalReturnPath(returnUrl) ? returnUrl! : "/";
+
+static bool IsSafeLocalReturnPath(string? returnUrl)
+{
+    if (string.IsNullOrWhiteSpace(returnUrl)
+        || returnUrl.Contains('\\')
+        || !Uri.TryCreate(returnUrl, UriKind.Relative, out _))
+    {
+        return false;
+    }
+
+    var pathEnd = returnUrl.IndexOfAny(['?', '#']);
+    var encodedPath = pathEnd < 0 ? returnUrl : returnUrl[..pathEnd];
+    var decodedPath = encodedPath;
+
+    while (true)
+    {
+        var nextPath = Uri.UnescapeDataString(decodedPath);
+        if (nextPath == decodedPath)
+        {
+            break;
+        }
+
+        decodedPath = nextPath;
+    }
+
+    return decodedPath[0] == '/'
+           && !decodedPath.StartsWith("//", StringComparison.Ordinal)
+           && !decodedPath.StartsWith("/\\", StringComparison.Ordinal)
+           && !decodedPath.Contains('\\');
+}
