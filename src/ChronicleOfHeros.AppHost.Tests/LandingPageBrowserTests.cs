@@ -84,6 +84,57 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     }
 
     [Theory]
+    [InlineData("en-US", "Rejoining the server...")]
+    [InlineData("de-DE", "Verbindung mit dem Server wird wiederhergestellt...")]
+    public async Task Reconnect_dialog_displays_rejoining_feedback_in_the_active_display_language(
+        string browserLanguage,
+        string expectedRejoining)
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            await page.GotoAsync(baseAddress.AbsoluteUri);
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+            await page.EvaluateAsync(
+                """
+                () => {
+                    const reconnectModal = document.getElementById("components-reconnect-modal");
+                    reconnectModal.classList.add("components-reconnect-show");
+                    reconnectModal.dispatchEvent(new CustomEvent("components-reconnect-state-changed", { detail: { state: "show" } }));
+                }
+                """);
+
+            var reconnectDialog = page.Locator("#components-reconnect-modal");
+            await Assertions.Expect(reconnectDialog).ToHaveAttributeAsync("open", string.Empty);
+            await Assertions.Expect(reconnectDialog.GetByText(expectedRejoining, new() { Exact = true })).ToBeVisibleAsync();
+        }, locale: browserLanguage);
+    }
+
+    [Theory]
+    [InlineData("en-US", "en-US", "Something went wrong | ChronicleOfHeros", "We could not complete that request.", "Return to the character sheet")]
+    [InlineData("de-DE", "de-DE", "Etwas ist schiefgelaufen | ChronicleOfHeros", "Diese Anfrage konnte nicht abgeschlossen werden.", "Zurück zum Charakterbogen")]
+    public async Task Reachable_error_boundary_renders_feedback_and_recovery_in_the_active_display_language(
+        string browserLanguage,
+        string expectedCulture,
+        string expectedTitle,
+        string expectedFeedback,
+        string expectedRecoveryAction)
+    {
+        using var webClient = _fixture.CreateHttpClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/Error");
+        request.Headers.AcceptLanguage.ParseAdd(browserLanguage);
+
+        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+        var errorPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var decodedErrorPage = WebUtility.HtmlDecode(errorPage);
+
+        Assert.Equal([expectedCulture], response.Content.Headers.ContentLanguage);
+        Assert.Contains($"<title>{expectedTitle}</title>", errorPage);
+        Assert.Contains(expectedFeedback, decodedErrorPage);
+        Assert.Contains($">{expectedRecoveryAction}<", decodedErrorPage);
+    }
+
+    [Theory]
     [InlineData("en-US", "en-US", "en", "Page not found | ChronicleOfHeros", "This page is missing from the record.", "Return to the character sheet", "Display language")]
     [InlineData("de-DE", "de-DE", "de", "Seite nicht gefunden | ChronicleOfHeros", "Diese Seite fehlt im Register.", "Zurück zum Charakterbogen", "Anzeigesprache")]
     public async Task Unknown_local_route_retains_404_status_and_renders_the_localized_not_found_experience(

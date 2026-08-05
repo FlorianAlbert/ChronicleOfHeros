@@ -1,6 +1,5 @@
 using ChronicleOfHeros.Web.Components;
 using ChronicleOfHeros.Web.Services.Localization;
-using ChronicleOfHeros.Web.Services.ServerHealthReportService;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.Extensions.Http.Resilience;
 using Yarp.ReverseProxy.Forwarder;
@@ -9,8 +8,6 @@ using Yarp.ReverseProxy.Transforms;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
-
-builder.Services.AddServerHealthReportService("https+http://api");
 
 builder.Services.AddHttpForwarderWithServiceDiscovery()
                 .Configure<HttpStandardResilienceOptions>(typeof(IHttpForwarder).FullName, options =>
