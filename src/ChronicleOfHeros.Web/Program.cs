@@ -1,7 +1,9 @@
 using ChronicleOfHeros.Web.Components;
+using ChronicleOfHeros.Web.Client.Services.Localization;
 using ChronicleOfHeros.Web.Services.Localization;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.Extensions.Http.Resilience;
+using Microsoft.Extensions.Localization;
 using Yarp.ReverseProxy.Forwarder;
 using Yarp.ReverseProxy.Transforms;
 
@@ -21,6 +23,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 var supportedCultures = new[] { "en-US", "de-DE" };
 builder.Services.AddLocalization();
+builder.Services.AddSingleton<IStringLocalizerFactory, MissingTranslationDiagnosticStringLocalizerFactory>();
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
     options.SetDefaultCulture("en-US")

@@ -22,5 +22,6 @@
 
   <ItemGroup>
     <ProjectReference Include="../ChronicleOfHeros.AppHost/ChronicleOfHeros.AppHost.csproj" />
+    <ProjectReference Include="../ChronicleOfHeros.Web/ChronicleOfHeros.Web.csproj" />
   </ItemGroup>
 </Project>
