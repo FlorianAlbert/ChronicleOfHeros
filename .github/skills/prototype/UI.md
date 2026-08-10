@@ -13,11 +13,11 @@ If the question is about logic/state rather than what something looks like — w
 
 ## Two sub-shapes — strongly prefer sub-shape A
 
-A UI prototype is much easier to judge when it's **butting up against the rest of the app** — real header, real sidebar, real data, real density. A throwaway route on its own is a vacuum: every variant looks fine in isolation. Default to sub-shape A whenever there's a plausible existing Razor component to host the variants. Only reach for sub-shape B if the prototype genuinely has no nearby home.
+A UI prototype is much easier to judge when it's **butting up against the rest of the app** — real header, real sidebar, real data, real density. A throwaway route on its own is a vacuum: every variant looks fine in isolation. Default to sub-shape A whenever there's a plausible existing page to host the variants. Only reach for sub-shape B if the prototype genuinely has no nearby home.
 
 ### Sub-shape A — adjustment to an existing page (preferred)
 
-The route already exists. Variants are rendered **on the same route**, gated by a `?variant=` URL search param. Keep the existing data loading, parameters, and authorization — only the rendered subtree changes. This is the default; pick it unless there's a specific reason not to.
+The route already exists. Variants are rendered **on the same route**, gated by a `?variant=` URL search parameter. Use `[SupplyParameterFromQuery(Name = "variant")]` to bind it. The existing data fetching, parameters, and authorization all stay — only the rendering swaps. This is the default; pick it unless there's a specific reason not to.
 
 If the prototype is for something that doesn't yet have a page but *would naturally live inside one* (a new section of the dashboard, a new card on the settings screen, a new step in an existing flow) — that's still sub-shape A. Mount the variants inside the host page.
 
@@ -25,7 +25,7 @@ If the prototype is for something that doesn't yet have a page but *would natura
 
 Only use this when the thing being prototyped genuinely has no existing page to live inside — e.g. an entirely new top-level surface, or a flow that can't be embedded anywhere sensible.
 
-Create a **throwaway Razor component route** following the existing Blazor conventions. Name it so it's obviously a prototype (for example, `Pages/PrototypeCharacter.razor` with `@page "/prototype/character"`). Use the same `?variant=` pattern.
+Create a **throwaway routed Razor component** under `src/ChronicleOfHeros.Web/Components/Pages`, following the existing routing convention. Name it so it's obviously a prototype (for example, `SettingsPrototype.razor` with `@page "/prototype/settings"`). Use the same `?variant=` pattern and `@rendermode InteractiveServer` so the switcher is interactive.
 
 Before committing to sub-shape B, sanity-check: is there really no existing page this could be embedded in? An empty route hides design problems that a populated one would expose.
 
@@ -37,7 +37,7 @@ In both sub-shapes the floating bottom bar is identical.
 
 Default to **3 variants**. More than 5 stops being radically different and starts being noise — cap there.
 
-Write down the plan in one line, in the prototype's location or a top-of-file comment:
+Write down the plan in one line, in the prototype's location or an `@* *@` comment at the top of its `.razor` file:
 
 > "Three variants of the settings page, switchable via `?variant=`, on the existing `/settings` route."
 
@@ -48,41 +48,40 @@ This works whether the user is here to push back or not.
 Draft each variant. Hold each one to:
 
 - The page's purpose and the data it has access to.
-- The project's Razor component and CSS conventions.
-- A clear component name, e.g. `VariantA.razor`, `VariantB.razor`, `VariantC.razor`.
+- The project's Razor component and CSS-isolation conventions.
+- A clear component name, e.g. `SettingsVariantA.razor`, `SettingsVariantB.razor`, `SettingsVariantC.razor`.
 
 Variants must be **structurally different** — different layout, different information hierarchy, different primary affordance, not just different colours. Three slightly-tweaked card grids isn't a UI prototype, it's wallpaper. If two drafts come out too similar, redo one with explicit "do not use a card grid" guidance.
 
 ### 3. Wire them together
 
-Create a single switcher component on the route. Bind the query parameter with `[SupplyParameterFromQuery]`, then use `NavigationManager.NavigateTo` to preserve a shareable, reload-stable URL:
+Create a single switcher component on the route:
 
 ```razor
+@* Three variants of the settings page, switchable via ?variant=, on /settings. *@
 @inject NavigationManager Navigation
 
-@if (CurrentVariant == "A")
+@switch (CurrentVariant)
 {
-    <VariantA />
-}
-else if (CurrentVariant == "B")
-{
-    <VariantB />
-}
-else
-{
-    <VariantC />
+    case "A":
+        <SettingsVariantA />
+        break;
+    case "B":
+        <SettingsVariantB />
+        break;
+    case "C":
+        <SettingsVariantC />
+        break;
 }
 
-<PrototypeSwitcher CurrentVariant="CurrentVariant" OnVariantChanged="SetVariant" />
+<PrototypeSwitcher Variants="Variants" Current="CurrentVariant" />
 
 @code {
     [SupplyParameterFromQuery(Name = "variant")]
     public string? Variant { get; set; }
 
-    private string CurrentVariant => Variant is "A" or "B" or "C" ? Variant : "A";
-
-    private void SetVariant(string variant) =>
-        Navigation.NavigateTo($"{Navigation.BaseUri}prototype/character?variant={variant}");
+    private static readonly string[] Variants = ["A", "B", "C"];
+    private string CurrentVariant => Variants.Contains(Variant) ? Variant : "A";
 }
 ```
 
@@ -92,7 +91,7 @@ For sub-shape B (new page): the throwaway route under `/prototype/<name>` mounts
 
 ### 4. Build the floating switcher
 
-A small fixed-position bar at the bottom-centre of the screen with three pieces:
+A small fixed-position Razor component at the bottom-centre of the screen with three pieces:
 
 - **Left arrow** — cycles to the previous variant (wraps around).
 - **Variant label** — shows the current variant key and, if the variant exports a name, that name too. e.g. `B — Sidebar layout`.
@@ -100,16 +99,16 @@ A small fixed-position bar at the bottom-centre of the screen with three pieces:
 
 Behaviour:
 
-- Clicking an arrow updates the URL search param with `NavigationManager.NavigateTo`, so the variant is shareable and reload-stable.
-- Keyboard: `←` and `→` arrow keys also cycle. Don't intercept arrow keys when an `<input>`, `<textarea>`, or `[contenteditable]` is focused.
+- Clicking an arrow updates the URL search parameter with `NavigationManager.GetUriWithQueryParameter("variant", nextVariant)` and `NavigateTo(..., replace: true)` so the variant is shareable and reload-stable.
+- Keyboard: `ArrowLeft` and `ArrowRight` also cycle. Register the listener after interactive render with the existing JS interop pattern, dispose it with the component, and do not intercept keys when an `<input>`, `<textarea>`, or `[contenteditable]` is focused.
 - Visually distinct from the page (e.g. high-contrast pill, subtle shadow) so it's obviously not part of the design being evaluated.
-- Hidden outside development — gate it with `IHostEnvironment.IsDevelopment()` (or remove it when folding the winner into the real page), so a stray prototype merge cannot ship the bar to users.
+- Hidden outside development — gate the switcher on `IHostEnvironment.IsDevelopment()` so a stray prototype merge cannot ship the bar to users.
 
 Put the switcher in a single shared component so both sub-shapes can reuse it. Locate it wherever shared UI lives in the project.
 
 ### 5. Hand it over
 
-Surface the URL (and the `?variant=` keys). The user will flip through whenever they get to it. The interesting feedback is usually **"I want the header from B with the sidebar from C"** — that's the actual design they want.
+Surface the URL (and the `?variant=` keys) plus the `aspire run` command. The user will flip through whenever they get to it. The interesting feedback is usually **"I want the header from B with the sidebar from C"** — that's the actual design they want.
 
 ### 6. Capture the answer and clean up
 

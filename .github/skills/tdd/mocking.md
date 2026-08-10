@@ -22,55 +22,48 @@ At system boundaries, design interfaces that are easy to mock:
 Pass external dependencies in rather than creating them internally:
 
 ```csharp
-// Easy to mock
-public class PaymentProcessor
+// Easy to replace at a system boundary.
+public sealed class PaymentProcessor(IPaymentGateway paymentGateway)
 {
-    private readonly IPaymentClient _paymentClient;
-    
-    public PaymentProcessor(IPaymentClient paymentClient)
-    {
-        _paymentClient = paymentClient;
-    }
-    
-    public Task<PaymentResult> ProcessPaymentAsync(Order order)
-    {
-        return _paymentClient.ChargeAsync(order.Total);
-    }
+    public Task<PaymentResult> ProcessAsync(Order order, CancellationToken cancellationToken) =>
+        paymentGateway.ChargeAsync(order.Total, cancellationToken);
 }
 
-// Hard to mock
-public class PaymentProcessor
+// Hard to replace and binds domain logic to configuration details.
+public sealed class PaymentProcessor
 {
-    public Task<PaymentResult> ProcessPaymentAsync(Order order)
+    public Task<PaymentResult> ProcessAsync(Order order, CancellationToken cancellationToken)
     {
-        var client = new StripeClient(Environment.GetEnvironmentVariable("STRIPE_KEY"));
-        return client.ChargeAsync(order.Total);
+        var gateway = new StripePaymentGateway(Environment.GetEnvironmentVariable("StripeApiKey")!);
+        return gateway.ChargeAsync(order.Total, cancellationToken);
     }
 }
 ```
 
-**2. Prefer SDK-style interfaces over generic fetchers**
+For Blazor UI behavior, prefer an Aspire integration test or C# Playwright browser test over mocking a component's own services. Mock only a dependency that crosses the application's boundary, such as a third-party payment gateway, clock, file store, or external HTTP service.
 
-Create specific methods for each external operation instead of one generic method with conditional logic:
+**2. Prefer specific typed clients over generic request wrappers**
+
+Define one operation for each external capability instead of exposing a generic request method with conditional test setup:
 
 ```csharp
-// GOOD: Each method is independently mockable
-public interface IApiClient
+// GOOD: Each member has a precise contract and return type.
+public interface ICharacterCatalogClient
 {
-    Task<User> GetUserAsync(int id);
-    Task<IEnumerable<Order>> GetOrdersAsync(int userId);
-    Task<Order> CreateOrderAsync(OrderData data);
+    Task<CharacterDto?> GetCharacterAsync(Guid characterId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<CharacterDto>> GetCharactersAsync(CancellationToken cancellationToken);
+    Task<CharacterDto> CreateCharacterAsync(CreateCharacterRequest request, CancellationToken cancellationToken);
 }
 
-// BAD: Mocking requires conditional logic inside the mock
+// BAD: Tests must branch on strings and anonymous payloads.
 public interface IApiClient
 {
-    Task<HttpResponseMessage> FetchAsync(string endpoint, HttpMethod method, object? body = null);
+    Task<TResponse> SendAsync<TResponse>(string path, object? body, CancellationToken cancellationToken);
 }
 ```
 
-The SDK approach means:
+The typed-client approach means:
 - Each mock returns one specific shape
 - No conditional logic in test setup
 - Easier to see which endpoints a test exercises
-- Strong typing per endpoint
+- C# type safety per endpoint
