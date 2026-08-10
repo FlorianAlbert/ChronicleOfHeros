@@ -34,7 +34,7 @@ The test discovers every production `.resx` file in `Web` and `Web.Client`, requ
 4. Add the display-language self-name to `SharedResources` and expose it through the selector.
 5. Add browser and selector coverage for the new language.
 
-Browser preferences match a supported locale exactly or by parent language, so `de`, `de-AT`, and `de-CH` select `de-DE`. An explicit choice takes precedence: the display-language selector writes a first-party, `Secure`, `HttpOnly`, `SameSite=Lax` cookie for 400 days, then redirects to a validated local path. The next full page load applies the choice consistently to server rendering and the interactive UI.
+Browser preferences match a supported locale exactly or by parent language, so `de`, `de-AT`, and `de-CH` select `de-DE`. An explicit choice takes precedence: the display-language selector writes a first-party, `Secure`, `HttpOnly`, `SameSite=Lax` cookie for 400 days, then redirects to a validated local path. The next full page load applies the choice consistently to server rendering and any component that explicitly opts into interactivity.
 
 ## German copy
 

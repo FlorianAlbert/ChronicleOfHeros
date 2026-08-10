@@ -1,5 +1,9 @@
 # Blazor Antiforgery In Interactive Auto
 
+## Current applicability
+
+The application now renders statically by default. This research applies only when a component explicitly opts into `InteractiveAuto`; the display-language selector remains a static, antiforgery-protected HTML form.
+
 ## Question
 
 Can the display-language selector remain a self-contained HTML form in the
@@ -36,10 +40,10 @@ Route unmatched local URLs through a catch-all component that calls
 renders the localized page with HTTP 404 in the original component response,
 where normal persistent state is emitted.
 
-The selector must inherit the application's global `InteractiveAuto` render
-mode; do not force it into a different child render mode. The browser test
-should assert that the hidden token remains present after hydration and that
-the protected POST returns to the attempted local 404 path.
+The selector must explicitly opt into `InteractiveAuto` before the browser
+test can exercise the hydration path. Otherwise, its normal static-rendering
+behavior still preserves the hidden token and posts to the attempted local 404
+path.
 
 `AntiforgeryStateProvider` is also the native API for an AJAX/API submission:
 obtain its token and send it in a configured request header. That is useful for

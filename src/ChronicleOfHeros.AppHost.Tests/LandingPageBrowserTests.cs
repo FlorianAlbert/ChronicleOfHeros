@@ -335,7 +335,7 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     }
 
     [Fact]
-    public async Task Public_root_keeps_German_when_the_interactive_UI_starts()
+    public async Task Public_root_keeps_German_after_a_reload()
     {
         await WithPublicPageAsync(async (page, baseAddress) =>
         {

@@ -1,4 +1,4 @@
-namespace ChronicleOfHeros.Web.Client.Layout;
+namespace ChronicleOfHeros.Web.Components.Layout;
 
 public static class NavigationSections
 {
