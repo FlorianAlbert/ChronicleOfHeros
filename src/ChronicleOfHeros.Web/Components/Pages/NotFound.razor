@@ -1,0 +1,14 @@
+﻿@page "/not-found"
+
+@inject IStringLocalizer<NotFound> Localizer
+
+<PageTitle>@Localizer["PageTitle"]</PageTitle>
+
+<div class="not-found-page">
+	<section aria-labelledby="not-found-title">
+		<p class="eyebrow">@Localizer["Eyebrow"]</p>
+		<h1 id="not-found-title">@Localizer["Heading"]</h1>
+		<p>@Localizer["Description"]</p>
+		<a class="return-link" href="/">@Localizer["ReturnToCharacterSheet"]</a>
+	</section>
+</div>

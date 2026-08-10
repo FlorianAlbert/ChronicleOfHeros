@@ -1,0 +1,14 @@
+﻿@inherits LayoutComponentBase
+@inject IStringLocalizer<MainLayout> Localizer
+
+<header class="application-header">
+    <NavMenu />
+</header>
+
+<main>@Body</main>
+
+<div id="blazor-error-ui" data-nosnippet>
+    @Localizer["UnhandledError"]
+    <a href="." class="reload">@Localizer["Reload"]</a>
+    <span class="dismiss" aria-label="@Localizer["Dismiss"]">🗙</span>
+</div>

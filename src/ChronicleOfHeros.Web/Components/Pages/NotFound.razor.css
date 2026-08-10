@@ -99,7 +99,6 @@
 }
 
 @media (max-width: 700px) {
-    .not-found-page header,
     .not-found-page section {
         padding-left: 1.25rem;
         padding-right: 1.25rem;

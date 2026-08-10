@@ -1,0 +1,17 @@
+﻿@inject IStringLocalizer<NavMenu> Localizer
+
+<div class="application-navigation">
+    <a class="wordmark" href="/">ChronicleOfHeros</a>
+    <details class="navigation-disclosure">
+        <summary title="@Localizer["NavigationMenu"]" aria-label="@Localizer["NavigationMenu"]" aria-controls="primary-navigation"><span aria-hidden="true"></span></summary>
+    </details>
+    <nav id="primary-navigation" class="primary-navigation" aria-label="@Localizer["PrimaryNavigation"]">
+        <NavLink class="navigation-link" href="/" Match="NavLinkMatch.All">@Localizer["Home"]</NavLink>
+        <SectionOutlet SectionName="@NavigationSections.PageLinks" />
+    </nav>
+    <div class="navigation-actions">
+        <SectionOutlet SectionName="@NavigationSections.Actions" />
+        <DisplayLanguageSelector />
+    </div>
+</div>
+

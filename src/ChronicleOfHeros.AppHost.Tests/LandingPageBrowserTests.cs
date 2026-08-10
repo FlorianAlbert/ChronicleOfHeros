@@ -1,4 +1,5 @@
 using Microsoft.Playwright;
+using System.Net;
 using System.Text.RegularExpressions;
 
 namespace ChronicleOfHeros.AppHost.Tests;
@@ -20,7 +21,7 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         {
             await page.GotoAsync(baseAddress.AbsoluteUri);
 
-            await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros");
+            await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros | Your character sheet at the table");
             await Assertions.Expect(page.Locator("link[rel='icon']")).ToHaveAttributeAsync("href", "favicon.svg");
             await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "An accurate character sheet, ready at the table." })).ToBeVisibleAsync();
             await Assertions.Expect(page.GetByText("Armor", new() { Exact = true })).ToBeVisibleAsync();
@@ -31,6 +32,389 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         });
     }
 
+    [Theory]
+    [InlineData("de")]
+    [InlineData("de-AT")]
+    [InlineData("de-CH")]
+    [InlineData("de-DE")]
+    [InlineData("fr-FR, de-CH;q=0.9, en-US;q=0.8")]
+    public async Task Public_root_renders_German_for_a_German_browser_preference(string browserLanguage)
+    {
+        using var webClient = _fixture.CreateHttpClient();
+        webClient.DefaultRequestHeaders.AcceptLanguage.ParseAdd(browserLanguage);
+
+        using var response = await webClient.GetAsync("/", TestContext.Current.CancellationToken);
+        var landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var decodedLandingPage = WebUtility.HtmlDecode(landingPage);
+
+        Assert.Equal(["de-DE"], response.Content.Headers.ContentLanguage);
+        Assert.Contains("<html lang=\"de\">", landingPage);
+        Assert.Contains("<title>ChronicleOfHeros | Dein Charakterbogen am Spieltisch</title>", landingPage);
+        Assert.Contains("aria-label=\"Hauptnavigation\"", landingPage);
+        Assert.Contains("Ein präziser Charakterbogen, bereit für den Spieltisch.", decodedLandingPage);
+        Assert.Contains(">Rüstungsklasse<", decodedLandingPage);
+        Assert.Contains(">30 ft.<", decodedLandingPage);
+        Assert.DoesNotContain("An accurate character sheet, ready at the table.", decodedLandingPage);
+    }
+
+    [Fact]
+    public async Task Public_root_uses_English_for_English_and_unsupported_browser_preferences()
+    {
+        using var webClient = _fixture.CreateHttpClient();
+
+        foreach (var browserLanguage in new string?[] { null, "en", "en-US", "en-GB", "fr-FR" })
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/");
+            if (browserLanguage is not null)
+            {
+                request.Headers.AcceptLanguage.ParseAdd(browserLanguage);
+            }
+
+            using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+            var landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+            Assert.Equal(["en-US"], response.Content.Headers.ContentLanguage);
+            Assert.Contains("<html lang=\"en\">", landingPage);
+            Assert.Contains("<title>ChronicleOfHeros | Your character sheet at the table</title>", landingPage);
+            Assert.Contains("aria-label=\"Primary navigation\"", landingPage);
+            Assert.Contains("An accurate character sheet, ready at the table.", landingPage);
+            Assert.Contains(">Armor<", landingPage);
+            Assert.DoesNotContain("Ein präziser Charakterbogen, bereit für den Spieltisch.", landingPage);
+        }
+    }
+
+    [Theory]
+    [InlineData("en-US", "Rejoining the server...")]
+    [InlineData("de-DE", "Verbindung mit dem Server wird wiederhergestellt...")]
+    public async Task Reconnect_dialog_displays_rejoining_feedback_in_the_active_display_language(
+        string browserLanguage,
+        string expectedRejoining)
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            await page.GotoAsync(baseAddress.AbsoluteUri);
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+            await page.EvaluateAsync(
+                """
+                () => {
+                    const reconnectModal = document.getElementById("components-reconnect-modal");
+                    reconnectModal.classList.add("components-reconnect-show");
+                    reconnectModal.dispatchEvent(new CustomEvent("components-reconnect-state-changed", { detail: { state: "show" } }));
+                }
+                """);
+
+            var reconnectDialog = page.Locator("#components-reconnect-modal");
+            await Assertions.Expect(reconnectDialog).ToHaveAttributeAsync("open", string.Empty);
+            await Assertions.Expect(reconnectDialog.GetByText(expectedRejoining, new() { Exact = true })).ToBeVisibleAsync();
+        }, locale: browserLanguage);
+    }
+
+    [Theory]
+    [InlineData("en-US", "en-US", "Something went wrong | ChronicleOfHeros", "We could not complete that request.", "Return to the character sheet", "Display language")]
+    [InlineData("de-DE", "de-DE", "Etwas ist schiefgelaufen | ChronicleOfHeros", "Diese Anfrage konnte nicht abgeschlossen werden.", "Zurück zum Charakterbogen", "Anzeigesprache")]
+    public async Task Reachable_error_boundary_renders_feedback_and_recovery_in_the_active_display_language(
+        string browserLanguage,
+        string expectedCulture,
+        string expectedTitle,
+        string expectedFeedback,
+        string expectedRecoveryAction,
+        string expectedDisplayLanguageLabel)
+    {
+        using var webClient = _fixture.CreateHttpClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/error");
+        request.Headers.AcceptLanguage.ParseAdd(browserLanguage);
+
+        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+        var errorPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var decodedErrorPage = WebUtility.HtmlDecode(errorPage);
+
+        Assert.Equal([expectedCulture], response.Content.Headers.ContentLanguage);
+        Assert.Contains($"<title>{expectedTitle}</title>", errorPage);
+        Assert.Contains(expectedFeedback, decodedErrorPage);
+        Assert.Contains($">{expectedRecoveryAction}<", decodedErrorPage);
+        Assert.Contains($"aria-label=\"{expectedDisplayLanguageLabel}\"", errorPage);
+    }
+
+    [Theory]
+    [InlineData("en-US", "en-US", "en", "Page not found | ChronicleOfHeros", "This page is missing from the record.", "Return to the character sheet", "Display language")]
+    [InlineData("de-DE", "de-DE", "de", "Seite nicht gefunden | ChronicleOfHeros", "Diese Seite fehlt im Register.", "Zurück zum Charakterbogen", "Anzeigesprache")]
+    public async Task Unknown_local_route_retains_404_status_and_renders_the_localized_not_found_experience(
+        string browserLanguage,
+        string expectedCulture,
+        string expectedDocumentLanguage,
+        string expectedTitle,
+        string expectedHeading,
+        string expectedReturnAction,
+        string expectedDisplayLanguageLabel)
+    {
+        using var webClient = _fixture.CreateHttpClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/a-page-that-does-not-exist");
+        request.Headers.AcceptLanguage.ParseAdd(browserLanguage);
+
+        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+        var notFoundPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var decodedNotFoundPage = WebUtility.HtmlDecode(notFoundPage);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal([expectedCulture], response.Content.Headers.ContentLanguage);
+        Assert.Contains($"<html lang=\"{expectedDocumentLanguage}\">", notFoundPage);
+        Assert.Contains($"<title>{expectedTitle}</title>", notFoundPage);
+        Assert.Contains(expectedHeading, decodedNotFoundPage);
+        Assert.Contains($"aria-label=\"{expectedDisplayLanguageLabel}\"", decodedNotFoundPage);
+        Assert.Contains($">{expectedReturnAction}<", decodedNotFoundPage);
+    }
+
+    [Fact]
+    public async Task Public_root_explicit_display_language_cookie_overrides_browser_preference()
+    {
+        using var webClient = _fixture.CreateHttpClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/");
+        request.Headers.AcceptLanguage.ParseAdd("en-US");
+        request.Headers.Add("Cookie", "ChronicleOfHeros.DisplayLanguage=de-DE");
+
+        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+        var landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(["de-DE"], response.Content.Headers.ContentLanguage);
+        Assert.Contains("<html lang=\"de\">", landingPage);
+        Assert.Contains("<title>ChronicleOfHeros | Dein Charakterbogen am Spieltisch</title>", landingPage);
+    }
+
+    [Fact]
+    public async Task Public_root_ignores_a_non_concrete_display_language_cookie()
+    {
+        using var webClient = _fixture.CreateHttpClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/");
+        request.Headers.AcceptLanguage.ParseAdd("en-US");
+        request.Headers.Add("Cookie", "ChronicleOfHeros.DisplayLanguage=de");
+
+        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+        var landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(["en-US"], response.Content.Headers.ContentLanguage);
+        Assert.Contains("<html lang=\"en\">", landingPage);
+        Assert.Contains("<title>ChronicleOfHeros | Your character sheet at the table</title>", landingPage);
+    }
+
+    [Theory]
+    [InlineData("en-US")]
+    [InlineData("de-DE")]
+    public async Task Supported_display_language_choice_persists_a_secure_preference_and_returns_to_the_local_path(string selectedLanguage)
+    {
+        using var webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
+        var antiforgery = await GetAntiforgeryTokenAsync(webClient);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/display-language")
+        {
+            Content = new FormUrlEncodedContent(
+            [
+                new("locale", selectedLanguage),
+                new("returnUrl", "/?character-sheet"),
+                new("__RequestVerificationToken", antiforgery.Token),
+            ]),
+        };
+        request.Headers.Add("Cookie", $"{antiforgery.Cookie}; ChronicleOfHeros.DisplayLanguage=en-US");
+
+        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
+        Assert.Equal("/?character-sheet", response.Headers.Location?.OriginalString);
+
+        var preferenceCookie = response.Headers.GetValues("Set-Cookie")
+            .Single(value => value.StartsWith("ChronicleOfHeros.DisplayLanguage=", StringComparison.Ordinal));
+
+        Assert.StartsWith($"ChronicleOfHeros.DisplayLanguage={selectedLanguage};", preferenceCookie, StringComparison.Ordinal);
+        Assert.Contains("max-age=34560000", preferenceCookie, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("path=/", preferenceCookie, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("secure", preferenceCookie, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("httponly", preferenceCookie, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("samesite=lax", preferenceCookie, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Display_language_choice_without_an_antiforgery_token_is_rejected()
+    {
+        using var webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/display-language")
+        {
+            Content = new FormUrlEncodedContent(
+            [
+                new("locale", "de-DE"),
+                new("returnUrl", "/"),
+            ]),
+        };
+
+        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.False(response.Headers.TryGetValues("Set-Cookie", out _));
+    }
+
+    [Theory]
+    [InlineData("de")]
+    [InlineData("fr-FR")]
+    [InlineData("invalid-locale")]
+    public async Task Unsupported_display_language_choice_does_not_change_the_preference(string selectedLanguage)
+    {
+        using var webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
+        var antiforgery = await GetAntiforgeryTokenAsync(webClient);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/display-language")
+        {
+            Content = new FormUrlEncodedContent(
+            [
+                new("locale", selectedLanguage),
+                new("returnUrl", "/"),
+                new("__RequestVerificationToken", antiforgery.Token),
+            ]),
+        };
+        request.Headers.Add("Cookie", $"{antiforgery.Cookie}; ChronicleOfHeros.DisplayLanguage=en-US");
+
+        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
+        Assert.Equal("/", response.Headers.Location?.OriginalString);
+        Assert.False(response.Headers.TryGetValues("Set-Cookie", out var cookies)
+            && cookies.Any(cookie => cookie.StartsWith("ChronicleOfHeros.DisplayLanguage=", StringComparison.Ordinal)));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("not-a-path")]
+    [InlineData("https://example.com")]
+    [InlineData("//example.com")]
+    [InlineData("/\\example.com")]
+    [InlineData("/%2F%2Fexample.com")]
+    [InlineData("/%5Cexample.com")]
+    [InlineData("/%252F%252Fexample.com")]
+    public async Task Display_language_choice_with_an_unsafe_return_path_redirects_to_root(string? returnUrl)
+    {
+        using var webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
+        var antiforgery = await GetAntiforgeryTokenAsync(webClient);
+        var formValues = new List<KeyValuePair<string, string>>
+        {
+            new("locale", "de-DE"),
+            new("__RequestVerificationToken", antiforgery.Token),
+        };
+        if (returnUrl is not null)
+        {
+            formValues.Add(new("returnUrl", returnUrl));
+        }
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/display-language")
+        {
+            Content = new FormUrlEncodedContent(formValues),
+        };
+        request.Headers.Add("Cookie", antiforgery.Cookie);
+
+        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
+        Assert.Equal("/", response.Headers.Location?.OriginalString);
+    }
+
+    [Fact]
+    public async Task Public_root_initial_document_presents_the_landing_experience_in_German()
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            await page.GotoAsync(baseAddress.AbsoluteUri);
+
+            await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros | Dein Charakterbogen am Spieltisch");
+            await Assertions.Expect(page.Locator("html")).ToHaveAttributeAsync("lang", "de");
+            await Assertions.Expect(page.GetByRole(AriaRole.Navigation, new() { Name = "Hauptnavigation" }).First).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByLabel("Navigationsmenü")).ToBeAttachedAsync();
+            await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Ein präziser Charakterbogen, bereit für den Spieltisch." })).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Demnächst" })).ToBeDisabledAsync();
+            await Assertions.Expect(page.GetByText("Rüstungsklasse", new() { Exact = true })).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByText("Bewegungsrate", new() { Exact = true })).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByText("30 ft.", new() { Exact = true })).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator("#how-it-works").GetByRole(AriaRole.Heading, new() { Name = "Verstehen" })).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator("#about").GetByRole(AriaRole.Heading, new() { Name = "Über ChronicleOfHeros" })).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator("body")).Not.ToContainTextAsync("Character Sheets");
+        }, javaScriptEnabled: false, locale: "de-CH");
+    }
+
+    [Fact]
+    public async Task Public_root_keeps_German_after_a_reload()
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            await page.GotoAsync(baseAddress.AbsoluteUri);
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+            await page.ReloadAsync();
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+            await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros | Dein Charakterbogen am Spieltisch");
+            await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Ein präziser Charakterbogen, bereit für den Spieltisch." })).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByRole(AriaRole.Navigation, new() { Name = "Hauptnavigation" }).First).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator("body")).Not.ToContainTextAsync("An accurate character sheet, ready at the table.");
+        }, locale: "de-CH");
+    }
+
+    [Fact]
+    public async Task Display_language_selector_changes_language_when_an_option_is_selected()
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            await page.GotoAsync(new Uri(baseAddress, "/?character-sheet").AbsoluteUri);
+
+            var selector = page.GetByLabel("Display language");
+
+            await Assertions.Expect(selector).ToBeVisibleAsync();
+            Assert.Equal(["English", "Deutsch"], await selector.Locator("option").AllTextContentsAsync());
+            await selector.SelectOptionAsync("de-DE");
+
+            await Assertions.Expect(page).ToHaveURLAsync(new Regex("\\?character-sheet$"));
+            await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros | Dein Charakterbogen am Spieltisch");
+            await Assertions.Expect(page.GetByLabel("Anzeigesprache")).ToHaveValueAsync("de-DE");
+
+            await page.ReloadAsync();
+
+            await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros | Dein Charakterbogen am Spieltisch");
+            await Assertions.Expect(page.GetByLabel("Anzeigesprache")).ToHaveValueAsync("de-DE");
+        }, locale: "en-US");
+    }
+
+    [Fact]
+    public async Task Display_language_selector_from_an_unknown_local_route_returns_there_with_a_404()
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            const string unknownRoute = "/missing-character?record=unknown";
+            await page.GotoAsync(new Uri(baseAddress, unknownRoute).AbsoluteUri);
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+            var selector = page.GetByLabel("Display language");
+            await Assertions.Expect(selector).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator("input[name='__RequestVerificationToken']")).ToHaveValueAsync(new Regex(".+"));
+            await selector.SelectOptionAsync("de-DE");
+
+            await Assertions.Expect(page).ToHaveURLAsync(new Uri(baseAddress, unknownRoute).AbsoluteUri);
+            var notFoundResponse = await page.ReloadAsync();
+
+            Assert.NotNull(notFoundResponse);
+            Assert.Equal((int)HttpStatusCode.NotFound, notFoundResponse.Status);
+            await Assertions.Expect(page).ToHaveTitleAsync("Seite nicht gefunden | ChronicleOfHeros");
+            await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Diese Seite fehlt im Register." })).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByLabel("Anzeigesprache")).ToHaveValueAsync("de-DE");
+        }, locale: "en-US");
+    }
+
+    [Fact]
+    public async Task Display_language_selector_on_an_unknown_local_route_is_keyboard_focusable()
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            await page.GotoAsync(new Uri(baseAddress, "/missing-character").AbsoluteUri);
+
+            var selector = page.GetByLabel("Display language");
+            await Assertions.Expect(selector).ToBeVisibleAsync();
+            await selector.FocusAsync();
+            await Assertions.Expect(selector).ToBeFocusedAsync();
+        }, javaScriptEnabled: false, locale: "en-US");
+    }
+
     [Fact]
     public async Task Public_root_excludes_default_template_presentation()
     {
@@ -39,7 +423,6 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await page.GotoAsync(baseAddress.AbsoluteUri);
 
             await Assertions.Expect(page.Locator("link[rel='stylesheet'][href*='bootstrap']")).ToHaveCountAsync(0);
-            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Home", Exact = true })).ToHaveCountAsync(0);
             await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Counter", Exact = true })).ToHaveCountAsync(0);
             await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Weather", Exact = true })).ToHaveCountAsync(0);
             await Assertions.Expect(page.GetByText("Hello, world!", new() { Exact = true })).ToHaveCountAsync(0);
@@ -88,6 +471,12 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
 
             await page.Keyboard.PressAsync("Enter");
             await page.Keyboard.PressAsync("Tab");
+
+                var homeNavigationLink = page.GetByRole(AriaRole.Navigation, new() { Name = "Primary navigation" })
+                    .GetByRole(AriaRole.Link, new() { Name = "Home", Exact = true });
+                await Assertions.Expect(homeNavigationLink).ToBeFocusedAsync();
+
+                await page.Keyboard.PressAsync("Tab");
             await page.Keyboard.PressAsync("Enter");
 
             await Assertions.Expect(page).ToHaveURLAsync(new Regex("#character-sheet$"));
@@ -104,19 +493,17 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
 
             var menuButton = page.GetByLabel("Navigation menu");
 
-            await page.Keyboard.PressAsync("Tab");
-            await page.Keyboard.PressAsync("Tab");
-
+            await menuButton.FocusAsync();
             await Assertions.Expect(menuButton).ToBeFocusedAsync();
             Assert.True(await HasVisibleFocusAsync(menuButton));
 
             await page.Keyboard.PressAsync("Enter");
             await page.Keyboard.PressAsync("Tab");
 
-            var firstNavigationLink = page.GetByRole(AriaRole.Navigation, new() { Name = "Primary navigation" })
-                .GetByRole(AriaRole.Link, new() { Name = "Character Sheets" });
-            await Assertions.Expect(firstNavigationLink).ToBeFocusedAsync();
-            Assert.True(await HasVisibleFocusAsync(firstNavigationLink));
+                var homeNavigationLink = page.GetByRole(AriaRole.Navigation, new() { Name = "Primary navigation" })
+                    .GetByRole(AriaRole.Link, new() { Name = "Home", Exact = true });
+                await Assertions.Expect(homeNavigationLink).ToBeFocusedAsync();
+                Assert.True(await HasVisibleFocusAsync(homeNavigationLink));
         }, javaScriptEnabled: false);
     }
 
@@ -217,9 +604,12 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await page.GotoAsync(new Uri(baseAddress, "/a-page-that-does-not-exist").AbsoluteUri);
 
             await Assertions.Expect(page).ToHaveTitleAsync("Page not found | ChronicleOfHeros");
+            await Assertions.Expect(page.GetByRole(AriaRole.Navigation, new() { Name = "Primary navigation" })).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Home", Exact = true })).ToHaveAttributeAsync("href", "/");
             await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "ChronicleOfHeros" })).ToHaveAttributeAsync("href", "/");
             await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "This page is missing from the record." })).ToBeVisibleAsync();
             await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Return to the character sheet" })).ToHaveAttributeAsync("href", "/");
+            await Assertions.Expect(page.GetByLabel("Display language")).ToBeVisibleAsync();
             await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Not Found", Exact = true })).ToHaveCountAsync(0);
         });
     }
@@ -240,8 +630,9 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
 
     private Task WithPublicPageAsync(
         Func<IPage, Uri, Task> exercisePage,
-        bool javaScriptEnabled = true) =>
-        _fixture.WithPublicPageAsync(exercisePage, javaScriptEnabled);
+        bool javaScriptEnabled = true,
+        string? locale = null) =>
+        _fixture.WithPublicPageAsync(exercisePage, javaScriptEnabled, locale);
 
     private static Task<double> TransitionDurationMillisecondsAsync(ILocator locator) =>
         locator.EvaluateAsync<double>(
@@ -250,4 +641,20 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     private static Task<bool> HasVisibleFocusAsync(ILocator locator) =>
         locator.EvaluateAsync<bool>(
             "element => { const style = getComputedStyle(element); return style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) >= 2; }");
+
+    private static async Task<(string Token, string Cookie)> GetAntiforgeryTokenAsync(HttpClient webClient)
+    {
+        using var response = await webClient.GetAsync("/", TestContext.Current.CancellationToken);
+        var landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var tokenMatch = Regex.Match(
+            landingPage,
+            "<input[^>]*name=\"__RequestVerificationToken\"[^>]*value=\"(?<token>[^\"]+)\"",
+            RegexOptions.CultureInvariant);
+        var antiforgeryCookie = response.Headers.GetValues("Set-Cookie")
+            .Select(value => value.Split(';', 2)[0])
+            .Single(value => value.StartsWith(".AspNetCore.Antiforgery.", StringComparison.Ordinal));
+
+        Assert.True(tokenMatch.Success, "The response did not include an antiforgery token.");
+        return (WebUtility.HtmlDecode(tokenMatch.Groups["token"].Value), antiforgeryCookie);
+    }
 }

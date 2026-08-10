@@ -1,0 +1,35 @@
+@using System.Globalization
+
+@inject NavigationManager NavigationManager
+@using ChronicleOfHeros.Web.Client.Localization
+@inject IStringLocalizer<DisplayLanguageSelector> Localizer
+@inject IStringLocalizer<SharedResources> SharedLocalizer
+
+<form class="display-language-selector" method="post" action="/display-language">
+    <AntiforgeryToken />
+    <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+    <select name="locale" value="@CultureInfo.CurrentUICulture.Name" onchange="this.form.requestSubmit()" aria-label="@Localizer["DisplayLanguage"]" title="@Localizer["DisplayLanguage"]">
+        <option value="en-US">@SharedLocalizer["English"]</option>
+        <option value="de-DE">@SharedLocalizer["German"]</option>
+    </select>
+</form>
+
+@code {
+    [CascadingParameter(Name = "OriginalPathAndQuery")]
+    private string? OriginalPathAndQuery { get; set; }
+
+    private string ReturnUrl
+    {
+        get
+        {
+            if (OriginalPathAndQuery is not null)
+            {
+                return OriginalPathAndQuery;
+            }
+
+            var currentUri = new Uri(NavigationManager.Uri);
+            return currentUri.PathAndQuery + currentUri.Fragment;
+        }
+    }
+
+}

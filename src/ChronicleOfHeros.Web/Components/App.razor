@@ -1,5 +1,7 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@using Microsoft.AspNetCore.Diagnostics
+
+<!DOCTYPE html>
+<html lang="@CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
 
 <head>
     <meta charset="utf-8" />
@@ -10,13 +12,40 @@
     <link rel="stylesheet" href="@Assets["ChronicleOfHeros.Web.styles.css"]" />
     <ImportMap />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <HeadOutlet @rendermode="InteractiveAuto" />
+    <HeadOutlet />
 </head>
 
 <body>
-    <Routes @rendermode="InteractiveAuto" />
+    <CascadingValue Name="OriginalPathAndQuery" Value="@OriginalPathAndQuery">
+        <Routes />
+    </CascadingValue>
     <ReconnectModal />
-    <script src="@Assets["_framework/blazor.web.js"]"></script>
+    <script src="@Assets["_framework/blazor.web.js"]" autostart="false"></script>
+    <script>
+        Blazor.start({
+            webAssembly: {
+                applicationCulture: '@CultureInfo.CurrentCulture.Name'
+            }
+        });
+    </script>
 </body>
 
 </html>
+
+@code {
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    private string? OriginalPathAndQuery
+    {
+        get
+        {
+            var reExecuteFeature = HttpContext?.Features.Get<IStatusCodeReExecuteFeature>();
+            return reExecuteFeature is null
+                ? null
+                : reExecuteFeature.OriginalPathBase
+                  + reExecuteFeature.OriginalPath
+                  + reExecuteFeature.OriginalQueryString;
+        }
+    }
+}

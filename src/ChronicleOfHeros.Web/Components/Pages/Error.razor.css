@@ -1,0 +1,89 @@
+.error-page {
+    --ink: #1d2630;
+    --ink-muted: #586169;
+    --paper: #f5f6f2;
+    --rule: #cbd1c9;
+    --signal: #b9412a;
+    background:
+        linear-gradient(rgba(29, 38, 48, 0.025) 1px, transparent 1px) 0 0 / 100% 2rem,
+        var(--paper);
+    box-sizing: border-box;
+    color: var(--ink);
+    min-height: 100vh;
+}
+
+.error-page *,
+.error-page *::before,
+.error-page *::after {
+    box-sizing: inherit;
+}
+
+.error-page section {
+    margin: 0 auto;
+    max-width: 1200px;
+    padding: clamp(5rem, 12vw, 10rem) 2rem 4rem;
+}
+
+.error-page h1 {
+    font: 500 clamp(3rem, 7vw, 6rem)/1 Georgia, "Times New Roman", serif;
+    letter-spacing: 0;
+    margin: 0 0 1.5rem;
+    max-width: 12ch;
+}
+
+.error-page section > p:not(.request-id) {
+    color: var(--ink-muted);
+    font: 1rem/1.7 "Trebuchet MS", sans-serif;
+    max-width: 34rem;
+}
+
+.return-link,
+.request-id {
+    font: 700 0.7rem "Courier New", monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.return-link {
+    color: inherit;
+    display: inline-block;
+    margin-top: 1.5rem;
+    text-underline-offset: 0.4rem;
+}
+
+.return-link::after {
+    content: " \2192";
+}
+
+.request-id {
+    border-top: 1px solid var(--rule);
+    margin-top: 1.5rem;
+    max-width: 34rem;
+    padding-top: 0.75rem;
+    text-transform: none;
+}
+
+.request-id code {
+    font: inherit;
+    letter-spacing: 0;
+}
+
+.error-page :focus-visible {
+    outline: 2px solid var(--signal, #b9412a);
+    outline-offset: 4px;
+}
+
+.error-page h1:focus {
+    outline: none;
+}
+
+@media (max-width: 700px) {
+    .error-page section {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+    }
+
+    .error-page h1 {
+        font-size: 3rem;
+    }
+}
