@@ -15,7 +15,7 @@
     align-items: center;
     display: grid;
     gap: 2rem;
-    grid-template-columns: 1fr auto 1fr;
+    grid-template-columns: auto minmax(0, 1fr) auto;
 }
 
 .wordmark {
