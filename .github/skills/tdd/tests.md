@@ -5,14 +5,18 @@
 **Integration-style**: Test through real interfaces, not mocks of internal parts.
 
 ```csharp
-// GOOD: Tests observable behavior
+using Microsoft.Playwright;
+
+// GOOD: Tests browser-visible behavior.
 [Fact]
-public async Task UserCanCheckoutWithValidCart()
+public async Task Display_language_selector_changes_the_rendered_language()
 {
-    var cart = CreateCart();
-    cart.Add(product);
-    var result = await CheckoutAsync(cart, paymentMethod);
-    Assert.Equal("confirmed", result.Status);
+    await page.GotoAsync(baseAddress.AbsoluteUri);
+
+    await page.GetByLabel("Display language").SelectOptionAsync("de-DE");
+
+    await Assertions.Expect(page)
+        .ToHaveTitleAsync("ChronicleOfHeros | Dein Charakterbogen am Spieltisch");
 }
 ```
 
@@ -29,13 +33,15 @@ Characteristics:
 **Implementation-detail tests**: Coupled to internal structure.
 
 ```csharp
-// BAD: Tests implementation details
+// BAD: Tests an internal collaboration instead of the rendered result.
 [Fact]
-public async Task CheckoutCallsPaymentServiceProcess()
+public async Task Display_language_selector_calls_the_language_preference_service()
 {
-    var mockPayment = Substitute.For<IPaymentService>();
-    await CheckoutAsync(cart, payment);
-    await mockPayment.Received(1).ProcessAsync(cart.Total);
+    await selector.SetLanguageAsync("de-DE");
+
+    languagePreferenceServiceMock.Verify(
+        service => service.SetAsync("de-DE"),
+        Times.Once);
 }
 ```
 
@@ -49,42 +55,43 @@ Red flags:
 - Verifying through external means instead of interface
 
 ```csharp
-// BAD: Bypasses interface to verify
+// BAD: Bypasses the endpoint to query persistence directly.
 [Fact]
-public async Task CreateUserSavesToDatabase()
+public async Task Save_character_creates_a_database_row()
 {
-    await CreateUserAsync(new User { Name = "Alice" });
-    var row = await dbContext.Users.FirstOrDefaultAsync(u => u.Name == "Alice");
-    Assert.NotNull(row);
+    await characterService.SaveAsync(character, TestContext.Current.CancellationToken);
+
+    Assert.NotNull(await dbContext.Characters.FindAsync(character.Id));
 }
 
-// GOOD: Verifies through interface
+// GOOD: Verifies the behavior through the application's public HTTP interface.
 [Fact]
-public async Task CreateUserMakesUserRetrievable()
+public async Task Saved_character_is_retrievable_from_its_endpoint()
 {
-    var user = await CreateUserAsync(new User { Name = "Alice" });
-    var retrieved = await GetUserAsync(user.Id);
-    Assert.Equal("Alice", retrieved.Name);
+    using var response = await webClient.GetAsync(
+        $"/api/characters/{character.Id}",
+        TestContext.Current.CancellationToken);
+
+    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 }
 ```
 
 **Tautological tests**: Expected value restates the implementation, so the test passes by construction.
 
 ```csharp
-// BAD: Expected value is recomputed the way the code computes it
+// BAD: Expected value is recomputed the way the code computes it.
 [Fact]
-public void CalculateTotalSumsLineItems_Bad()
+public void Armor_class_sums_its_known_modifiers()
 {
-    var items = new[] { new LineItem { Price = 10 }, new LineItem { Price = 5 } };
-    var expected = items.Sum(i => i.Price);
-    Assert.Equal(expected, CalculateTotal(items));
+    var modifiers = new[] { 10, 2, 1 };
+
+    Assert.Equal(modifiers.Sum(), CalculateArmorClass(modifiers));
 }
 
-// GOOD: Expected value is an independent, known literal
+// GOOD: Expected value is an independent, known literal from the rule.
 [Fact]
-public void CalculateTotalSumsLineItems_Good()
+public void Armor_class_includes_base_dexterity_and_shield()
 {
-    var items = new[] { new LineItem { Price = 10 }, new LineItem { Price = 5 } };
-    Assert.Equal(15, CalculateTotal(items));
+    Assert.Equal(13, CalculateArmorClass([10, 2, 1]));
 }
 ```

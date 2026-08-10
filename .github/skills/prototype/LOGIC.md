@@ -1,13 +1,15 @@
 # Logic Prototype
 
-A tiny interactive terminal app that lets the user drive a state model by hand. Use this when the question is about **business logic, state transitions, or data shape** — the kind of thing that looks reasonable on paper but only feels wrong once you push it through real cases.
+A small routed Blazor prototype — a **shareable demo** — that lets anyone drive a state model by clicking buttons. Use this when the question is about **business logic, state transitions, or data shape** — the kind of thing that looks reasonable on paper but only feels wrong once you push it through real cases.
+
+Because it runs with the existing Aspire app, a designer, PM, or domain expert can explore it in the browser without a separate toolchain. It speaks their language, not the code's.
 
 ## When this is the right shape
 
 - "I'm not sure if this state machine handles the edge case where X then Y."
 - "Does this data model actually let me represent the case where..."
 - "I want to feel out what the API should look like before writing it."
-- Anything where the user wants to **press buttons and watch state change**.
+- Anything where someone wants to **press buttons and watch state change**.
 
 If the question is "what should this look like" — wrong branch. Use [UI.md](UI.md).
 
@@ -15,61 +17,53 @@ If the question is "what should this look like" — wrong branch. Use [UI.md](UI
 
 ### 1. State the question
 
-Before writing code, write down what state model and what question you're prototyping. One paragraph, in the prototype's README or a comment at the top of the file. A logic prototype that answers the wrong question is pure waste — make the question explicit so it can be checked later, whether the user is watching now or returning to it AFK.
+Before writing code, write down what state model and what question you're prototyping. Add it as an `@* *@` comment at the top of the prototype component and as a visible introductory sentence. A logic prototype that answers the wrong question is pure waste — make the question explicit so it can be checked later, whether the user is watching now or returning to it AFK.
 
-### 2. Use C# and the .NET CLI
+### 2. Isolate the logic in a portable C# module
 
-Build logic prototypes in C#. Create a small console project near the code it explores, targeting the solution's existing .NET version. Do not add a package manager or runtime.
-
-### 3. Isolate the logic in a portable module
-
-Put the actual logic — the bit that's answering the question — behind a small, pure interface that could be lifted out and dropped into the real codebase later. The TUI around it is throwaway; the logic module shouldn't be.
+Put the actual logic — the bit that's answering the question — in a small, pure C# file next to the prototype, such as `LevelUpPrototypeLogic.cs`. The routed `.razor` page is throwaway; this module should be easy to lift into the real codebase later.
 
 The right shape depends on the question:
 
-- **A pure reducer** — `CharacterState Reduce(CharacterState state, CharacterAction action)`. Good when actions are discrete events and state is a single value.
+- **A pure reducer** — `State Reduce(State state, Action action)`. Good when actions are discrete events and state is a single value.
 - **A state machine** — explicit states and transitions. Good when "which actions are even legal right now" is part of the question.
-- **A small set of pure functions** over a plain data type. Good when there's no implicit current state — just transformations.
-- **A class or module with a clear method surface** when the logic genuinely owns ongoing internal state.
+- **A small set of pure functions** over records or other plain data types. Good when there's no implicit current state — just transformations.
+- **A class with a clear method surface** when the logic genuinely owns ongoing internal state.
 
-Pick whichever shape best fits the question being asked, *not* whichever is easiest to wire to a TUI. Keep it pure: no I/O, no terminal code, no `Console.WriteLine` for control flow. The TUI imports it and calls into it; nothing flows the other direction.
+Pick whichever shape best fits the question being asked, *not* whichever is easiest to wire to a page. Keep it pure: no component state, `NavigationManager`, or event callbacks reaching inside it. The `.razor` page calls it through `@onclick` handlers; nothing flows the other direction. This is what makes the prototype useful past its own lifetime: once the question's answered, the validated reducer / machine / function set lifts into the real module on its own.
 
-This is what makes the prototype useful past its own lifetime: when the question's been answered, the validated reducer / machine / function set can be lifted into the real module on its own.
+### 3. Build the runnable Blazor page
 
-### 4. Build the smallest TUI that exposes the state
+Create a routed component in `src/ChronicleOfHeros.Web/Components/Pages`, named clearly as a prototype, such as `LevelUpPrototype.razor`. Give it an `@page` route under `/prototype/` and `@rendermode InteractiveServer` so button events work without creating a separate client implementation. Use the existing Razor component and CSS-isolation conventions; do not add JavaScript, a separate frontend project, or a new server.
 
-Build it as a **lightweight console UI** — on every tick, clear the screen with `Console.Clear()` and re-render the whole frame. The user should always see one stable view, not an ever-growing scrollback.
+Anyone should be able to run it with `aspire run` and open the documented prototype route.
 
-Each frame has two parts, in this order:
+Write it for a non-developer. Every label is in **domain language**, not code — buttons and state read like the business, not the reducer. Explain in plain words what's happening.
 
-1. **Current state**, pretty-printed and diff-friendly (one field per line, or formatted JSON). Use **bold** for field names or section headers and **dim** for less important context (timestamps, IDs, derived values). Native ANSI escape codes are fine — `\x1b[1m` bold, `\x1b[2m` dim, `\x1b[0m` reset. No need to pull in a styling library unless one is already in the project.
-2. **Keyboard shortcuts**, listed at the bottom: `[a] add user  [d] delete user  [t] tick clock  [q] quit`. Bold the key, dim the description, or vice-versa — whatever reads cleanly.
+Lay it out with a clean hierarchy, top to bottom:
 
-Behaviour:
+1. **Title and one-line explanation** of what this demo lets you explore (the question from step 1).
+2. **Current state** — the full relevant state, rendered as a readable panel (labelled fields, not a raw JSON dump), re-rendered after every click so the change is visible. Where it helps a non-developer follow, call out what just changed.
+3. **Free-play buttons** — one button per action, always available, so anyone can poke at the model in any order. Each click dispatches its action and re-renders the state.
+4. **Guided walkthroughs** — a set of **scenarios**, one per tab. Each tab holds a short plain-language description of the scenario — the situation it sets up and what to watch for — and underneath it, the ordered **buttons to press** for that scenario. Each step is a real Blazor button with an `@onclick` handler: clicking it performs that action and moves to the next step. Starting a walkthrough resets to a known initial state so the scenario runs the same way every time.
 
-1. **Initialise state** — a single in-memory object/struct. Render the first frame on start.
-2. **Read one keystroke (or one line)** with `Console.ReadKey()` or `Console.ReadLine()`, then dispatch to a handler that updates state.
-3. **Re-render** the full frame after every action — don't append, replace.
-4. **Loop until quit.**
+Choose scenarios that demonstrate the awkward cases — the happy path, a tricky edge case, an attempt at something that should be illegal — the ones hard to reason about on paper.
 
-The whole frame should fit on one screen.
+Keep it beautiful but restrained: clean typography, generous spacing, one accent colour. No animations, no gimmicks — nothing that competes with the state and the buttons.
 
-### 5. Make it runnable in one command
+### 4. Hand it over
 
-Run the prototype with `dotnet run --project <prototype-project>`. Put the exact command at the top of the prototype's README so the user never needs to remember a path.
+Surface the route and the `aspire run` command. They'll click through the walkthroughs and free-play whenever they get to it; the interesting moments are when they say "wait, that shouldn't be possible" or "huh, I assumed X would be different" — those are the bugs in the _idea_, which is the whole point. If they want new actions or a new scenario, add them. Prototypes evolve.
 
-### 6. Hand it over
+### 5. Capture the answer and the prototype
 
-Give the user the run command. They'll drive it themselves; the interesting moments are when they say "wait, that shouldn't be possible" or "huh, I assumed X would be different" — those are the bugs in the _idea_, which is the whole point. If they want new actions added, add them. Prototypes evolve.
-
-### 7. Capture the answer and the prototype
-
-Once the prototype has answered its question, capture the answer, then capture the prototype the way the [SKILL](SKILL.md) describes. The logic-specific mapping: the validated reducer / machine / function set lifts into the real module (the decision, absorbed); the TUI shell rides along to the throwaway branch that keeps the prototype as a primary source.
+Once the prototype has answered its question, capture the answer, then capture the prototype the way the [SKILL](SKILL.md) describes. The logic-specific mapping: the validated reducer / machine / function set lifts into the real module (the decision, absorbed); the routed Blazor shell rides along to the throwaway branch that keeps the prototype as a primary source.
 
 ## Anti-patterns
 
 - **Don't add tests.** A prototype that needs tests is no longer a prototype.
-- **Don't wire it to the real database.** Use an in-memory store unless the question is specifically about persistence.
+- **Don't wire it to the real database.** Use in-memory state unless the question is specifically about persistence.
 - **Don't generalise.** No "what if we wanted to support X later." The prototype answers one question.
-- **Don't blur the logic and the console UI together.** If the reducer / state machine references `Console.WriteLine`, prompts, or terminal escape codes, it's no longer portable. Keep the console UI as a thin shell over a pure module.
-- **Don't ship the TUI shell into production.** The shell is optimised for being driven by hand from a terminal. The logic module behind it is the bit worth keeping.
+- **Don't blur the logic and the page together.** If the pure module references component state, `NavigationManager`, or event callbacks, it's no longer liftable. Keep the page as a thin shell over a pure module.
+- **Don't add another framework, build pipeline, or server.** Use the existing Razor Components app and Aspire orchestration.
+- **Don't ship the prototype page into production.** The page is optimised for being clicked through by hand. The C# logic module behind it is the bit worth keeping.
