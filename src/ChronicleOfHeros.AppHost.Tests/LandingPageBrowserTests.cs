@@ -122,7 +122,7 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         string expectedDisplayLanguageLabel)
     {
         using var webClient = _fixture.CreateHttpClient();
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/Error");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/error");
         request.Headers.AcceptLanguage.ParseAdd(browserLanguage);
 
         using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
