@@ -4,16 +4,20 @@
 
 <PageTitle>@Localizer["PageTitle"]</PageTitle>
 
-<h1>@Localizer["Heading"]</h1>
-<p>@Localizer["Message"]</p>
-<a href="/">@Localizer["ReturnToCharacterSheet"]</a>
+<div class="error-page">
+    <section aria-labelledby="error-heading">
+        <h1 id="error-heading">@Localizer["Heading"]</h1>
+        <p>@Localizer["Message"]</p>
+        <a class="return-link" href="/">@Localizer["ReturnToCharacterSheet"]</a>
 
-@if (ShowRequestId)
-{
-    <p>
-        <strong>@Localizer["RequestId"]</strong> <code>@RequestId</code>
-    </p>
-}
+        @if (ShowRequestId)
+        {
+            <p class="request-id">
+                <strong>@Localizer["RequestId"]</strong> <code>@RequestId</code>
+            </p>
+        }
+    </section>
+</div>
 
 @code{
     [CascadingParameter]

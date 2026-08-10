@@ -111,14 +111,15 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     }
 
     [Theory]
-    [InlineData("en-US", "en-US", "Something went wrong | ChronicleOfHeros", "We could not complete that request.", "Return to the character sheet")]
-    [InlineData("de-DE", "de-DE", "Etwas ist schiefgelaufen | ChronicleOfHeros", "Diese Anfrage konnte nicht abgeschlossen werden.", "Zurück zum Charakterbogen")]
+    [InlineData("en-US", "en-US", "Something went wrong | ChronicleOfHeros", "We could not complete that request.", "Return to the character sheet", "Display language")]
+    [InlineData("de-DE", "de-DE", "Etwas ist schiefgelaufen | ChronicleOfHeros", "Diese Anfrage konnte nicht abgeschlossen werden.", "Zurück zum Charakterbogen", "Anzeigesprache")]
     public async Task Reachable_error_boundary_renders_feedback_and_recovery_in_the_active_display_language(
         string browserLanguage,
         string expectedCulture,
         string expectedTitle,
         string expectedFeedback,
-        string expectedRecoveryAction)
+        string expectedRecoveryAction,
+        string expectedDisplayLanguageLabel)
     {
         using var webClient = _fixture.CreateHttpClient();
         using var request = new HttpRequestMessage(HttpMethod.Get, "/Error");
@@ -132,6 +133,7 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         Assert.Contains($"<title>{expectedTitle}</title>", errorPage);
         Assert.Contains(expectedFeedback, decodedErrorPage);
         Assert.Contains($">{expectedRecoveryAction}<", decodedErrorPage);
+        Assert.Contains($"aria-label=\"{expectedDisplayLanguageLabel}\"", errorPage);
     }
 
     [Theory]
