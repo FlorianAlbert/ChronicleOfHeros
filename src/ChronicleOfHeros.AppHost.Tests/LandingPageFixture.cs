@@ -16,7 +16,8 @@ public sealed class LandingPageFixture : IAsyncLifetime
     public async ValueTask InitializeAsync()
     {
         var appHost = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.ChronicleOfHeros_AppHost>();
+            .CreateAsync<Projects.ChronicleOfHeros_AppHost>(
+                BootstrapOperatorTestParameters.CreateAppHostArguments());
 
         var app = await appHost.BuildAsync();
         _app = app;
