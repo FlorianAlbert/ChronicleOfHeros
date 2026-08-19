@@ -300,3 +300,5 @@ public sealed record TokenPairResponse(
     DateTimeOffset RefreshTokenExpiresAt);
 
 public sealed record TemporaryCredentialResponse(string TemporaryCredential);
+
+public sealed record PlayerIdentityResponse(Guid AccountId);

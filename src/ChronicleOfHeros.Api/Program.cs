@@ -234,7 +234,13 @@ app.MapPost(
 	})
 	.RequireAuthorization("Operator");
 
-app.MapGet("/players/me", () => Results.Ok())
+app.MapGet(
+	"/players/me",
+	(HttpContext context) =>
+	{
+		var accountId = Guid.Parse(context.User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value);
+		return Results.Ok(new PlayerIdentityResponse(accountId));
+	})
 	.RequireAuthorization("Player");
 
 app.Run();
