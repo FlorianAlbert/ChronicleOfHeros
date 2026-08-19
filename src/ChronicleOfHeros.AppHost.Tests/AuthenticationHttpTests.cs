@@ -17,6 +17,206 @@ public sealed class AuthenticationHttpTests
     private const string ReplacementPassword = "Replacement-operator-password1!";
 
     [Fact]
+    public async Task Operator_can_enroll_a_player_with_a_temporary_credential_that_requires_replacement()
+    {
+        var appHost = await DistributedApplicationTestingBuilder
+            .CreateAsync<Projects.ChronicleOfHeros_AppHost>(
+                CreateAppHostArguments(),
+                TestContext.Current.CancellationToken);
+
+        await using var app = await appHost.BuildAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.Current.CancellationToken);
+
+        var resourceNotifications = app.Services.GetRequiredService<ResourceNotificationService>();
+        await resourceNotifications.WaitForResourceHealthyAsync("api", TestContext.Current.CancellationToken);
+
+        using var apiClient = app.CreateHttpClient("api");
+        var temporaryOperatorAccessToken = await SignInAndGetAccessTokenAsync(
+            apiClient,
+            BootstrapOperatorTestParameters.TemporaryPassword);
+        await ChangePasswordAsync(
+            apiClient,
+            temporaryOperatorAccessToken,
+            BootstrapOperatorTestParameters.TemporaryPassword,
+            ReplacementPassword);
+        var operatorTokenPair = await SignInAndGetTokenPairAsync(apiClient, ReplacementPassword);
+
+        using var enrollmentRequest = new HttpRequestMessage(HttpMethod.Post, "/players")
+        {
+            Content = JsonContent.Create(new { Username = "EnrolledPlayer" }),
+        };
+        enrollmentRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", operatorTokenPair.AccessToken);
+        using var enrollmentResponse = await apiClient.SendAsync(enrollmentRequest, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Created, enrollmentResponse.StatusCode);
+        Assert.False(enrollmentResponse.Headers.Contains("Set-Cookie"));
+
+        using var enrollmentBody = JsonDocument.Parse(
+            await enrollmentResponse.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken));
+        var temporaryCredential = enrollmentBody.RootElement.GetProperty("temporaryCredential").GetString();
+        Assert.NotNull(temporaryCredential);
+
+        using var playerSignInResponse = await SignInAsync(apiClient, "enrolledplayer", temporaryCredential);
+        Assert.Equal(HttpStatusCode.OK, playerSignInResponse.StatusCode);
+        using var playerSignInBody = JsonDocument.Parse(
+            await playerSignInResponse.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken));
+        Assert.False(playerSignInBody.RootElement.TryGetProperty("refreshToken", out _));
+    }
+
+    [Fact]
+    public async Task Operator_password_reset_issues_a_temporary_credential_and_revokes_the_players_refresh_sessions()
+    {
+        var appHost = await DistributedApplicationTestingBuilder
+            .CreateAsync<Projects.ChronicleOfHeros_AppHost>(
+                CreateAppHostArguments(),
+                TestContext.Current.CancellationToken);
+
+        await using var app = await appHost.BuildAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.Current.CancellationToken);
+
+        var resourceNotifications = app.Services.GetRequiredService<ResourceNotificationService>();
+        await resourceNotifications.WaitForResourceHealthyAsync("api", TestContext.Current.CancellationToken);
+
+        using var apiClient = app.CreateHttpClient("api");
+        var temporaryOperatorAccessToken = await SignInAndGetAccessTokenAsync(
+            apiClient,
+            BootstrapOperatorTestParameters.TemporaryPassword);
+        await ChangePasswordAsync(
+            apiClient,
+            temporaryOperatorAccessToken,
+            BootstrapOperatorTestParameters.TemporaryPassword,
+            ReplacementPassword);
+        var operatorTokenPair = await SignInAndGetTokenPairAsync(apiClient, ReplacementPassword);
+
+        using var enrollmentRequest = new HttpRequestMessage(HttpMethod.Post, "/players")
+        {
+            Content = JsonContent.Create(new { Username = "ResettablePlayer" }),
+        };
+        enrollmentRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", operatorTokenPair.AccessToken);
+        using var enrollmentResponse = await apiClient.SendAsync(enrollmentRequest, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.Created, enrollmentResponse.StatusCode);
+        using var enrollmentBody = JsonDocument.Parse(
+            await enrollmentResponse.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken));
+        var initialCredential = enrollmentBody.RootElement.GetProperty("temporaryCredential").GetString();
+        Assert.NotNull(initialCredential);
+
+        var restrictedPlayerAccessToken = await SignInAndGetAccessTokenAsync(
+            apiClient,
+            "ResettablePlayer",
+            initialCredential);
+        await ChangePasswordAsync(
+            apiClient,
+            restrictedPlayerAccessToken,
+            initialCredential,
+            "Original-player-password1!");
+        var playerTokenPair = await SignInAndGetTokenPairAsync(
+            apiClient,
+            "ResettablePlayer",
+            "Original-player-password1!");
+        var secondPlayerTokenPair = await SignInAndGetTokenPairAsync(
+            apiClient,
+            "ResettablePlayer",
+            "Original-player-password1!");
+
+        using var resetRequest = new HttpRequestMessage(HttpMethod.Post, "/players/ResettablePlayer/reset-password");
+        resetRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", operatorTokenPair.AccessToken);
+        using var resetResponse = await apiClient.SendAsync(resetRequest, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, resetResponse.StatusCode);
+        Assert.False(resetResponse.Headers.Contains("Set-Cookie"));
+        using var resetBody = JsonDocument.Parse(
+            await resetResponse.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken));
+        var resetCredential = resetBody.RootElement.GetProperty("temporaryCredential").GetString();
+        Assert.NotNull(resetCredential);
+        Assert.NotEqual(initialCredential, resetCredential);
+
+        using var revokedRefreshResponse = await RefreshRequestAsync(apiClient, playerTokenPair.RefreshToken);
+        using var secondRevokedRefreshResponse = await RefreshRequestAsync(
+            apiClient,
+            secondPlayerTokenPair.RefreshToken);
+        Assert.Equal(HttpStatusCode.Unauthorized, revokedRefreshResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, secondRevokedRefreshResponse.StatusCode);
+
+        using var resetCredentialSignInResponse = await SignInAsync(apiClient, "resettableplayer", resetCredential);
+        Assert.Equal(HttpStatusCode.OK, resetCredentialSignInResponse.StatusCode);
+        using var resetCredentialSignInBody = JsonDocument.Parse(
+            await resetCredentialSignInResponse.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken));
+        Assert.False(resetCredentialSignInBody.RootElement.TryGetProperty("refreshToken", out _));
+    }
+
+    [Fact]
+    public async Task Player_only_callers_cannot_enroll_players_or_reset_passwords()
+    {
+        var appHost = await DistributedApplicationTestingBuilder
+            .CreateAsync<Projects.ChronicleOfHeros_AppHost>(
+                CreateAppHostArguments(),
+                TestContext.Current.CancellationToken);
+
+        await using var app = await appHost.BuildAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.Current.CancellationToken);
+
+        var resourceNotifications = app.Services.GetRequiredService<ResourceNotificationService>();
+        await resourceNotifications.WaitForResourceHealthyAsync("api", TestContext.Current.CancellationToken);
+
+        using var apiClient = app.CreateHttpClient("api");
+        var temporaryOperatorAccessToken = await SignInAndGetAccessTokenAsync(
+            apiClient,
+            BootstrapOperatorTestParameters.TemporaryPassword);
+        await ChangePasswordAsync(
+            apiClient,
+            temporaryOperatorAccessToken,
+            BootstrapOperatorTestParameters.TemporaryPassword,
+            ReplacementPassword);
+        var operatorTokenPair = await SignInAndGetTokenPairAsync(apiClient, ReplacementPassword);
+
+        using var enrollmentRequest = new HttpRequestMessage(HttpMethod.Post, "/players")
+        {
+            Content = JsonContent.Create(new { Username = "PlayerOnly" }),
+        };
+        enrollmentRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", operatorTokenPair.AccessToken);
+        using var enrollmentResponse = await apiClient.SendAsync(enrollmentRequest, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.Created, enrollmentResponse.StatusCode);
+        using var enrollmentBody = JsonDocument.Parse(
+            await enrollmentResponse.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken));
+        var temporaryPlayerCredential = enrollmentBody.RootElement.GetProperty("temporaryCredential").GetString();
+        Assert.NotNull(temporaryPlayerCredential);
+
+        var restrictedPlayerAccessToken = await SignInAndGetAccessTokenAsync(
+            apiClient,
+            "PlayerOnly",
+            temporaryPlayerCredential);
+        await ChangePasswordAsync(
+            apiClient,
+            restrictedPlayerAccessToken,
+            temporaryPlayerCredential,
+            "Player-only-password1!");
+        var playerTokenPair = await SignInAndGetTokenPairAsync(
+            apiClient,
+            "PlayerOnly",
+            "Player-only-password1!");
+
+        using var unauthorizedEnrollmentRequest = new HttpRequestMessage(HttpMethod.Post, "/players")
+        {
+            Content = JsonContent.Create(new { Username = "UnauthorizedPlayer" }),
+        };
+        unauthorizedEnrollmentRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", playerTokenPair.AccessToken);
+        using var unauthorizedEnrollmentResponse = await apiClient.SendAsync(
+            unauthorizedEnrollmentRequest,
+            TestContext.Current.CancellationToken);
+
+        using var unauthorizedResetRequest = new HttpRequestMessage(
+            HttpMethod.Post,
+            "/players/FirstOperator/reset-password");
+        unauthorizedResetRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", playerTokenPair.AccessToken);
+        using var unauthorizedResetResponse = await apiClient.SendAsync(
+            unauthorizedResetRequest,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Forbidden, unauthorizedEnrollmentResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, unauthorizedResetResponse.StatusCode);
+    }
+
+    [Fact]
     public async Task Temporary_credential_can_only_replace_its_password_before_receiving_a_normal_token_pair()
     {
         var appHost = await DistributedApplicationTestingBuilder
@@ -276,13 +476,19 @@ public sealed class AuthenticationHttpTests
         Assert.False(disabledAccountResponse.Headers.Contains("Set-Cookie"));
     }
 
-    private static async Task<string> SignInAndGetAccessTokenAsync(HttpClient apiClient, string password)
+    private static Task<string> SignInAndGetAccessTokenAsync(HttpClient apiClient, string password) =>
+        SignInAndGetAccessTokenAsync(apiClient, BootstrapOperatorTestParameters.Username, password);
+
+    private static async Task<string> SignInAndGetAccessTokenAsync(
+        HttpClient apiClient,
+        string username,
+        string password)
     {
         using var response = await apiClient.PostAsJsonAsync(
             "/authentication/sign-in",
             new
             {
-                Username = BootstrapOperatorTestParameters.Username,
+                Username = username,
                 Password = password,
             },
             TestContext.Current.CancellationToken);
@@ -301,11 +507,17 @@ public sealed class AuthenticationHttpTests
             new { Username = username, Password = password },
             TestContext.Current.CancellationToken);
 
-    private static async Task<TokenPair> SignInAndGetTokenPairAsync(HttpClient apiClient, string password)
+    private static Task<TokenPair> SignInAndGetTokenPairAsync(HttpClient apiClient, string password) =>
+        SignInAndGetTokenPairAsync(apiClient, BootstrapOperatorTestParameters.Username, password);
+
+    private static async Task<TokenPair> SignInAndGetTokenPairAsync(
+        HttpClient apiClient,
+        string username,
+        string password)
     {
         using var response = await SignInAsync(
             apiClient,
-            BootstrapOperatorTestParameters.Username,
+            username,
             password);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 

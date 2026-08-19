@@ -289,6 +289,8 @@ public sealed record ChangePasswordRequest(string? CurrentPassword, string? NewP
 
 public sealed record RefreshTokenRequest(string? RefreshToken);
 
+public sealed record EnrollPlayerRequest(string? Username);
+
 public sealed record RestrictedAccessTokenResponse(string AccessToken, DateTimeOffset AccessTokenExpiresAt);
 
 public sealed record TokenPairResponse(
@@ -296,3 +298,5 @@ public sealed record TokenPairResponse(
     DateTimeOffset AccessTokenExpiresAt,
     string RefreshToken,
     DateTimeOffset RefreshTokenExpiresAt);
+
+public sealed record TemporaryCredentialResponse(string TemporaryCredential);

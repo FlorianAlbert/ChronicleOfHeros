@@ -2,7 +2,6 @@ using ChronicleOfHeros.Api.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using System.Text.RegularExpressions;
 
 namespace ChronicleOfHeros.Api.Identity;
 
@@ -55,8 +54,7 @@ public static partial class BootstrapOperatorInitializer
     }
 
     private static bool IsValidConfiguration(string? username, string? temporaryPassword) =>
-        username is not null
-        && UsernamePattern().IsMatch(username)
+        UsernameValidator.IsValid(username)
         && temporaryPassword is { Length: >= 8 and <= 128 };
 
     private static void EnsureSucceeded(IdentityResult result)
@@ -66,7 +64,4 @@ public static partial class BootstrapOperatorInitializer
             throw new InvalidOperationException(string.Join(" ", result.Errors.Select(error => error.Description)));
         }
     }
-
-    [GeneratedRegex("^[A-Za-z0-9][A-Za-z0-9_.-]{1,30}[A-Za-z0-9]$", RegexOptions.CultureInvariant)]
-    private static partial Regex UsernamePattern();
 }

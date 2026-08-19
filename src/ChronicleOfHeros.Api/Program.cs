@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +49,7 @@ builder.Services.AddAuthorization(options =>
 			policy => policy.RequireAssertion(context =>
 				context.User.IsInRole(ApplicationRoles.Player)
 				|| context.User.HasClaim("scope", "password-change")));
+		options.AddPolicy("Operator", policy => policy.RequireRole(ApplicationRoles.Operator));
 	});
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
 	{
@@ -59,7 +61,8 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
 		options.Password.RequireUppercase = true;
 	})
 	.AddRoles<IdentityRole>()
-	.AddEntityFrameworkStores<ChronicleOfHerosDbContext>();
+	.AddEntityFrameworkStores<ChronicleOfHerosDbContext>()
+	.AddDefaultTokenProviders();
 
 var app = builder.Build();
 
@@ -120,18 +123,14 @@ app.MapPost(
 			request.NewPassword ?? string.Empty);
 		if (!passwordChange.Succeeded)
 		{
-			return Results.ValidationProblem(passwordChange.Errors.ToDictionary(
-				error => error.Code,
-				error => new[] { error.Description }));
+			return ToValidationProblem(passwordChange);
 		}
 
 		user.MustChangePassword = false;
 		var userUpdate = await userManager.UpdateAsync(user);
 		if (!userUpdate.Succeeded)
 		{
-			return Results.ValidationProblem(userUpdate.Errors.ToDictionary(
-				error => error.Code,
-				error => new[] { error.Description }));
+			return ToValidationProblem(userUpdate);
 		}
 
 		await tokenService.RevokeAllRefreshSessionsAsync(user.Id, cancellationToken);
@@ -170,7 +169,80 @@ app.MapPost(
 	})
 	.AllowAnonymous();
 
+app.MapPost(
+	"/players",
+	async (
+		EnrollPlayerRequest request,
+		UserManager<ApplicationUser> userManager,
+		CancellationToken cancellationToken) =>
+	{
+		var username = request.Username?.Trim();
+		if (!UsernameValidator.IsValid(username))
+		{
+			return Results.ValidationProblem(new Dictionary<string, string[]>
+			{
+				["username"] = ["The username is invalid."],
+			});
+		}
+
+		var temporaryCredential = CreateTemporaryCredential();
+		var user = new ApplicationUser { UserName = username };
+		var creation = await userManager.CreateAsync(user, temporaryCredential);
+		if (!creation.Succeeded)
+		{
+			return ToValidationProblem(creation);
+		}
+
+		var roleAssignment = await userManager.AddToRoleAsync(user, ApplicationRoles.Player);
+		if (!roleAssignment.Succeeded)
+		{
+			await userManager.DeleteAsync(user);
+			return ToValidationProblem(roleAssignment);
+		}
+
+		return Results.Created($"/players/{user.Id}", new TemporaryCredentialResponse(temporaryCredential));
+	})
+	.RequireAuthorization("Operator");
+
+app.MapPost(
+	"/players/{username}/reset-password",
+	async (
+		string username,
+		UserManager<ApplicationUser> userManager,
+		AuthenticationTokenService tokenService,
+		CancellationToken cancellationToken) =>
+	{
+		var user = await userManager.FindByNameAsync(username.Trim());
+		if (user is null)
+		{
+			return Results.NotFound();
+		}
+
+		var temporaryCredential = CreateTemporaryCredential();
+		user.MustChangePassword = true;
+		var passwordReset = await userManager.ResetPasswordAsync(
+			user,
+			await userManager.GeneratePasswordResetTokenAsync(user),
+			temporaryCredential);
+		if (!passwordReset.Succeeded)
+		{
+			return ToValidationProblem(passwordReset);
+		}
+
+		await tokenService.RevokeAllRefreshSessionsAsync(user.Id, cancellationToken);
+		return Results.Ok(new TemporaryCredentialResponse(temporaryCredential));
+	})
+	.RequireAuthorization("Operator");
+
 app.MapGet("/players/me", () => Results.Ok())
 	.RequireAuthorization("Player");
 
 app.Run();
+
+static string CreateTemporaryCredential() =>
+	$"A{Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant()}!1";
+
+static IResult ToValidationProblem(IdentityResult result) =>
+	Results.ValidationProblem(result.Errors.ToDictionary(
+		error => error.Code,
+		error => new[] { error.Description }));
