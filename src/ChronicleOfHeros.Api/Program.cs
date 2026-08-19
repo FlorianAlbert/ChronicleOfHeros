@@ -140,6 +140,36 @@ app.MapPost(
 	})
 	.RequireAuthorization("PasswordChange");
 
+app.MapPost(
+	"/authentication/refresh",
+	async (
+		RefreshTokenRequest request,
+		AuthenticationTokenService tokenService,
+		UserManager<ApplicationUser> userManager,
+		CancellationToken cancellationToken) =>
+	{
+		var tokenPair = await tokenService.RefreshNormalTokenPairAsync(
+			request.RefreshToken,
+			userManager,
+			cancellationToken);
+		return tokenPair is null ? Results.Unauthorized() : Results.Ok(tokenPair);
+	})
+	.AllowAnonymous();
+
+app.MapPost(
+	"/authentication/sign-out",
+	async (
+		RefreshTokenRequest request,
+		AuthenticationTokenService tokenService,
+		CancellationToken cancellationToken) =>
+	{
+		await tokenService.RevokeRefreshSessionFamilyForTokenAsync(
+			request.RefreshToken,
+			cancellationToken);
+		return Results.NoContent();
+	})
+	.AllowAnonymous();
+
 app.MapGet("/players/me", () => Results.Ok())
 	.RequireAuthorization("Player");
 

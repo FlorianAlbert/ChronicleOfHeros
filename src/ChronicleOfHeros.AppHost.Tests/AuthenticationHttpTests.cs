@@ -164,6 +164,61 @@ public sealed class AuthenticationHttpTests
     }
 
     [Fact]
+    public async Task Refresh_rotation_replay_and_sign_out_are_isolated_to_their_sign_in_session_family()
+    {
+        var appHost = await DistributedApplicationTestingBuilder
+            .CreateAsync<Projects.ChronicleOfHeros_AppHost>(
+                CreateAppHostArguments(),
+                TestContext.Current.CancellationToken);
+
+        await using var app = await appHost.BuildAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.Current.CancellationToken);
+
+        var resourceNotifications = app.Services.GetRequiredService<ResourceNotificationService>();
+        await resourceNotifications.WaitForResourceHealthyAsync("api", TestContext.Current.CancellationToken);
+
+        using var apiClient = app.CreateHttpClient("api");
+        var temporaryAccessToken = await SignInAndGetAccessTokenAsync(
+            apiClient,
+            BootstrapOperatorTestParameters.TemporaryPassword);
+        await ChangePasswordAsync(
+            apiClient,
+            temporaryAccessToken,
+            BootstrapOperatorTestParameters.TemporaryPassword,
+            ReplacementPassword);
+
+        var firstFamily = await SignInAndGetTokenPairAsync(apiClient, ReplacementPassword);
+        var secondFamily = await SignInAndGetTokenPairAsync(apiClient, ReplacementPassword);
+
+        var firstFamilyReplacement = await RefreshAsync(apiClient, firstFamily.RefreshToken);
+        Assert.NotEqual(firstFamily.RefreshToken, firstFamilyReplacement.RefreshToken);
+
+        using var replayResponse = await RefreshRequestAsync(apiClient, firstFamily.RefreshToken);
+        Assert.Equal(HttpStatusCode.Unauthorized, replayResponse.StatusCode);
+
+        using var revokedFamilyResponse = await RefreshRequestAsync(apiClient, firstFamilyReplacement.RefreshToken);
+        Assert.Equal(HttpStatusCode.Unauthorized, revokedFamilyResponse.StatusCode);
+
+        var secondFamilyReplacement = await RefreshAsync(apiClient, secondFamily.RefreshToken);
+
+        using var signOutResponse = await apiClient.PostAsJsonAsync(
+            "/authentication/sign-out",
+            new { RefreshToken = secondFamilyReplacement.RefreshToken },
+            TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.NoContent, signOutResponse.StatusCode);
+
+        using var signedOutFamilyResponse = await RefreshRequestAsync(apiClient, secondFamilyReplacement.RefreshToken);
+        Assert.Equal(HttpStatusCode.Unauthorized, signedOutFamilyResponse.StatusCode);
+
+        using var activeAccessTokenRequest = new HttpRequestMessage(HttpMethod.Get, "/players/me");
+        activeAccessTokenRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", secondFamily.AccessToken);
+        using var activeAccessTokenResponse = await apiClient.SendAsync(
+            activeAccessTokenRequest,
+            TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, activeAccessTokenResponse.StatusCode);
+    }
+
+    [Fact]
     public async Task Unknown_invalid_and_disabled_sign_ins_return_indistinguishable_unauthorized_responses()
     {
         var appHost = await DistributedApplicationTestingBuilder
@@ -246,6 +301,45 @@ public sealed class AuthenticationHttpTests
             new { Username = username, Password = password },
             TestContext.Current.CancellationToken);
 
+    private static async Task<TokenPair> SignInAndGetTokenPairAsync(HttpClient apiClient, string password)
+    {
+        using var response = await SignInAsync(
+            apiClient,
+            BootstrapOperatorTestParameters.Username,
+            password);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        return await ReadTokenPairAsync(response);
+    }
+
+    private static async Task<TokenPair> RefreshAsync(HttpClient apiClient, string refreshToken)
+    {
+        using var response = await RefreshRequestAsync(apiClient, refreshToken);
+        Assert.True(
+            response.IsSuccessStatusCode,
+            await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+
+        return await ReadTokenPairAsync(response);
+    }
+
+    private static Task<HttpResponseMessage> RefreshRequestAsync(HttpClient apiClient, string refreshToken) =>
+        apiClient.PostAsJsonAsync(
+            "/authentication/refresh",
+            new { RefreshToken = refreshToken },
+            TestContext.Current.CancellationToken);
+
+    private static async Task<TokenPair> ReadTokenPairAsync(HttpResponseMessage response)
+    {
+        using var body = JsonDocument.Parse(
+            await response.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken));
+        var accessToken = body.RootElement.GetProperty("accessToken").GetString();
+        var refreshToken = body.RootElement.GetProperty("refreshToken").GetString();
+
+        Assert.NotNull(accessToken);
+        Assert.NotNull(refreshToken);
+        return new TokenPair(accessToken, refreshToken);
+    }
+
     private static void AssertUsesRs256(string accessToken)
     {
         var headerSegment = accessToken.Split('.')[0];
@@ -277,4 +371,6 @@ public sealed class AuthenticationHttpTests
     }
 
     private static string[] CreateAppHostArguments() => BootstrapOperatorTestParameters.CreateAppHostArguments();
+
+    private sealed record TokenPair(string AccessToken, string RefreshToken);
 }

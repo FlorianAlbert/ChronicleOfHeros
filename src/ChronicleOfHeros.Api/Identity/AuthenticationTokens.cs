@@ -1,4 +1,5 @@
 using ChronicleOfHeros.Api.Data;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -71,7 +72,8 @@ public sealed class AuthenticationTokenService(
 {
     public static readonly TimeSpan NormalAccessTokenLifetime = TimeSpan.FromMinutes(15);
     public static readonly TimeSpan RestrictedAccessTokenLifetime = TimeSpan.FromMinutes(5);
-    public static readonly TimeSpan RefreshTokenLifetime = TimeSpan.FromDays(30);
+    public static readonly TimeSpan RefreshTokenIdleLifetime = TimeSpan.FromDays(30);
+    public static readonly TimeSpan RefreshTokenAbsoluteLifetime = TimeSpan.FromDays(90);
 
     public RestrictedAccessTokenResponse CreateRestrictedAccessToken(ApplicationUser user)
     {
@@ -88,18 +90,14 @@ public sealed class AuthenticationTokenService(
         CancellationToken cancellationToken)
     {
         var issuedAt = timeProvider.GetUtcNow();
-        var refreshToken = WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(64));
-        var refreshTokenExpiresAt = issuedAt.Add(RefreshTokenLifetime);
+        var familyExpiresAt = issuedAt.Add(RefreshTokenAbsoluteLifetime);
+        var (refreshSession, refreshToken) = CreateRefreshSession(
+            user.Id,
+            Guid.NewGuid(),
+            familyExpiresAt,
+            issuedAt);
 
-        dbContext.RefreshSessions.Add(new RefreshSession
-        {
-            Id = Guid.NewGuid(),
-            UserId = user.Id,
-            TokenHash = Hash(refreshToken),
-            FamilyId = Guid.NewGuid(),
-            CreatedAtUtc = issuedAt,
-            ExpiresAtUtc = refreshTokenExpiresAt,
-        });
+        dbContext.RefreshSessions.Add(refreshSession);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         var roleClaims = roles.Select(role => new Claim(ClaimTypes.Role, role));
@@ -107,7 +105,104 @@ public sealed class AuthenticationTokenService(
             IssueAccessToken(user, issuedAt, NormalAccessTokenLifetime, roleClaims),
             issuedAt.Add(NormalAccessTokenLifetime),
             refreshToken,
-            refreshTokenExpiresAt);
+            refreshSession.ExpiresAtUtc);
+    }
+
+    public async Task<TokenPairResponse?> RefreshNormalTokenPairAsync(
+        string? refreshToken,
+        UserManager<ApplicationUser> userManager,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            return null;
+        }
+
+        var refreshedAt = timeProvider.GetUtcNow();
+        var refreshedSession = await dbContext.Database
+            .CreateExecutionStrategy()
+            .ExecuteAsync(async () =>
+            {
+                await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+                var refreshSession = await dbContext.RefreshSessions
+                    .Include(session => session.User)
+                    .AsNoTracking()
+                    .SingleOrDefaultAsync(session => session.TokenHash == Hash(refreshToken), cancellationToken);
+                if (refreshSession is null)
+                {
+                    return null;
+                }
+
+                if (!refreshSession.User.IsActive
+                    || refreshSession.RevokedAtUtc is not null
+                    || refreshSession.ExpiresAtUtc <= refreshedAt
+                    || refreshSession.FamilyExpiresAtUtc <= refreshedAt)
+                {
+                    await RevokeRefreshSessionFamilyAsync(refreshSession.FamilyId, refreshedAt, cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+                    return null;
+                }
+
+                var tokenWasRevoked = await dbContext.RefreshSessions
+                    .Where(session => session.Id == refreshSession.Id && session.RevokedAtUtc == null)
+                    .ExecuteUpdateAsync(
+                        setters => setters.SetProperty(session => session.RevokedAtUtc, refreshedAt),
+                        cancellationToken);
+                if (tokenWasRevoked != 1)
+                {
+                    await RevokeRefreshSessionFamilyAsync(refreshSession.FamilyId, refreshedAt, cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+                    return null;
+                }
+
+                var (replacementSession, replacementToken) = CreateRefreshSession(
+                    refreshSession.UserId,
+                    refreshSession.FamilyId,
+                    refreshSession.FamilyExpiresAtUtc,
+                    refreshedAt);
+                dbContext.RefreshSessions.Add(replacementSession);
+                await dbContext.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+
+                return new RefreshedSession(refreshSession.User, replacementSession, replacementToken);
+            });
+        if (refreshedSession is null)
+        {
+            return null;
+        }
+
+        var roles = await userManager.GetRolesAsync(refreshedSession.User);
+        var roleClaims = roles.Select(role => new Claim(ClaimTypes.Role, role));
+        return new TokenPairResponse(
+            IssueAccessToken(
+                refreshedSession.User,
+                refreshedAt,
+                NormalAccessTokenLifetime,
+                roleClaims),
+            refreshedAt.Add(NormalAccessTokenLifetime),
+            refreshedSession.ReplacementToken,
+            refreshedSession.ReplacementSession.ExpiresAtUtc);
+    }
+
+    public async Task RevokeRefreshSessionFamilyForTokenAsync(
+        string? refreshToken,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            return;
+        }
+
+        var refreshSession = await dbContext.RefreshSessions
+            .AsNoTracking()
+            .SingleOrDefaultAsync(session => session.TokenHash == Hash(refreshToken), cancellationToken);
+        if (refreshSession is not null)
+        {
+            await RevokeRefreshSessionFamilyAsync(
+                refreshSession.FamilyId,
+                timeProvider.GetUtcNow(),
+                cancellationToken);
+        }
     }
 
     public Task RevokeAllRefreshSessionsAsync(string userId, CancellationToken cancellationToken)
@@ -119,6 +214,36 @@ public sealed class AuthenticationTokenService(
             .ExecuteUpdateAsync(
                 setters => setters.SetProperty(session => session.RevokedAtUtc, revokedAt),
                 cancellationToken);
+    }
+
+    private Task<int> RevokeRefreshSessionFamilyAsync(
+        Guid familyId,
+        DateTimeOffset revokedAt,
+        CancellationToken cancellationToken) =>
+        dbContext.RefreshSessions
+            .Where(session => session.FamilyId == familyId && session.RevokedAtUtc == null)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(session => session.RevokedAtUtc, revokedAt),
+                cancellationToken);
+
+    private static (RefreshSession Session, string Token) CreateRefreshSession(
+        string userId,
+        Guid familyId,
+        DateTimeOffset familyExpiresAt,
+        DateTimeOffset createdAt)
+    {
+        var token = WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(64));
+
+        return (new RefreshSession
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            TokenHash = Hash(token),
+            FamilyId = familyId,
+            CreatedAtUtc = createdAt,
+            ExpiresAtUtc = Min(createdAt.Add(RefreshTokenIdleLifetime), familyExpiresAt),
+            FamilyExpiresAtUtc = familyExpiresAt,
+        }, token);
     }
 
     private string IssueAccessToken(
@@ -148,11 +273,21 @@ public sealed class AuthenticationTokenService(
 
     private static string Hash(string token) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
+
+    private static DateTimeOffset Min(DateTimeOffset first, DateTimeOffset second) =>
+        first <= second ? first : second;
+
+    private sealed record RefreshedSession(
+        ApplicationUser User,
+        RefreshSession ReplacementSession,
+        string ReplacementToken);
 }
 
 public sealed record SignInRequest(string? Username, string? Password);
 
 public sealed record ChangePasswordRequest(string? CurrentPassword, string? NewPassword);
+
+public sealed record RefreshTokenRequest(string? RefreshToken);
 
 public sealed record RestrictedAccessTokenResponse(string AccessToken, DateTimeOffset AccessTokenExpiresAt);
 

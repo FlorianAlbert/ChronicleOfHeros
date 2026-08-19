@@ -14,6 +14,8 @@ public sealed class RefreshSession
 
     public DateTimeOffset ExpiresAtUtc { get; set; }
 
+    public DateTimeOffset FamilyExpiresAtUtc { get; set; }
+
     public DateTimeOffset? RevokedAtUtc { get; set; }
 
     public ApplicationUser User { get; set; } = null!;
