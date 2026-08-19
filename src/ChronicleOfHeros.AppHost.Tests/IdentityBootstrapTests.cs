@@ -5,19 +5,28 @@ using ChronicleOfHeros.Api.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using System.Security.Cryptography;
 
 namespace ChronicleOfHeros.AppHost.Tests;
 
 internal static class BootstrapOperatorTestParameters
 {
     internal const string Username = "FirstOperator";
-    internal const string TemporaryPassword = "first-operator-temporary-password";
+    internal const string TemporaryPassword = "First-operator-temporary-password1!";
 
-    internal static string[] CreateAppHostArguments() =>
-    [
-        $"Parameters:bootstrap-operator-username={Username}",
-        $"Parameters:bootstrap-operator-temporary-password={TemporaryPassword}",
-    ];
+    internal static string[] CreateAppHostArguments()
+    {
+        using var rsa = RSA.Create(2048);
+
+        return
+        [
+            $"Parameters:bootstrap-operator-username={Username}",
+            $"Parameters:bootstrap-operator-temporary-password={TemporaryPassword}",
+            $"Parameters:jwt-signing-private-key={Convert.ToBase64String(rsa.ExportPkcs8PrivateKey())}",
+            "Parameters:jwt-issuer=https://identity.chronicleofheros.test",
+            "Parameters:jwt-audience=chronicleofheros-api-tests",
+        ];
+    }
 }
 
 [Collection("AppHost integration")]

@@ -8,6 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="../ChronicleOfHeros.ServiceDefaults/ChronicleOfHeros.ServiceDefaults.csproj" />
     <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
