@@ -14,7 +14,9 @@ public class AppHostSmokeTests
     public async Task Public_root_presents_the_field_notes_landing_core()
     {
         var appHost = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.ChronicleOfHeros_AppHost>(TestContext.Current.CancellationToken);
+            .CreateAsync<Projects.ChronicleOfHeros_AppHost>(
+                BootstrapOperatorTestParameters.CreateAppHostArguments(),
+                TestContext.Current.CancellationToken);
 
         await using var app = await appHost.BuildAsync(TestContext.Current.CancellationToken);
         await app.StartAsync(TestContext.Current.CancellationToken);
@@ -42,7 +44,9 @@ public class AppHostSmokeTests
     public async Task Health_endpoints_are_available_through_the_web_host()
     {
         var appHost = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.ChronicleOfHeros_AppHost>(TestContext.Current.CancellationToken);
+            .CreateAsync<Projects.ChronicleOfHeros_AppHost>(
+                BootstrapOperatorTestParameters.CreateAppHostArguments(),
+                TestContext.Current.CancellationToken);
 
         await using var app = await appHost.BuildAsync(TestContext.Current.CancellationToken);
         await app.StartAsync(TestContext.Current.CancellationToken);

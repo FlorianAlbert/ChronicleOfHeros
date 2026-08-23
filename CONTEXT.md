@@ -1,5 +1,21 @@
 # ChronicleOfHeros Domain Glossary
 
+## Player
+
+A human being who has an application identity and manages their own character data. Every account has the Player role. The initial product supports Players only; non-human API clients and DM actors are outside the current scope.
+
+## Operator
+
+A Player with the additional Operator role, authorized to enroll and manage Player accounts. Operators can manage only their own character data through the Player role and cannot access another Player's character data.
+
+## Player enrollment
+
+The process by which an Operator creates a Player account and delivers a temporary initial credential directly to the Player outside the application. A Player must replace that credential before using normal application capabilities. Self-registration is outside the current scope.
+
+## Username
+
+The unique, case-insensitive account identifier used by a Player or Operator to sign in. A Username contains 3-32 ASCII letters, digits, underscores, hyphens, or periods, with no whitespace or leading/trailing punctuation. Its entered spelling is retained for display and a canonical form is used for lookup. Email addresses are outside the current scope.
+
 ## Display language
 
 The language used for user-facing application text. It is selected in this order: an explicit user choice persisted in the browser, a supported browser language preference, then English.
