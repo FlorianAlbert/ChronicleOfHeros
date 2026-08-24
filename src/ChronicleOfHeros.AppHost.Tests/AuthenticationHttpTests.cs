@@ -1,7 +1,5 @@
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
-using ChronicleOfHeros.Api.Data;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Net.Http.Headers;
@@ -49,6 +47,7 @@ public sealed class AuthenticationHttpTests
         using var enrollmentResponse = await apiClient.SendAsync(enrollmentRequest, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, enrollmentResponse.StatusCode);
+        Assert.Matches("^/players/[0-9a-f-]+$", enrollmentResponse.Headers.Location?.OriginalString);
         Assert.False(enrollmentResponse.Headers.Contains("Set-Cookie"));
 
         using var enrollmentBody = JsonDocument.Parse(
@@ -508,7 +507,7 @@ public sealed class AuthenticationHttpTests
     }
 
     [Fact]
-    public async Task Unknown_invalid_and_disabled_sign_ins_return_indistinguishable_unauthorized_responses()
+    public async Task Unknown_and_invalid_sign_ins_return_indistinguishable_unauthorized_responses()
     {
         var appHost = await DistributedApplicationTestingBuilder
             .CreateAsync<Projects.ChronicleOfHeros_AppHost>(
@@ -531,38 +530,14 @@ public sealed class AuthenticationHttpTests
             BootstrapOperatorTestParameters.Username,
             "Incorrect-password1!");
 
-        var connectionString = await app.GetConnectionStringAsync(
-            "chronicleofheros",
-            TestContext.Current.CancellationToken);
-        var dbContextOptions = new DbContextOptionsBuilder<ChronicleOfHerosDbContext>()
-            .UseNpgsql(connectionString)
-            .Options;
-        await using (var dbContext = new ChronicleOfHerosDbContext(dbContextOptions))
-        {
-            var bootstrapOperator = await dbContext.Users.SingleAsync(
-                user => user.UserName == BootstrapOperatorTestParameters.Username,
-                TestContext.Current.CancellationToken);
-            bootstrapOperator.IsActive = false;
-            await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
-        }
-
-        using var disabledAccountResponse = await SignInAsync(
-            apiClient,
-            BootstrapOperatorTestParameters.Username,
-            BootstrapOperatorTestParameters.TemporaryPassword);
-
         var unknownUsernameBody = await unknownUsernameResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         var invalidPasswordBody = await invalidPasswordResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        var disabledAccountBody = await disabledAccountResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, unknownUsernameResponse.StatusCode);
         Assert.Equal(unknownUsernameResponse.StatusCode, invalidPasswordResponse.StatusCode);
-        Assert.Equal(unknownUsernameResponse.StatusCode, disabledAccountResponse.StatusCode);
         Assert.Equal(unknownUsernameBody, invalidPasswordBody);
-        Assert.Equal(unknownUsernameBody, disabledAccountBody);
         Assert.False(unknownUsernameResponse.Headers.Contains("Set-Cookie"));
         Assert.False(invalidPasswordResponse.Headers.Contains("Set-Cookie"));
-        Assert.False(disabledAccountResponse.Headers.Contains("Set-Cookie"));
     }
 
     private static Task<string> SignInAndGetAccessTokenAsync(HttpClient apiClient, string password) =>

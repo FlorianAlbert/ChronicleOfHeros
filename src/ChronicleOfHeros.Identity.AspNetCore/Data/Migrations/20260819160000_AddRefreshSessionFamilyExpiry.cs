@@ -1,14 +1,14 @@
-using ChronicleOfHeros.Api.Data;
+using ChronicleOfHeros.Identity.AspNetCore.Data;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace ChronicleOfHeros.Api.Data.Migrations
+namespace ChronicleOfHeros.Identity.AspNetCore.Data.Migrations
 {
     [DbContext(typeof(ChronicleOfHerosDbContext))]
     [Migration("20260819160000_AddRefreshSessionFamilyExpiry")]
-    public partial class AddRefreshSessionFamilyExpiry : Migration
+    internal partial class AddRefreshSessionFamilyExpiry : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {

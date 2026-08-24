@@ -4,10 +4,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace ChronicleOfHeros.Api.Data.Migrations
+namespace ChronicleOfHeros.Identity.AspNetCore.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialIdentity : Migration
+    internal partial class InitialIdentity : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

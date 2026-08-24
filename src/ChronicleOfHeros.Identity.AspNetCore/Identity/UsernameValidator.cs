@@ -1,8 +1,8 @@
 using System.Text.RegularExpressions;
 
-namespace ChronicleOfHeros.Api.Identity;
+namespace ChronicleOfHeros.Identity.AspNetCore.Identity;
 
-public static partial class UsernameValidator
+internal static partial class UsernameValidator
 {
     public static bool IsValid(string? username) =>
         username is not null && UsernamePattern().IsMatch(username);

@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace ChronicleOfHeros.Api.Identity;
+namespace ChronicleOfHeros.Identity.AspNetCore.Identity;
 
-public sealed class ApplicationUser : IdentityUser
+internal sealed class ApplicationUser : IdentityUser
 {
     public bool IsActive { get; set; } = true;
 

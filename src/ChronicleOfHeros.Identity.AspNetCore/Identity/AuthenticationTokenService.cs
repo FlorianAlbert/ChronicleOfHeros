@@ -1,72 +1,19 @@
-using ChronicleOfHeros.Api.Data;
+using ChronicleOfHeros.Identity.AspNetCore.Data;
+using ChronicleOfHeros.Identity.Contracts;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace ChronicleOfHeros.Api.Identity;
+namespace ChronicleOfHeros.Identity.AspNetCore.Identity;
 
-public sealed class JwtOptions
-{
-    public const string ConfigurationSectionName = "Jwt";
-
-    public required string SigningPrivateKey { get; init; }
-
-    public required string Issuer { get; init; }
-
-    public required string Audience { get; init; }
-}
-
-public sealed class JwtKeyMaterial : IDisposable
-{
-    private readonly RSA signingRsa;
-    private readonly RSA validationRsa;
-
-    private JwtKeyMaterial(RSA signingRsa, RSA validationRsa)
-    {
-        this.signingRsa = signingRsa;
-        this.validationRsa = validationRsa;
-        SigningCredentials = new SigningCredentials(
-            new RsaSecurityKey(signingRsa)
-            {
-                CryptoProviderFactory = new CryptoProviderFactory { CacheSignatureProviders = false },
-            },
-            SecurityAlgorithms.RsaSha256);
-        ValidationKey = new RsaSecurityKey(validationRsa)
-        {
-            CryptoProviderFactory = new CryptoProviderFactory { CacheSignatureProviders = false },
-        };
-    }
-
-    public SigningCredentials SigningCredentials { get; }
-
-    public SecurityKey ValidationKey { get; }
-
-    public static JwtKeyMaterial Create(JwtOptions options)
-    {
-        var signingRsa = RSA.Create();
-        signingRsa.ImportPkcs8PrivateKey(Convert.FromBase64String(options.SigningPrivateKey), out _);
-
-        var validationRsa = RSA.Create();
-        validationRsa.ImportSubjectPublicKeyInfo(signingRsa.ExportSubjectPublicKeyInfo(), out _);
-
-        return new JwtKeyMaterial(signingRsa, validationRsa);
-    }
-
-    public void Dispose()
-    {
-        signingRsa.Dispose();
-        validationRsa.Dispose();
-    }
-}
-
-public sealed class AuthenticationTokenService(
+internal sealed class AuthenticationTokenService(
     ChronicleOfHerosDbContext dbContext,
-    JwtOptions jwtOptions,
+    IOptions<JwtOptions> jwtOptions,
     JwtKeyMaterial keyMaterial,
     TimeProvider timeProvider)
 {
@@ -261,8 +208,8 @@ public sealed class AuthenticationTokenService(
         claims.AddRange(additionalClaims);
 
         var token = new JwtSecurityToken(
-            issuer: jwtOptions.Issuer,
-            audience: jwtOptions.Audience,
+            issuer: jwtOptions.Value.Issuer,
+            audience: jwtOptions.Value.Audience,
             claims: claims,
             notBefore: issuedAt.UtcDateTime,
             expires: issuedAt.Add(lifetime).UtcDateTime,
@@ -282,23 +229,3 @@ public sealed class AuthenticationTokenService(
         RefreshSession ReplacementSession,
         string ReplacementToken);
 }
-
-public sealed record SignInRequest(string? Username, string? Password);
-
-public sealed record ChangePasswordRequest(string? CurrentPassword, string? NewPassword);
-
-public sealed record RefreshTokenRequest(string? RefreshToken);
-
-public sealed record EnrollPlayerRequest(string? Username);
-
-public sealed record RestrictedAccessTokenResponse(string AccessToken, DateTimeOffset AccessTokenExpiresAt);
-
-public sealed record TokenPairResponse(
-    string AccessToken,
-    DateTimeOffset AccessTokenExpiresAt,
-    string RefreshToken,
-    DateTimeOffset RefreshTokenExpiresAt);
-
-public sealed record TemporaryCredentialResponse(string TemporaryCredential);
-
-public sealed record PlayerIdentityResponse(Guid AccountId);

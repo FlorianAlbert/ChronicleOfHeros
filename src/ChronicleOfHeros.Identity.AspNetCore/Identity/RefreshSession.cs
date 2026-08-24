@@ -1,6 +1,6 @@
-namespace ChronicleOfHeros.Api.Identity;
+namespace ChronicleOfHeros.Identity.AspNetCore.Identity;
 
-public sealed class RefreshSession
+internal sealed class RefreshSession
 {
     public Guid Id { get; set; }
 

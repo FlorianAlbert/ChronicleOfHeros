@@ -10,9 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.Testing" />
-    <PackageReference Include="Microsoft.Playwright" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
     <PackageReference Include="xunit.v3.mtp-v2" />
   </ItemGroup>
 
@@ -21,7 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../ChronicleOfHeros.AppHost/ChronicleOfHeros.AppHost.csproj" />
-    <ProjectReference Include="../ChronicleOfHeros.Web/ChronicleOfHeros.Web.csproj" />
+    <ProjectReference Include="../ChronicleOfHeros.Identity.AspNetCore/ChronicleOfHeros.Identity.AspNetCore.csproj" />
   </ItemGroup>
 </Project>

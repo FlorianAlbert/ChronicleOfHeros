@@ -1,4 +1,5 @@
 using ChronicleOfHeros.Web.Components;
+using ChronicleOfHeros.Web.Services;
 using ChronicleOfHeros.Web.Client.Services.Localization;
 using ChronicleOfHeros.Web.Services.Localization;
 using Microsoft.AspNetCore.Antiforgery;
@@ -12,10 +13,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 builder.Services.AddHttpForwarderWithServiceDiscovery()
-                .Configure<HttpStandardResilienceOptions>(typeof(IHttpForwarder).FullName, options =>
-                    {
-                        options.Retry.MaxRetryAttempts = 0;
-                    });
+                .Configure<HttpStandardResilienceOptions>(
+                    typeof(IHttpForwarder).FullName,
+                    options => options.DisableRetries());
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -24,17 +24,8 @@ builder.Services.AddRazorComponents()
 var supportedCultures = new[] { "en-US", "de-DE" };
 builder.Services.AddLocalization();
 builder.Services.AddSingleton<IStringLocalizerFactory, MissingTranslationDiagnosticStringLocalizerFactory>();
-builder.Services.Configure<RequestLocalizationOptions>(options =>
-{
-    options.SetDefaultCulture("en-US")
-        .AddSupportedCultures(supportedCultures)
-        .AddSupportedUICultures(supportedCultures);
-    options.RequestCultureProviders =
-    [
-        new DisplayLanguageRequestCultureProvider(supportedCultures),
-    ];
-    options.ApplyCurrentCultureToResponseHeaders = true;
-});
+builder.Services.Configure<RequestLocalizationOptions>(
+    options => options.ConfigureDisplayLanguages(supportedCultures));
 
 var app = builder.Build();
 
