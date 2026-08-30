@@ -1,7 +1,7 @@
 using ChronicleOfHeros.Web.Services.Localization;
 using Microsoft.AspNetCore.Localization;
 
-namespace ChronicleOfHeros.Web.Services;
+namespace ChronicleOfHeros.Web.Extensions;
 
 internal static class RequestLocalizationOptionsExtensions
 {

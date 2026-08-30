@@ -1,5 +1,5 @@
 using ChronicleOfHeros.Web.Components;
-using ChronicleOfHeros.Web.Services;
+using ChronicleOfHeros.Web.Extensions;
 using ChronicleOfHeros.Web.Client.Services.Localization;
 using ChronicleOfHeros.Web.Services.Localization;
 using Microsoft.AspNetCore.Antiforgery;

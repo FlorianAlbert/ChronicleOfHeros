@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Http.Resilience;
 
-namespace ChronicleOfHeros.Web.Services;
+namespace ChronicleOfHeros.Web.Extensions;
 
 internal static class HttpStandardResilienceOptionsExtensions
 {
