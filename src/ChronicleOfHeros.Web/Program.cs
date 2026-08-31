@@ -56,14 +56,14 @@ app.MapPost("/display-language", async (HttpContext context, IAntiforgery antifo
 {
     try
     {
-        await antiforgery.ValidateRequestAsync(context);
+        await antiforgery.ValidateRequestAsync(context).ConfigureAwait(false);
     }
     catch (AntiforgeryValidationException)
     {
         return Results.BadRequest();
     }
 
-    var form = await context.Request.ReadFormAsync(context.RequestAborted);
+    var form = await context.Request.ReadFormAsync(context.RequestAborted).ConfigureAwait(false);
     var selectedCulture = supportedCultures.FirstOrDefault(culture =>
         string.Equals(culture, form["locale"], StringComparison.OrdinalIgnoreCase));
 
@@ -101,7 +101,7 @@ static string GetSafeLocalReturnPath(string? returnUrl) =>
 static bool IsSafeLocalReturnPath(string? returnUrl)
 {
     if (string.IsNullOrWhiteSpace(returnUrl)
-        || returnUrl.Contains('\\')
+        || returnUrl.Contains('\\', StringComparison.Ordinal)
         || !Uri.TryCreate(returnUrl, UriKind.Relative, out _))
     {
         return false;
@@ -125,5 +125,5 @@ static bool IsSafeLocalReturnPath(string? returnUrl)
     return decodedPath[0] == '/'
            && !decodedPath.StartsWith("//", StringComparison.Ordinal)
            && !decodedPath.StartsWith("/\\", StringComparison.Ordinal)
-           && !decodedPath.Contains('\\');
+           && !decodedPath.Contains('\\', StringComparison.Ordinal);
 }

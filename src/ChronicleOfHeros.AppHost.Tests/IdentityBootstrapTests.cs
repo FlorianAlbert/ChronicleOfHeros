@@ -27,9 +27,16 @@ internal static class BootstrapOperatorTestParameters
     }
 }
 
+/// <summary>
+/// Integration tests for the ChronicleOfHeros.AppHost project that verify the bootstrap operator is created and can sign in with a temporary credential.
+/// </summary>
 [Collection("AppHost integration")]
 public sealed class IdentityBootstrapTests
 {
+    /// <summary>
+    /// Verifies that the ChronicleOfHeros.AppHost project runs migrations and bootstraps an operator with a temporary credential, allowing sign-in via the API.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Startup_runs_migrations_and_bootstraps_an_operator_with_a_temporary_credential()
     {

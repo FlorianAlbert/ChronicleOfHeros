@@ -11,10 +11,13 @@ internal sealed class IdentityMigrationHostedService(
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        await using var scope = services.CreateAsyncScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ChronicleOfHerosDbContext>();
-        await dbContext.Database.MigrateAsync(cancellationToken);
-        lifetime.StopApplication();
+        var scope = services.CreateAsyncScope();
+        await using (scope.ConfigureAwait(false))
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ChronicleOfHerosDbContext>();
+            await dbContext.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
+            lifetime.StopApplication();
+        }
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

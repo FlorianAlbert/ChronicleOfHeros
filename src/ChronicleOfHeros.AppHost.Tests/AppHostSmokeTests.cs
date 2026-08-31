@@ -5,11 +5,18 @@ using System.Net;
 
 namespace ChronicleOfHeros.AppHost.Tests;
 
+/// <summary>
+/// This test class is intended to be a smoke test for the ChronicleOfHeros.AppHost application.
+/// </summary>
 [Collection("AppHost integration")]
 public class AppHostSmokeTests
 {
     private static readonly TimeSpan HealthRequestTimeout = TimeSpan.FromSeconds(90);
 
+    /// <summary>
+    /// This test verifies that the public root of the application presents the field notes landing core.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Public_root_presents_the_field_notes_landing_core()
     {
@@ -40,6 +47,10 @@ public class AppHostSmokeTests
         Assert.DoesNotContain("Visual Prototype", landingPage);
     }
 
+    /// <summary>
+    /// This test verifies that the health endpoints of the application are available and return a successful response.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Health_endpoints_are_available_through_the_web_host()
     {

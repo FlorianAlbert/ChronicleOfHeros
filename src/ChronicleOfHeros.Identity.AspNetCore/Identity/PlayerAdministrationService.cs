@@ -24,16 +24,16 @@ internal sealed class PlayerAdministrationService(
 
         var temporaryCredential = CreateTemporaryCredential();
         var user = new ApplicationUser { UserName = username };
-        var creation = await userManager.CreateAsync(user, temporaryCredential);
+        var creation = await userManager.CreateAsync(user, temporaryCredential).ConfigureAwait(false);
         if (!creation.Succeeded)
         {
             return IdentityOperationResults.Validation<PlayerEnrollmentResponse>(creation);
         }
 
-        var roleAssignment = await userManager.AddToRoleAsync(user, ApplicationRoles.Player);
+        var roleAssignment = await userManager.AddToRoleAsync(user, ApplicationRoles.Player).ConfigureAwait(false);
         if (!roleAssignment.Succeeded)
         {
-            await userManager.DeleteAsync(user);
+            await userManager.DeleteAsync(user).ConfigureAwait(false);
             return IdentityOperationResults.Validation<PlayerEnrollmentResponse>(roleAssignment);
         }
 
@@ -46,7 +46,7 @@ internal sealed class PlayerAdministrationService(
         ResetPasswordRequest request,
         CancellationToken cancellationToken)
     {
-        var user = await userManager.FindByNameAsync(request.Username.Trim());
+        var user = await userManager.FindByNameAsync(request.Username.Trim()).ConfigureAwait(false);
         if (user is null)
         {
             return IdentityOperationResults.NotFound<TemporaryCredentialResponse>();
@@ -56,17 +56,17 @@ internal sealed class PlayerAdministrationService(
         user.MustChangePassword = true;
         var passwordReset = await userManager.ResetPasswordAsync(
             user,
-            await userManager.GeneratePasswordResetTokenAsync(user),
-            temporaryCredential);
+            await userManager.GeneratePasswordResetTokenAsync(user).ConfigureAwait(false),
+            temporaryCredential).ConfigureAwait(false);
         if (!passwordReset.Succeeded)
         {
             return IdentityOperationResults.Validation<TemporaryCredentialResponse>(passwordReset);
         }
 
-        await tokenService.RevokeAllRefreshSessionsAsync(user.Id, cancellationToken);
+        await tokenService.RevokeAllRefreshSessionsAsync(user.Id, cancellationToken).ConfigureAwait(false);
         return IdentityOperationResults.Success(new TemporaryCredentialResponse(temporaryCredential));
     }
 
     private static string CreateTemporaryCredential() =>
-        $"A{Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant()}!1";
+        $"A{Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToUpperInvariant()}!1";
 }

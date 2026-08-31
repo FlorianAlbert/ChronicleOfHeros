@@ -3,13 +3,15 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.ServiceDiscovery;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 namespace Microsoft.Extensions.Hosting;
 
+/// <summary>
+/// Extension methods for configuring service defaults in a host application builder.
+/// </summary>
 public static class ServiceDefaultsExtensions
 {
     private const string HealthEndpointPath = "/health";
@@ -17,6 +19,10 @@ public static class ServiceDefaultsExtensions
 
     extension<TBuilder>(TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
+        /// <summary>
+        /// Adds service defaults to the host application builder, including OpenTelemetry configuration, default health checks, service discovery, and HTTP client defaults.
+        /// </summary>
+        /// <returns>The modified host application builder.</returns>
         public TBuilder AddServiceDefaults()
         {
             builder.ConfigureOpenTelemetry();
@@ -31,6 +37,10 @@ public static class ServiceDefaultsExtensions
             return builder;
         }
 
+        /// <summary>
+        /// Configures OpenTelemetry for the host application builder, including metrics and tracing instrumentation.
+        /// </summary>
+        /// <returns>The modified host application builder.</returns>
         public TBuilder ConfigureOpenTelemetry()
         {
             builder.Logging.AddOpenTelemetry(logging =>
@@ -47,8 +57,8 @@ public static class ServiceDefaultsExtensions
                 .WithTracing(tracing => tracing
                     .AddSource(builder.Environment.ApplicationName)
                     .AddAspNetCoreInstrumentation(options => options.Filter = context =>
-                        !context.Request.Path.StartsWithSegments(HealthEndpointPath) &&
-                        !context.Request.Path.StartsWithSegments(AlivenessEndpointPath))
+                        !context.Request.Path.StartsWithSegments(HealthEndpointPath, StringComparison.OrdinalIgnoreCase) &&
+                        !context.Request.Path.StartsWithSegments(AlivenessEndpointPath, StringComparison.OrdinalIgnoreCase))
                     .AddHttpClientInstrumentation());
 
             AddOpenTelemetryExporters(builder);
@@ -56,6 +66,11 @@ public static class ServiceDefaultsExtensions
             return builder;
         }
 
+        /// <summary>
+        /// Adds default health checks to the host application builder, including a self-check and an aliveness check.
+        /// The self-check is always healthy, while the aliveness check is tagged with "live" and can be used to determine if the application is alive.
+        /// </summary>
+        /// <returns>The modified host application builder.</returns>
         public TBuilder AddDefaultHealthChecks()
         {
             builder.Services.AddHealthChecks()
@@ -67,6 +82,10 @@ public static class ServiceDefaultsExtensions
 
     extension(WebApplication app)
     {
+        /// <summary>
+        /// Maps the default health check endpoints to the web application. In development environment, it maps the /health endpoint for overall health and the /alive endpoint for aliveness checks.
+        /// </summary>
+        /// <returns>The modified web application.</returns>
         public WebApplication MapDefaultEndpoints()
         {
             if (app.Environment.IsDevelopment())

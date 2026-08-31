@@ -1,5 +1,4 @@
 using ChronicleOfHeros.Web.Services.Localization;
-using Microsoft.AspNetCore.Localization;
 
 namespace ChronicleOfHeros.Web.Extensions;
 

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -45,7 +46,7 @@ internal sealed class AuthenticationTokenService(
             issuedAt);
 
         dbContext.RefreshSessions.Add(refreshSession);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         var roleClaims = roles.Select(role => new Claim(ClaimTypes.Role, role));
         return new TokenPairResponse(
@@ -70,55 +71,59 @@ internal sealed class AuthenticationTokenService(
             .CreateExecutionStrategy()
             .ExecuteAsync(async () =>
             {
-                await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-                var refreshSession = await dbContext.RefreshSessions
-                    .Include(session => session.User)
-                    .AsNoTracking()
-                    .SingleOrDefaultAsync(session => session.TokenHash == Hash(refreshToken), cancellationToken);
-                if (refreshSession is null)
+                var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+                await using (transaction.ConfigureAwait(false))
                 {
-                    return null;
+                    var refreshSession = await dbContext.RefreshSessions
+                        .Include(session => session.User)
+                        .AsNoTracking()
+                        .SingleOrDefaultAsync(session => session.TokenHash == Hash(refreshToken), cancellationToken)
+                        .ConfigureAwait(false);
+                    if (refreshSession is null)
+                    {
+                        return null;
+                    }
+
+                    if (!refreshSession.User.IsActive
+                        || refreshSession.RevokedAtUtc is not null
+                        || refreshSession.ExpiresAtUtc <= refreshedAt
+                        || refreshSession.FamilyExpiresAtUtc <= refreshedAt)
+                    {
+                        await RevokeRefreshSessionFamilyAsync(refreshSession.FamilyId, refreshedAt, cancellationToken).ConfigureAwait(false);
+                        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                        return null;
+                    }
+
+                    var tokenWasRevoked = await dbContext.RefreshSessions
+                        .Where(session => session.Id == refreshSession.Id && session.RevokedAtUtc == null)
+                        .ExecuteUpdateAsync(
+                            setters => setters.SetProperty(session => session.RevokedAtUtc, refreshedAt),
+                            cancellationToken).ConfigureAwait(false);
+                    if (tokenWasRevoked != 1)
+                    {
+                        await RevokeRefreshSessionFamilyAsync(refreshSession.FamilyId, refreshedAt, cancellationToken).ConfigureAwait(false);
+                        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                        return null;
+                    }
+
+                    var (replacementSession, replacementToken) = CreateRefreshSession(
+                        refreshSession.UserId,
+                        refreshSession.FamilyId,
+                        refreshSession.FamilyExpiresAtUtc,
+                        refreshedAt);
+                    dbContext.RefreshSessions.Add(replacementSession);
+                    await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                    await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+
+                    return new RefreshedSession(refreshSession.User, replacementSession, replacementToken);
                 }
-
-                if (!refreshSession.User.IsActive
-                    || refreshSession.RevokedAtUtc is not null
-                    || refreshSession.ExpiresAtUtc <= refreshedAt
-                    || refreshSession.FamilyExpiresAtUtc <= refreshedAt)
-                {
-                    await RevokeRefreshSessionFamilyAsync(refreshSession.FamilyId, refreshedAt, cancellationToken);
-                    await transaction.CommitAsync(cancellationToken);
-                    return null;
-                }
-
-                var tokenWasRevoked = await dbContext.RefreshSessions
-                    .Where(session => session.Id == refreshSession.Id && session.RevokedAtUtc == null)
-                    .ExecuteUpdateAsync(
-                        setters => setters.SetProperty(session => session.RevokedAtUtc, refreshedAt),
-                        cancellationToken);
-                if (tokenWasRevoked != 1)
-                {
-                    await RevokeRefreshSessionFamilyAsync(refreshSession.FamilyId, refreshedAt, cancellationToken);
-                    await transaction.CommitAsync(cancellationToken);
-                    return null;
-                }
-
-                var (replacementSession, replacementToken) = CreateRefreshSession(
-                    refreshSession.UserId,
-                    refreshSession.FamilyId,
-                    refreshSession.FamilyExpiresAtUtc,
-                    refreshedAt);
-                dbContext.RefreshSessions.Add(replacementSession);
-                await dbContext.SaveChangesAsync(cancellationToken);
-                await transaction.CommitAsync(cancellationToken);
-
-                return new RefreshedSession(refreshSession.User, replacementSession, replacementToken);
-            });
+            }).ConfigureAwait(false);
         if (refreshedSession is null)
         {
             return null;
         }
 
-        var roles = await userManager.GetRolesAsync(refreshedSession.User);
+        var roles = await userManager.GetRolesAsync(refreshedSession.User).ConfigureAwait(false);
         var roleClaims = roles.Select(role => new Claim(ClaimTypes.Role, role));
         return new TokenPairResponse(
             IssueAccessToken(
@@ -142,13 +147,14 @@ internal sealed class AuthenticationTokenService(
 
         var refreshSession = await dbContext.RefreshSessions
             .AsNoTracking()
-            .SingleOrDefaultAsync(session => session.TokenHash == Hash(refreshToken), cancellationToken);
+            .SingleOrDefaultAsync(session => session.TokenHash == Hash(refreshToken), cancellationToken)
+            .ConfigureAwait(false);
         if (refreshSession is not null)
         {
             await RevokeRefreshSessionFamilyAsync(
                 refreshSession.FamilyId,
                 timeProvider.GetUtcNow(),
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -203,7 +209,7 @@ internal sealed class AuthenticationTokenService(
         {
             new(JwtRegisteredClaimNames.Sub, user.Id),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
-            new(JwtRegisteredClaimNames.Iat, issuedAt.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
+            new(JwtRegisteredClaimNames.Iat, issuedAt.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture), ClaimValueTypes.Integer64),
         };
         claims.AddRange(additionalClaims);
 

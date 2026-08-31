@@ -9,11 +9,18 @@ using System.Text;
 
 namespace ChronicleOfHeros.AppHost.Tests;
 
+/// <summary>
+/// Integration tests for the authentication endpoints of the ChronicleOfHeros application host.
+/// </summary>
 [Collection("AppHost integration")]
 public sealed class AuthenticationHttpTests
 {
     private const string ReplacementPassword = "Replacement-operator-password1!";
 
+    /// <summary>
+    /// Tests that an operator can enroll a new player with a temporary credential that requires replacement, and that the player can sign in with the temporary credential and does not receive a refresh token.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Operator_can_enroll_a_player_with_a_temporary_credential_that_requires_replacement()
     {
@@ -61,7 +68,11 @@ public sealed class AuthenticationHttpTests
             await playerSignInResponse.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken));
         Assert.False(playerSignInBody.RootElement.TryGetProperty("refreshToken", out _));
     }
-
+    
+    /// <summary>
+    /// Tests that when an operator resets a player's password, a new temporary credential is issued and all of the player's existing refresh sessions are revoked.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Operator_password_reset_issues_a_temporary_credential_and_revokes_the_players_refresh_sessions()
     {
@@ -142,7 +153,11 @@ public sealed class AuthenticationHttpTests
             await resetCredentialSignInResponse.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken));
         Assert.False(resetCredentialSignInBody.RootElement.TryGetProperty("refreshToken", out _));
     }
-
+    
+    /// <summary>
+    /// Tests that a player-only caller cannot enroll new players or reset passwords, and receives a forbidden response when attempting to do so.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Player_only_callers_cannot_enroll_players_or_reset_passwords()
     {
@@ -214,7 +229,11 @@ public sealed class AuthenticationHttpTests
         Assert.Equal(HttpStatusCode.Forbidden, unauthorizedEnrollmentResponse.StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, unauthorizedResetResponse.StatusCode);
     }
-
+    
+    /// <summary>
+    /// Tests that a player-only caller receives the correct immutable account ID when accessing their own player information, and that the account ID matches the subject claim in their access token.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Player_authorization_returns_the_normal_callers_immutable_account_id()
     {
@@ -303,7 +322,11 @@ public sealed class AuthenticationHttpTests
         Assert.Equal(ReadJwtSubject(accessToken), accountId);
         Assert.False(playerBody.RootElement.TryGetProperty("username", out _));
     }
-
+    
+    /// <summary>
+    /// Tests that a player with a temporary credential can only replace their password before receiving a normal token pair, and that they cannot access restricted endpoints until they have replaced their password.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Temporary_credential_can_only_replace_its_password_before_receiving_a_normal_token_pair()
     {
@@ -390,7 +413,11 @@ public sealed class AuthenticationHttpTests
 
         Assert.Equal(HttpStatusCode.OK, normalPlayerResponse.StatusCode);
     }
-
+    
+    /// <summary>
+    /// Tests that a normal sign-in returns a JSON token pair that can be used to authenticate a player request.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Normal_sign_in_returns_a_json_token_pair_that_authenticates_a_player_request()
     {
@@ -450,7 +477,11 @@ public sealed class AuthenticationHttpTests
 
         Assert.Equal(HttpStatusCode.OK, playerResponse.StatusCode);
     }
-
+    
+    /// <summary>
+    /// Tests that refresh token rotation, replay detection, and sign-out are isolated to their respective sign-in session families, ensuring that revoking one session does not affect others.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Refresh_rotation_replay_and_sign_out_are_isolated_to_their_sign_in_session_family()
     {
@@ -505,7 +536,11 @@ public sealed class AuthenticationHttpTests
             TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, activeAccessTokenResponse.StatusCode);
     }
-
+    
+    /// <summary>
+    /// Tests that unknown usernames and invalid passwords return indistinguishable unauthorized responses, preventing attackers from determining valid usernames or password correctness.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Unknown_and_invalid_sign_ins_return_indistinguishable_unauthorized_responses()
     {

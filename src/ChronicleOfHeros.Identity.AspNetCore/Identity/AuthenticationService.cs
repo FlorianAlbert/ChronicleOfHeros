@@ -14,8 +14,8 @@ internal sealed class AuthenticationService(
         var username = request.Username?.Trim();
         var user = string.IsNullOrWhiteSpace(username)
             ? null
-            : await userManager.FindByNameAsync(username);
-        if (user is null || !user.IsActive || !await userManager.CheckPasswordAsync(user, request.Password ?? string.Empty))
+            : await userManager.FindByNameAsync(username).ConfigureAwait(false);
+        if (user is null || !user.IsActive || !await userManager.CheckPasswordAsync(user, request.Password ?? string.Empty).ConfigureAwait(false))
         {
             return IdentityOperationResults.Unauthorized<AccessTokenResponse>();
         }
@@ -26,9 +26,9 @@ internal sealed class AuthenticationService(
                 tokenService.CreateRestrictedAccessToken(user));
         }
 
-        var roles = await userManager.GetRolesAsync(user);
+        var roles = await userManager.GetRolesAsync(user).ConfigureAwait(false);
         return IdentityOperationResults.Success<AccessTokenResponse>(
-            await tokenService.CreateNormalTokenPairAsync(user, roles, cancellationToken));
+            await tokenService.CreateNormalTokenPairAsync(user, roles, cancellationToken).ConfigureAwait(false));
     }
 
     public async Task<IdentityOperationResult<TokenPairResponse>> ChangePasswordAsync(
@@ -36,8 +36,8 @@ internal sealed class AuthenticationService(
         ChangePasswordRequest request,
         CancellationToken cancellationToken)
     {
-        var user = await userManager.FindByIdAsync(accountId.ToString());
-        if (user is null || !user.IsActive || !await userManager.CheckPasswordAsync(user, request.CurrentPassword ?? string.Empty))
+        var user = await userManager.FindByIdAsync(accountId.ToString()).ConfigureAwait(false);
+        if (user is null || !user.IsActive || !await userManager.CheckPasswordAsync(user, request.CurrentPassword ?? string.Empty).ConfigureAwait(false))
         {
             return IdentityOperationResults.Unauthorized<TokenPairResponse>();
         }
@@ -45,23 +45,23 @@ internal sealed class AuthenticationService(
         var passwordChange = await userManager.ChangePasswordAsync(
             user,
             request.CurrentPassword ?? string.Empty,
-            request.NewPassword ?? string.Empty);
+            request.NewPassword ?? string.Empty).ConfigureAwait(false);
         if (!passwordChange.Succeeded)
         {
             return IdentityOperationResults.Validation<TokenPairResponse>(passwordChange);
         }
 
         user.MustChangePassword = false;
-        var userUpdate = await userManager.UpdateAsync(user);
+        var userUpdate = await userManager.UpdateAsync(user).ConfigureAwait(false);
         if (!userUpdate.Succeeded)
         {
             return IdentityOperationResults.Validation<TokenPairResponse>(userUpdate);
         }
 
-        await tokenService.RevokeAllRefreshSessionsAsync(user.Id, cancellationToken);
-        var roles = await userManager.GetRolesAsync(user);
+        await tokenService.RevokeAllRefreshSessionsAsync(user.Id, cancellationToken).ConfigureAwait(false);
+        var roles = await userManager.GetRolesAsync(user).ConfigureAwait(false);
         return IdentityOperationResults.Success(
-            await tokenService.CreateNormalTokenPairAsync(user, roles, cancellationToken));
+            await tokenService.CreateNormalTokenPairAsync(user, roles, cancellationToken).ConfigureAwait(false));
     }
 
     public async Task<IdentityOperationResult<TokenPairResponse>> RefreshAsync(
@@ -71,7 +71,7 @@ internal sealed class AuthenticationService(
         var tokenPair = await tokenService.RefreshNormalTokenPairAsync(
             request.RefreshToken,
             userManager,
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
 
         return tokenPair is null
             ? IdentityOperationResults.Unauthorized<TokenPairResponse>()

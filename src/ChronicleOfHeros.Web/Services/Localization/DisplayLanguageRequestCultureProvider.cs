@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Localization;
 
 namespace ChronicleOfHeros.Web.Services.Localization;
 
-public sealed class DisplayLanguageRequestCultureProvider(IEnumerable<string> supportedCultureNames)
+internal sealed class DisplayLanguageRequestCultureProvider(IEnumerable<string> supportedCultureNames)
     : RequestCultureProvider
 {
     public const string PreferenceCookieName = "ChronicleOfHeros.DisplayLanguage";

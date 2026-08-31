@@ -4,16 +4,27 @@ using System.Text.RegularExpressions;
 
 namespace ChronicleOfHeros.AppHost.Tests;
 
+/// <summary>
+/// Tests for the landing page experience in a browser, including localization, accessibility, and responsive design.
+/// </summary>
 [Collection("AppHost integration")]
 public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
 {
     private readonly LandingPageFixture _fixture;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LandingPageBrowserTests"/> class with the specified fixture.
+    /// </summary>
+    /// <param name="fixture">The landing page fixture.</param>
     public LandingPageBrowserTests(LandingPageFixture fixture)
     {
         _fixture = fixture;
     }
-
+    
+    /// <summary>
+    /// Tests that the public root page presents the field notes landing core in a browser, verifying the title, favicon, headings, and other elements for correctness.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Public_root_presents_the_field_notes_landing_core_in_a_browser()
     {
@@ -32,6 +43,11 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         });
     }
 
+    /// <summary>
+    /// Tests that the public root page renders in German when the browser's language preference is set to German or related locales, verifying the title, headings, and other elements for correctness.
+    /// </summary>
+    /// <param name="browserLanguage">The browser's language preference.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Theory]
     [InlineData("de")]
     [InlineData("de-AT")]
@@ -57,6 +73,10 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         Assert.DoesNotContain("An accurate character sheet, ready at the table.", decodedLandingPage);
     }
 
+    /// <summary>
+    /// Tests that the public root page defaults to English when the browser's language preference is set to English or unsupported locales, verifying the title, headings, and other elements for correctness.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Public_root_uses_English_for_English_and_unsupported_browser_preferences()
     {
@@ -83,6 +103,12 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         }
     }
 
+    /// <summary>
+    /// Tests that the reconnect dialog displays the appropriate rejoining feedback message in the active display language when the browser's language preference is set to English or German.
+    /// </summary>
+    /// <param name="browserLanguage">The browser's language preference.</param>
+    /// <param name="expectedRejoining">The expected rejoining feedback message.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Theory]
     [InlineData("en-US", "Rejoining the server...")]
     [InlineData("de-DE", "Verbindung mit dem Server wird wiederhergestellt...")]
@@ -109,7 +135,17 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await Assertions.Expect(reconnectDialog.GetByText(expectedRejoining, new() { Exact = true })).ToBeVisibleAsync();
         }, locale: browserLanguage);
     }
-
+    
+    /// <summary>
+    /// Tests that the reachable error boundary renders feedback and recovery actions in the active display language based on the browser's language preference, verifying the title, feedback message, recovery action, and display language label for correctness.
+    /// </summary>
+    /// <param name="browserLanguage">The browser's language preference.</param>
+    /// <param name="expectedCulture">The expected culture of the error page.</param>
+    /// <param name="expectedTitle">The expected title of the error page.</param>
+    /// <param name="expectedFeedback">The expected feedback message displayed on the error page.</param>
+    /// <param name="expectedRecoveryAction">The expected recovery action text displayed on the error page.</param>
+    /// <param name="expectedDisplayLanguageLabel">The expected label for the display language selector.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Theory]
     [InlineData("en-US", "en-US", "Something went wrong | ChronicleOfHeros", "We could not complete that request.", "Return to the character sheet", "Display language")]
     [InlineData("de-DE", "de-DE", "Etwas ist schiefgelaufen | ChronicleOfHeros", "Diese Anfrage konnte nicht abgeschlossen werden.", "Zurück zum Charakterbogen", "Anzeigesprache")]
@@ -136,6 +172,17 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         Assert.Contains($"aria-label=\"{expectedDisplayLanguageLabel}\"", errorPage);
     }
 
+    /// <summary>
+    /// Tests that an unknown local route retains a 404 status and renders the localized not found experience based on the browser's language preference, verifying the culture, document language, title, heading, return action, and display language label for correctness.
+    /// </summary>
+    /// <param name="browserLanguage">The browser's language preference.</param>
+    /// <param name="expectedCulture">The expected culture of the not found page.</param>
+    /// <param name="expectedDocumentLanguage">The expected document language of the not found page.</param>
+    /// <param name="expectedTitle">The expected title of the not found page.</param>
+    /// <param name="expectedHeading">The expected heading displayed on the not found page.</param>
+    /// <param name="expectedReturnAction">The expected return action text displayed on the not found page.</param>
+    /// <param name="expectedDisplayLanguageLabel">The expected label for the display language selector.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Theory]
     [InlineData("en-US", "en-US", "en", "Page not found | ChronicleOfHeros", "This page is missing from the record.", "Return to the character sheet", "Display language")]
     [InlineData("de-DE", "de-DE", "de", "Seite nicht gefunden | ChronicleOfHeros", "Diese Seite fehlt im Register.", "Zurück zum Charakterbogen", "Anzeigesprache")]
@@ -165,6 +212,10 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         Assert.Contains($">{expectedReturnAction}<", decodedNotFoundPage);
     }
 
+    /// <summary>
+    /// Tests that the public root page respects an explicit display language cookie, overriding the browser's language preference, and renders the page in the specified language, verifying the content language, document language, and title for correctness.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Public_root_explicit_display_language_cookie_overrides_browser_preference()
     {
@@ -180,7 +231,11 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         Assert.Contains("<html lang=\"de\">", landingPage);
         Assert.Contains("<title>ChronicleOfHeros | Dein Charakterbogen am Spieltisch</title>", landingPage);
     }
-
+    
+    /// <summary>
+    /// Tests that the public root page ignores a non-concrete display language cookie, falling back to the browser's language preference, and renders the page in the appropriate language, verifying the content language, document language, and title for correctness.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Public_root_ignores_a_non_concrete_display_language_cookie()
     {
@@ -196,7 +251,12 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         Assert.Contains("<html lang=\"en\">", landingPage);
         Assert.Contains("<title>ChronicleOfHeros | Your character sheet at the table</title>", landingPage);
     }
-
+    
+    /// <summary>
+    /// Tests that a supported display language choice persists a secure preference cookie and redirects back to the specified local path, verifying the response status, location header, and cookie attributes for correctness.
+    /// </summary>
+    /// <param name="selectedLanguage">The display language selected by the user.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Theory]
     [InlineData("en-US")]
     [InlineData("de-DE")]
@@ -229,7 +289,11 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         Assert.Contains("httponly", preferenceCookie, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("samesite=lax", preferenceCookie, StringComparison.OrdinalIgnoreCase);
     }
-
+    
+    /// <summary>
+    /// Tests that a display language choice submission without an anti-forgery token is rejected with a Bad Request response, verifying the response status and absence of a Set-Cookie header for the preference cookie.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Display_language_choice_without_an_antiforgery_token_is_rejected()
     {
@@ -248,7 +312,12 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.False(response.Headers.TryGetValues("Set-Cookie", out _));
     }
-
+    
+    /// <summary>
+    /// Tests that an unsupported display language choice does not change the existing preference cookie and redirects back to the specified local path, verifying the response status, location header, and absence of a Set-Cookie header for the preference cookie.
+    /// </summary>
+    /// <param name="selectedLanguage">The display language selected by the user.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Theory]
     [InlineData("de")]
     [InlineData("fr-FR")]
@@ -275,7 +344,12 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         Assert.False(response.Headers.TryGetValues("Set-Cookie", out var cookies)
             && cookies.Any(cookie => cookie.StartsWith("ChronicleOfHeros.DisplayLanguage=", StringComparison.Ordinal)));
     }
-
+    
+    /// <summary>
+    /// Tests that a display language choice submission with an unsafe return path redirects to the root path, verifying the response status and location header for correctness.
+    /// </summary>
+    /// <param name="returnUrl">The return URL specified in the display language choice submission.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -311,7 +385,11 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         Assert.Equal(HttpStatusCode.Found, response.StatusCode);
         Assert.Equal("/", response.Headers.Location?.OriginalString);
     }
-
+    
+    /// <summary>
+    /// Tests that the public root page presents the landing experience in German when the browser's language preference is set to German, verifying the title, document language, navigation, headings, and other elements for correctness.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Public_root_initial_document_presents_the_landing_experience_in_German()
     {
@@ -333,7 +411,11 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await Assertions.Expect(page.Locator("body")).Not.ToContainTextAsync("Character Sheets");
         }, javaScriptEnabled: false, locale: "de-CH");
     }
-
+    
+    /// <summary>
+    /// Tests that the public root page retains the German language preference after a page reload, verifying the title, headings, navigation, and absence of English content for correctness.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Public_root_keeps_German_after_a_reload()
     {
@@ -351,7 +433,11 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await Assertions.Expect(page.Locator("body")).Not.ToContainTextAsync("An accurate character sheet, ready at the table.");
         }, locale: "de-CH");
     }
-
+    
+    /// <summary>
+    /// Tests that the display language selector changes the language of the page when an option is selected, verifying the visibility of the selector, available options, selected value, URL, title, and persistence after a page reload for correctness.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Display_language_selector_changes_language_when_an_option_is_selected()
     {
@@ -375,7 +461,11 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await Assertions.Expect(page.GetByLabel("Anzeigesprache")).ToHaveValueAsync("de-DE");
         }, locale: "en-US");
     }
-
+    
+    /// <summary>
+    /// Tests that the display language selector is visible and functional on an unknown local route, allowing the user to change the language and retain the 404 status, verifying the visibility of the selector, presence of the anti-forgery token, selected value, URL, response status, title, heading, and selected value after a page reload for correctness.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Display_language_selector_from_an_unknown_local_route_returns_there_with_a_404()
     {
@@ -401,6 +491,10 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         }, locale: "en-US");
     }
 
+    /// <summary>
+    /// Tests that the display language selector on an unknown local route is keyboard focusable, allowing users to navigate and interact with it using the keyboard, verifying the visibility and focus state of the selector for correctness.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Display_language_selector_on_an_unknown_local_route_is_keyboard_focusable()
     {
@@ -414,7 +508,11 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await Assertions.Expect(selector).ToBeFocusedAsync();
         }, javaScriptEnabled: false, locale: "en-US");
     }
-
+    
+    /// <summary>
+    /// Tests that the public root page excludes the default template presentation, ensuring that specific elements from the default template are not present on the landing page, verifying the absence of certain stylesheets, links, and text for correctness.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Public_root_excludes_default_template_presentation()
     {
@@ -429,7 +527,11 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await Assertions.Expect(page.GetByText("ChronicleOfHeros.Web", new() { Exact = true })).ToHaveCountAsync(0);
         });
     }
-
+    
+    /// <summary>
+    /// Tests that the public root page explains the character management journey through on-page navigation, verifying the presence and attributes of navigation links, as well as the content of specific sections for correctness.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Public_root_explains_the_character_management_journey_through_on_page_navigation()
     {
@@ -446,7 +548,11 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await Assertions.Expect(page.Locator("#about").GetByRole(AriaRole.Heading, new() { Name = "About ChronicleOfHeros" })).ToBeVisibleAsync();
         });
     }
-
+    
+    /// <summary>
+    /// Tests that the narrow header navigation can be opened and closed using keyboard interactions, verifying the visibility of the navigation menu and the focus state of links for correctness.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Narrow_header_navigation_opens_from_the_keyboard()
     {
@@ -482,7 +588,11 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await Assertions.Expect(page).ToHaveURLAsync(new Regex("#character-sheet$"));
         }, javaScriptEnabled: false);
     }
-
+    
+    /// <summary>
+    /// Tests that the narrow header navigation has a visible keyboard focus indicator when focused, verifying the focus state and visibility of the focus indicator for correctness.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Narrow_header_navigation_has_visible_keyboard_focus()
     {
@@ -506,7 +616,11 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
                 Assert.True(await HasVisibleFocusAsync(homeNavigationLink));
         }, javaScriptEnabled: false);
     }
-
+    
+    /// <summary>
+    /// Tests that the public root page reduces nonessential motion when the user has requested reduced motion in their system preferences, verifying the media query match, transition duration, and relevant style properties for correctness.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Public_root_reduces_nonessential_motion_when_requested()
     {
@@ -527,7 +641,11 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             Assert.True(reducedTransitionMilliseconds <= 1, reducedMotionDiagnostics);
         }, javaScriptEnabled: false);
     }
-
+    
+    /// <summary>
+    /// Tests that the public root page has sufficient contrast for text and controls, verifying the contrast ratios of specific text elements and a control against the background color for correctness.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Public_root_text_and_compact_control_have_sufficient_contrast()
     {
@@ -561,6 +679,11 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         });
     }
 
+    /// <summary>
+    /// Tests that the public root page remains coherent and visually consistent across supported viewport widths, verifying the absence of horizontal overflow, clipped elements, and alignment of specific elements for correctness.
+    /// </summary>
+    /// <param name="viewportWidth">The width of the viewport to test.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Theory]
     [InlineData(320)]
     [InlineData(768)]
@@ -596,6 +719,10 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         });
     }
 
+    /// <summary>
+    /// Tests that an invalid URL presents a branded way back to the public root, verifying the title, navigation, headings, links, and display language selector for correctness.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Invalid_url_presents_a_branded_way_back_to_the_public_root()
     {
@@ -613,7 +740,12 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Not Found", Exact = true })).ToHaveCountAsync(0);
         });
     }
-
+    
+    /// <summary>
+    /// Tests that public demo routes are absent, ensuring that specific demo routes are not accessible and return a 404 response, verifying the title and heading for correctness.
+    /// </summary>
+    /// <param name="route">The public demo route to test for absence.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Theory]
     [InlineData("/counter")]
     [InlineData("/weather")]

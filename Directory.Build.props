@@ -5,5 +5,14 @@
     <Nullable>enable</Nullable>
 
     <LangVersion>14.0</LangVersion>
+
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <AnalysisLevel>latest-strict</AnalysisLevel>
+    <AnalysisMode>All</AnalysisMode>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <WarningsAsErrors>$(WarningsAsErrors);IDE0005;IDE0305;xUnit2032</WarningsAsErrors>
   </PropertyGroup>
 </Project>

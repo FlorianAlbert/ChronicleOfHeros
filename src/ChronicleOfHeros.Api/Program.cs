@@ -23,7 +23,7 @@ app.MapPost(
 		CancellationToken cancellationToken) =>
 	{
 			return IdentityHttpResults.From(
-				await authenticationService.SignInAsync(request, cancellationToken),
+				await authenticationService.SignInAsync(request, cancellationToken).ConfigureAwait(false),
 				value => Results.Ok(value));
 	})
 	.AllowAnonymous();
@@ -43,7 +43,7 @@ app.MapPost(
 		}
 
 		return IdentityHttpResults.From(
-			await authenticationService.ChangePasswordAsync(parsedAccountId, request, cancellationToken),
+			await authenticationService.ChangePasswordAsync(parsedAccountId, request, cancellationToken).ConfigureAwait(false),
 			value => Results.Ok(value));
 	})
 	.RequireAuthorization("PasswordChange");
@@ -56,7 +56,7 @@ app.MapPost(
 		CancellationToken cancellationToken) =>
 	{
 			return IdentityHttpResults.From(
-			await authenticationService.RefreshAsync(request, cancellationToken),
+			await authenticationService.RefreshAsync(request, cancellationToken).ConfigureAwait(false),
 			value => Results.Ok(value));
 	})
 	.AllowAnonymous();
@@ -68,7 +68,7 @@ app.MapPost(
 		IAuthenticationService authenticationService,
 		CancellationToken cancellationToken) =>
 	{
-		await authenticationService.SignOutAsync(request, cancellationToken);
+		await authenticationService.SignOutAsync(request, cancellationToken).ConfigureAwait(false);
 		return Results.NoContent();
 	})
 	.AllowAnonymous();
@@ -81,7 +81,7 @@ app.MapPost(
 		CancellationToken cancellationToken) =>
 	{
 		return IdentityHttpResults.From(
-			await playerAdministrationService.EnrollAsync(request, cancellationToken),
+			await playerAdministrationService.EnrollAsync(request, cancellationToken).ConfigureAwait(false),
 			value => Results.Created($"/players/{value.AccountId}", value.TemporaryCredential));
 	})
 	.RequireAuthorization("Operator");
@@ -96,7 +96,7 @@ app.MapPost(
 		return IdentityHttpResults.From(
 			await playerAdministrationService.ResetPasswordAsync(
 				new ResetPasswordRequest(username),
-				cancellationToken),
+				cancellationToken).ConfigureAwait(false),
 			value => Results.Ok(value));
 	})
 	.RequireAuthorization("Operator");
