@@ -1,5 +1,6 @@
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Playwright;
 
@@ -21,21 +22,21 @@ public sealed class LandingPageFixture : IAsyncLifetime
     {
         var appHost = await DistributedApplicationTestingBuilder
             .CreateAsync<Projects.ChronicleOfHeros_AppHost>(
-                BootstrapOperatorTestParameters.CreateAppHostArguments());
+                BootstrapOperatorTestParameters.CreateAppHostArguments()).ConfigureAwait(false);
 
-        var app = await appHost.BuildAsync();
+        var app = await appHost.BuildAsync().ConfigureAwait(false);
         _app = app;
         _createWebClient = () => app.CreateHttpClient("web");
 
-        await app.StartAsync();
+        await app.StartAsync().ConfigureAwait(false);
 
         var resourceNotifications = app.Services.GetRequiredService<ResourceNotificationService>();
-        await resourceNotifications.WaitForResourceHealthyAsync("web", CancellationToken.None);
+        await resourceNotifications.WaitForResourceHealthyAsync("web", CancellationToken.None).ConfigureAwait(false);
 
         using var webClient = app.CreateHttpClient("web");
         BaseAddress = webClient.BaseAddress!;
     }
-    
+
     /// <summary>
     /// Creates an HttpClient for interacting with the application. The client can be configured to allow or disallow automatic redirection of HTTP requests.
     /// </summary>
@@ -60,7 +61,7 @@ public sealed class LandingPageFixture : IAsyncLifetime
         webClient.Timeout = TimeSpan.FromSeconds(90);
         return webClient;
     }
-    
+
     /// <summary>
     /// Executes a provided asynchronous function that interacts with a public page of the application using Playwright. This method ensures that only one page interaction occurs at a time by using a semaphore for synchronization. It allows for configuration of JavaScript execution and locale settings for the browser context.
     /// </summary>
@@ -73,20 +74,26 @@ public sealed class LandingPageFixture : IAsyncLifetime
         bool javaScriptEnabled = true,
         string? locale = null)
     {
-        await _pageGate.WaitAsync();
+        await _pageGate.WaitAsync().ConfigureAwait(false);
 
         try
         {
-            using var playwright = await Playwright.CreateAsync();
-            await using var browser = await playwright.Chromium.LaunchAsync();
-            await using var context = await browser.NewContextAsync(new()
+            using var playwright = await Playwright.CreateAsync().ConfigureAwait(false);
+            IBrowser browser = await playwright.Chromium.LaunchAsync().ConfigureAwait(false);
+            await using (browser.ConfigureAwait(false))
             {
-                JavaScriptEnabled = javaScriptEnabled,
-                Locale = locale,
-                ReducedMotion = ReducedMotion.NoPreference,
-            });
-            var page = await context.NewPageAsync();
-            await exercisePage(page, BaseAddress);
+                IBrowserContext browserContext = await browser.NewContextAsync(new()
+                {
+                    JavaScriptEnabled = javaScriptEnabled,
+                    Locale = locale,
+                    ReducedMotion = ReducedMotion.NoPreference,
+                }).ConfigureAwait(false);
+                await using (browserContext.ConfigureAwait(false))
+                {
+                    var page = await browserContext.NewPageAsync().ConfigureAwait(false);
+                    await exercisePage(page, BaseAddress).ConfigureAwait(false);
+                }
+            }
         }
         finally
         {
@@ -99,7 +106,7 @@ public sealed class LandingPageFixture : IAsyncLifetime
     {
         if (_app is not null)
         {
-            await _app.DisposeAsync();
+            await _app.DisposeAsync().ConfigureAwait(false);
         }
 
         _pageGate.Dispose();

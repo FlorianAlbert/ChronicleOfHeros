@@ -1,4 +1,5 @@
 using ChronicleOfHeros.Identity.AspNetCore.Identity;
+
 using Microsoft.Extensions.Hosting;
 
 namespace ChronicleOfHeros.Identity.AspNetCore;

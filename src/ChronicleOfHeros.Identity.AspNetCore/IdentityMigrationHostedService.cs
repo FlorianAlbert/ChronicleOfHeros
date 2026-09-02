@@ -1,4 +1,5 @@
 using ChronicleOfHeros.Identity.AspNetCore.Data;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

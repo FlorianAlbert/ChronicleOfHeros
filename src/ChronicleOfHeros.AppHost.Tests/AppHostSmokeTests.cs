@@ -1,7 +1,10 @@
+using System.Net;
+
+using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
+
 using Microsoft.Extensions.DependencyInjection;
-using System.Net;
 
 namespace ChronicleOfHeros.AppHost.Tests;
 
@@ -25,26 +28,29 @@ public class AppHostSmokeTests
                 BootstrapOperatorTestParameters.CreateAppHostArguments(),
                 TestContext.Current.CancellationToken);
 
-        await using var app = await appHost.BuildAsync(TestContext.Current.CancellationToken);
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        DistributedApplication distributedApplication = await appHost.BuildAsync(TestContext.Current.CancellationToken);
+        await using (distributedApplication.ConfigureAwait(false))
+        {
+            await distributedApplication.StartAsync(TestContext.Current.CancellationToken);
 
-        var resourceNotifications = app.Services.GetRequiredService<ResourceNotificationService>();
+            var resourceNotifications = distributedApplication.Services.GetRequiredService<ResourceNotificationService>();
 
-        await resourceNotifications.WaitForResourceHealthyAsync("web", TestContext.Current.CancellationToken);
+            await resourceNotifications.WaitForResourceHealthyAsync("web", TestContext.Current.CancellationToken);
 
-        using var webClient = app.CreateHttpClient("web");
-        webClient.Timeout = HealthRequestTimeout;
+            using var webClient = distributedApplication.CreateHttpClient("web");
+            webClient.Timeout = HealthRequestTimeout;
 
-        var landingPage = await webClient.GetStringAsync("/", TestContext.Current.CancellationToken);
+            var landingPage = await webClient.GetStringAsync("/", TestContext.Current.CancellationToken);
 
-        Assert.Contains("<title>ChronicleOfHeros | Your character sheet at the table</title>", landingPage);
-        Assert.Contains("An accurate character sheet, ready at the table.", landingPage);
-        Assert.Contains(">Armor<", landingPage);
-        Assert.Contains(">Initiative<", landingPage);
-        Assert.Contains(">Speed<", landingPage);
-        Assert.Matches("<button[^>]*disabled[^>]*>Coming soon</button>", landingPage);
-        Assert.DoesNotContain("prototype-switcher", landingPage);
-        Assert.DoesNotContain("Visual Prototype", landingPage);
+            Assert.Contains("<title>ChronicleOfHeros | Your character sheet at the table</title>", landingPage);
+            Assert.Contains("An accurate character sheet, ready at the table.", landingPage);
+            Assert.Contains(">Armor<", landingPage);
+            Assert.Contains(">Initiative<", landingPage);
+            Assert.Contains(">Speed<", landingPage);
+            Assert.Matches("<button[^>]*disabled[^>]*>Coming soon</button>", landingPage);
+            Assert.DoesNotContain("prototype-switcher", landingPage);
+            Assert.DoesNotContain("Visual Prototype", landingPage);
+        }
     }
 
     /// <summary>
@@ -59,22 +65,25 @@ public class AppHostSmokeTests
                 BootstrapOperatorTestParameters.CreateAppHostArguments(),
                 TestContext.Current.CancellationToken);
 
-        await using var app = await appHost.BuildAsync(TestContext.Current.CancellationToken);
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        DistributedApplication distributedApplication = await appHost.BuildAsync(TestContext.Current.CancellationToken);
+        await using (distributedApplication.ConfigureAwait(false))
+        {
+            await distributedApplication.StartAsync(TestContext.Current.CancellationToken);
 
-        var resourceNotifications = app.Services.GetRequiredService<ResourceNotificationService>();
+            var resourceNotifications = distributedApplication.Services.GetRequiredService<ResourceNotificationService>();
 
-        await resourceNotifications.WaitForResourceHealthyAsync("postgres", TestContext.Current.CancellationToken);
-        await resourceNotifications.WaitForResourceHealthyAsync("api", TestContext.Current.CancellationToken);
-        await resourceNotifications.WaitForResourceHealthyAsync("web", TestContext.Current.CancellationToken);
+            await resourceNotifications.WaitForResourceHealthyAsync("postgres", TestContext.Current.CancellationToken);
+            await resourceNotifications.WaitForResourceHealthyAsync("api", TestContext.Current.CancellationToken);
+            await resourceNotifications.WaitForResourceHealthyAsync("web", TestContext.Current.CancellationToken);
 
-        using var webClient = app.CreateHttpClient("web");
-        webClient.Timeout = HealthRequestTimeout;
+            using var webClient = distributedApplication.CreateHttpClient("web");
+            webClient.Timeout = HealthRequestTimeout;
 
-        var webHealthResponse = await webClient.GetAsync("/health", TestContext.Current.CancellationToken);
-        var apiHealthResponse = await webClient.GetAsync("/api/health", TestContext.Current.CancellationToken);
+            var webHealthResponse = await webClient.GetAsync("/health", TestContext.Current.CancellationToken);
+            var apiHealthResponse = await webClient.GetAsync("/api/health", TestContext.Current.CancellationToken);
 
-        Assert.Equal(HttpStatusCode.OK, webHealthResponse.StatusCode);
-        Assert.Equal(HttpStatusCode.OK, apiHealthResponse.StatusCode);
+            Assert.Equal(HttpStatusCode.OK, webHealthResponse.StatusCode);
+            Assert.Equal(HttpStatusCode.OK, apiHealthResponse.StatusCode);
+        }
     }
 }

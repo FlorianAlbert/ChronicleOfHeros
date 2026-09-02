@@ -1,4 +1,5 @@
 using ChronicleOfHeros.Identity.Contracts;
+
 using Microsoft.AspNetCore.Identity;
 
 namespace ChronicleOfHeros.Identity.AspNetCore.Identity;
@@ -18,7 +19,7 @@ internal static class IdentityOperationResults
             .GroupBy(error => error.Code)
             .ToDictionary(
                 errors => errors.Key,
-                errors => (IReadOnlyList<string>)errors.Select(error => error.Description).ToArray()));
+                errors => (IReadOnlyList<string>)[.. errors.Select(error => error.Description)]));
 
     internal static IdentityOperationResult<T> Validation<T>(
         IReadOnlyDictionary<string, IReadOnlyList<string>> errors) =>

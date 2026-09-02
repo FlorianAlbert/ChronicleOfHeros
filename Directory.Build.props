@@ -8,7 +8,7 @@
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
-    <AnalysisLevel>latest-strict</AnalysisLevel>
+    <AnalysisLevel>latest</AnalysisLevel>
     <AnalysisMode>All</AnalysisMode>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>

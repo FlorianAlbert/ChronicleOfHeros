@@ -1,14 +1,16 @@
-using ChronicleOfHeros.Identity.AspNetCore.Data;
-using ChronicleOfHeros.Identity.Contracts;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+
+using ChronicleOfHeros.Identity.AspNetCore.Data;
+using ChronicleOfHeros.Identity.Contracts;
+
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace ChronicleOfHeros.Identity.AspNetCore.Identity;
 

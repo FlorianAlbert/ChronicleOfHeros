@@ -1,4 +1,5 @@
 using ChronicleOfHeros.Identity.AspNetCore.Identity;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

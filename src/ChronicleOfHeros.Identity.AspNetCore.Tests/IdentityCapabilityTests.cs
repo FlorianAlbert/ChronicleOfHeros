@@ -1,8 +1,11 @@
+using System.Security.Cryptography;
+
 using ChronicleOfHeros.Identity.Contracts;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Security.Cryptography;
+
 using Testcontainers.PostgreSql;
 
 namespace ChronicleOfHeros.Identity.AspNetCore.Tests;

@@ -1,5 +1,6 @@
-using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
+
+using Microsoft.IdentityModel.Tokens;
 
 namespace ChronicleOfHeros.Identity.AspNetCore.Identity;
 

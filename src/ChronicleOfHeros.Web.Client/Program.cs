@@ -1,5 +1,6 @@
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using ChronicleOfHeros.Web.Client.Services.Localization;
+
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Localization;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);

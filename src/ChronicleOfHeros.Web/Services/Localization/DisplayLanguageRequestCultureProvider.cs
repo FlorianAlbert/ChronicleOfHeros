@@ -1,4 +1,5 @@
 using System.Globalization;
+
 using Microsoft.AspNetCore.Localization;
 
 namespace ChronicleOfHeros.Web.Services.Localization;
@@ -8,9 +9,7 @@ internal sealed class DisplayLanguageRequestCultureProvider(IEnumerable<string> 
 {
     public const string PreferenceCookieName = "ChronicleOfHeros.DisplayLanguage";
 
-    private readonly CultureInfo[] _supportedCultures = supportedCultureNames
-        .Select(CultureInfo.GetCultureInfo)
-        .ToArray();
+    private readonly CultureInfo[] _supportedCultures = [.. supportedCultureNames.Select(CultureInfo.GetCultureInfo)];
 
     public override Task<ProviderCultureResult?> DetermineProviderCultureResult(HttpContext httpContext)
     {

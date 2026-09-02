@@ -1,9 +1,12 @@
-using Aspire.Hosting.ApplicationModel;
-using Aspire.Hosting.Testing;
-using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
+
+using Aspire.Hosting;
+using Aspire.Hosting.ApplicationModel;
+using Aspire.Hosting.Testing;
+
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ChronicleOfHeros.AppHost.Tests;
 
@@ -45,22 +48,25 @@ public sealed class IdentityBootstrapTests
                 BootstrapOperatorTestParameters.CreateAppHostArguments(),
                 TestContext.Current.CancellationToken);
 
-        await using var app = await appHost.BuildAsync(TestContext.Current.CancellationToken);
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        DistributedApplication distributedApplication = await appHost.BuildAsync(TestContext.Current.CancellationToken);
+        await using (distributedApplication.ConfigureAwait(false))
+        {
+            await distributedApplication.StartAsync(TestContext.Current.CancellationToken);
 
-        var resourceNotifications = app.Services.GetRequiredService<ResourceNotificationService>();
-        await resourceNotifications.WaitForResourceHealthyAsync("api", TestContext.Current.CancellationToken);
+            var resourceNotifications = distributedApplication.Services.GetRequiredService<ResourceNotificationService>();
+            await resourceNotifications.WaitForResourceHealthyAsync("api", TestContext.Current.CancellationToken);
 
-        using var apiClient = app.CreateHttpClient("api");
-        using var signInResponse = await apiClient.PostAsJsonAsync(
-            "/authentication/sign-in",
-            new
-            {
-                Username = BootstrapOperatorTestParameters.Username,
-                Password = BootstrapOperatorTestParameters.TemporaryPassword,
-            },
-            TestContext.Current.CancellationToken);
+            using var apiClient = distributedApplication.CreateHttpClient("api");
+            using var signInResponse = await apiClient.PostAsJsonAsync(
+                "/authentication/sign-in",
+                new
+                {
+                    Username = BootstrapOperatorTestParameters.Username,
+                    Password = BootstrapOperatorTestParameters.TemporaryPassword,
+                },
+                TestContext.Current.CancellationToken);
 
-        Assert.Equal(HttpStatusCode.OK, signInResponse.StatusCode);
+            Assert.Equal(HttpStatusCode.OK, signInResponse.StatusCode);
+        }
     }
 }

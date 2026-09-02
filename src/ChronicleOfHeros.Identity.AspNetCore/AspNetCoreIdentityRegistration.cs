@@ -1,6 +1,7 @@
 using ChronicleOfHeros.Identity.AspNetCore.Data;
 using ChronicleOfHeros.Identity.AspNetCore.Identity;
 using ChronicleOfHeros.Identity.Contracts;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,9 +1,11 @@
+using System.Security.Cryptography;
+
 using ChronicleOfHeros.Identity.Contracts;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using System.Security.Cryptography;
 
 namespace ChronicleOfHeros.Identity.AspNetCore.Tests;
 
@@ -72,7 +74,7 @@ public sealed class AspNetCoreIdentityRegistrationTests
 
         Assert.Contains("JWT configuration is required.", exception.Message, StringComparison.Ordinal);
     }
-    
+
     /// <summary>
     /// Tests that the runtime registration of the identity services exposes the expected contracts without requiring any host-assembled dependencies, ensuring that the services can be resolved and used independently of the host's assembly context.
     /// </summary>

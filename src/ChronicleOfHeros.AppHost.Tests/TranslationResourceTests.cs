@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Xml.Linq;
+
 using ChronicleOfHeros.Web.Client.Services.Localization;
+
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -31,7 +33,7 @@ public sealed class TranslationResourceTests
         Assert.Equal("English fallback", value.Value);
         Assert.False(value.ResourceNotFound);
     }
-    
+
     /// <summary>
     /// Verifies that when a canonical English translation key is missing, the application logs a warning diagnostic and returns the key itself as the value. This test sets the current culture to English (en-US) and checks that the missing canonical English key returns the key name, indicates a resource not found error, and logs an appropriate warning message.
     /// </summary>
@@ -53,7 +55,7 @@ public sealed class TranslationResourceTests
         Assert.Equal(LogLevel.Warning, diagnostic.LogLevel);
         Assert.Contains("Translation key AbsentEnglish is missing from its canonical English resource.", diagnostic.Message);
     }
-    
+
     /// <summary>
     /// Verifies that all production translation resources for supported display languages match their corresponding canonical English keys. This test iterates through the canonical English resource files and checks that each supported display language has a corresponding resource file with the same set of keys. If any discrepancies are found, the test fails, indicating that the translation resources are not in sync with the canonical English keys.
     /// </summary>
@@ -158,4 +160,4 @@ public sealed class TranslationResourceTests
 /// <summary>
 /// A probe class used for testing translation resource behavior. This class serves as a placeholder for localization tests, allowing the test framework to verify the handling of translation keys and fallbacks without relying on actual application logic. It is used to simulate scenarios where translation keys may be missing or require fallback to canonical English values.
 /// </summary>
-public sealed class TranslationFallbackProbe;
+internal sealed class TranslationFallbackProbe;

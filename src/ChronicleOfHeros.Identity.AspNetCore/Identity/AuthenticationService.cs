@@ -1,4 +1,5 @@
 using ChronicleOfHeros.Identity.Contracts;
+
 using Microsoft.AspNetCore.Identity;
 
 namespace ChronicleOfHeros.Identity.AspNetCore.Identity;

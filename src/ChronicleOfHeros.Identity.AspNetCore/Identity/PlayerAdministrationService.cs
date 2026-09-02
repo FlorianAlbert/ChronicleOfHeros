@@ -1,6 +1,8 @@
-using ChronicleOfHeros.Identity.Contracts;
-using Microsoft.AspNetCore.Identity;
 using System.Security.Cryptography;
+
+using ChronicleOfHeros.Identity.Contracts;
+
+using Microsoft.AspNetCore.Identity;
 
 namespace ChronicleOfHeros.Identity.AspNetCore.Identity;
 

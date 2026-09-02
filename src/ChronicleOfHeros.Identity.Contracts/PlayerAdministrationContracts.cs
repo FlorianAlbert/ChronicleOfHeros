@@ -14,7 +14,7 @@ public interface IPlayerAdministrationService
     Task<IdentityOperationResult<PlayerEnrollmentResponse>> EnrollAsync(
         EnrollPlayerRequest request,
         CancellationToken cancellationToken);
-    
+
     /// <summary>
     /// Resets the password for a player with the specified request details.
     /// </summary>

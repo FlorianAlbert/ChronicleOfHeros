@@ -14,7 +14,7 @@ public interface IAuthenticationService
     Task<IdentityOperationResult<AccessTokenResponse>> SignInAsync(
         SignInRequest request,
         CancellationToken cancellationToken);
-    
+
     /// <summary>
     /// Changes the password for the specified account and returns a token pair response.
     /// </summary>
