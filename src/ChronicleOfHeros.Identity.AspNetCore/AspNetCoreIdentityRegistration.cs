@@ -63,6 +63,7 @@ public static class AspNetCoreIdentityRegistration
             builder.Services.AddScoped<AuthenticationTokenService>();
             builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
             builder.Services.AddScoped<IPlayerAdministrationService, PlayerAdministrationService>();
+            builder.Services.AddScoped<IPlayerIdentityService, PlayerIdentityService>();
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer();
             builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)

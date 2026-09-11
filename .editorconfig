@@ -47,6 +47,9 @@ dotnet_diagnostic.CA1812.severity = none
 [src/ChronicleOfHeros.Identity.AspNetCore/Identity/PlayerAdministrationService.cs]
 dotnet_diagnostic.CA1812.severity = none
 
+[src/ChronicleOfHeros.Identity.AspNetCore/Identity/PlayerIdentityService.cs]
+dotnet_diagnostic.CA1812.severity = none
+
 # These public symbols are consumed by the Web host and integration tests.
 [src/ChronicleOfHeros.Web.Client/Localization/SharedResources.cs]
 dotnet_diagnostic.CA1515.severity = none

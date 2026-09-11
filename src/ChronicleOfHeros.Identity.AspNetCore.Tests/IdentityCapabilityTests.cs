@@ -38,6 +38,31 @@ public sealed class IdentityCapabilityTests(IdentityCapabilityFixture fixture)
     }
 
     /// <summary>
+    /// Tests that an enrolled Player's immutable account ID can be retrieved through the public Identity contract.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    [Fact]
+    public async Task Enrolled_player_identity_is_available_through_the_identity_contract()
+    {
+        using var scope = fixture.CreateScope();
+        var playerAdministrationService = scope.ServiceProvider.GetRequiredService<IPlayerAdministrationService>();
+        var enrollment = await playerAdministrationService.EnrollAsync(
+            new EnrollPlayerRequest("IdentityContractPlayer"),
+            TestContext.Current.CancellationToken);
+
+        Assert.Null(enrollment.Failure);
+        Assert.NotNull(enrollment.Value);
+
+        var playerIdentityService = scope.ServiceProvider.GetRequiredService<IPlayerIdentityService>();
+        var result = await playerIdentityService.GetAsync(
+            enrollment.Value.AccountId,
+            TestContext.Current.CancellationToken);
+
+        Assert.Null(result.Failure);
+        Assert.Equal(enrollment.Value.AccountId, result.Value?.AccountId);
+    }
+
+    /// <summary>
     /// Tests that an enrolled player must replace the temporary credential before being able to sign in normally, ensuring that the system enforces the requirement for players to set a permanent password after enrollment.
     /// </summary>
     /// <returns>A task representing the asynchronous operation.</returns>

@@ -99,5 +99,7 @@ public sealed class AspNetCoreIdentityRegistrationTests
             services.GetRequiredService<IAuthenticationService>(), exactMatch: false);
         Assert.IsType<IPlayerAdministrationService>(
             services.GetRequiredService<IPlayerAdministrationService>(), exactMatch: false);
+        Assert.IsType<IPlayerIdentityService>(
+            services.GetRequiredService<IPlayerIdentityService>(), exactMatch: false);
     }
 }
