@@ -72,6 +72,128 @@ public sealed class IdentityCapabilityTests(IdentityCapabilityFixture fixture)
         Assert.IsType<TokenPairResponse>(passwordChange.Value);
     }
 
+    /// <summary>
+    /// Tests that refresh rotation detects replay, revokes only the replayed session family, and sign-out revokes its session family.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    [Fact]
+    public async Task Refresh_rotation_replay_and_sign_out_are_isolated_to_their_sign_in_session_family()
+    {
+        using var scope = fixture.CreateScope();
+        var playerAdministrationService = scope.ServiceProvider.GetRequiredService<IPlayerAdministrationService>();
+        var authenticationService = scope.ServiceProvider.GetRequiredService<IAuthenticationService>();
+        var enrollment = await playerAdministrationService.EnrollAsync(
+            new EnrollPlayerRequest("RefreshLifecyclePlayer"),
+            TestContext.Current.CancellationToken);
+
+        Assert.Null(enrollment.Failure);
+        Assert.NotNull(enrollment.Value);
+
+        var passwordChange = await authenticationService.ChangePasswordAsync(
+            enrollment.Value.AccountId,
+            new ChangePasswordRequest(
+                enrollment.Value.TemporaryCredential.TemporaryCredential,
+                "Refresh-lifecycle-password1!"),
+            TestContext.Current.CancellationToken);
+
+        Assert.Null(passwordChange.Failure);
+        var firstFamily = Assert.IsType<TokenPairResponse>(passwordChange.Value);
+
+        var secondSignIn = await authenticationService.SignInAsync(
+            new SignInRequest("RefreshLifecyclePlayer", "Refresh-lifecycle-password1!"),
+            TestContext.Current.CancellationToken);
+
+        Assert.Null(secondSignIn.Failure);
+        var secondFamily = Assert.IsType<TokenPairResponse>(secondSignIn.Value);
+
+        var firstRefresh = await authenticationService.RefreshAsync(
+            new RefreshTokenRequest(firstFamily.RefreshToken),
+            TestContext.Current.CancellationToken);
+
+        Assert.Null(firstRefresh.Failure);
+        var firstFamilyReplacement = Assert.IsType<TokenPairResponse>(firstRefresh.Value);
+        Assert.NotEqual(firstFamily.RefreshToken, firstFamilyReplacement.RefreshToken);
+
+        var replay = await authenticationService.RefreshAsync(
+            new RefreshTokenRequest(firstFamily.RefreshToken),
+            TestContext.Current.CancellationToken);
+        var replayedFamilyRefresh = await authenticationService.RefreshAsync(
+            new RefreshTokenRequest(firstFamilyReplacement.RefreshToken),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(IdentityFailureKind.Unauthorized, replay.Failure?.Kind);
+        Assert.Equal(IdentityFailureKind.Unauthorized, replayedFamilyRefresh.Failure?.Kind);
+
+        var secondRefresh = await authenticationService.RefreshAsync(
+            new RefreshTokenRequest(secondFamily.RefreshToken),
+            TestContext.Current.CancellationToken);
+
+        Assert.Null(secondRefresh.Failure);
+        var secondFamilyReplacement = Assert.IsType<TokenPairResponse>(secondRefresh.Value);
+
+        await authenticationService.SignOutAsync(
+            new RefreshTokenRequest(secondFamilyReplacement.RefreshToken),
+            TestContext.Current.CancellationToken);
+        var signedOutFamilyRefresh = await authenticationService.RefreshAsync(
+            new RefreshTokenRequest(secondFamilyReplacement.RefreshToken),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(IdentityFailureKind.Unauthorized, signedOutFamilyRefresh.Failure?.Kind);
+    }
+
+    /// <summary>
+    /// Tests that changing a password revokes every previously issued refresh session.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    [Fact]
+    public async Task Password_change_revokes_every_existing_refresh_session()
+    {
+        using var scope = fixture.CreateScope();
+        var playerAdministrationService = scope.ServiceProvider.GetRequiredService<IPlayerAdministrationService>();
+        var authenticationService = scope.ServiceProvider.GetRequiredService<IAuthenticationService>();
+        var enrollment = await playerAdministrationService.EnrollAsync(
+            new EnrollPlayerRequest("PasswordChangePlayer"),
+            TestContext.Current.CancellationToken);
+
+        Assert.Null(enrollment.Failure);
+        Assert.NotNull(enrollment.Value);
+
+        var initialPasswordChange = await authenticationService.ChangePasswordAsync(
+            enrollment.Value.AccountId,
+            new ChangePasswordRequest(
+                enrollment.Value.TemporaryCredential.TemporaryCredential,
+                "Initial-player-password1!"),
+            TestContext.Current.CancellationToken);
+
+        Assert.Null(initialPasswordChange.Failure);
+        var firstFamily = Assert.IsType<TokenPairResponse>(initialPasswordChange.Value);
+
+        var secondSignIn = await authenticationService.SignInAsync(
+            new SignInRequest("PasswordChangePlayer", "Initial-player-password1!"),
+            TestContext.Current.CancellationToken);
+
+        Assert.Null(secondSignIn.Failure);
+        var secondFamily = Assert.IsType<TokenPairResponse>(secondSignIn.Value);
+
+        var subsequentPasswordChange = await authenticationService.ChangePasswordAsync(
+            enrollment.Value.AccountId,
+            new ChangePasswordRequest("Initial-player-password1!", "Updated-player-password1!"),
+            TestContext.Current.CancellationToken);
+
+        Assert.Null(subsequentPasswordChange.Failure);
+        Assert.IsType<TokenPairResponse>(subsequentPasswordChange.Value);
+
+        var firstFamilyRefresh = await authenticationService.RefreshAsync(
+            new RefreshTokenRequest(firstFamily.RefreshToken),
+            TestContext.Current.CancellationToken);
+        var secondFamilyRefresh = await authenticationService.RefreshAsync(
+            new RefreshTokenRequest(secondFamily.RefreshToken),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(IdentityFailureKind.Unauthorized, firstFamilyRefresh.Failure?.Kind);
+        Assert.Equal(IdentityFailureKind.Unauthorized, secondFamilyRefresh.Failure?.Kind);
+    }
+
 }
 
 /// <summary>

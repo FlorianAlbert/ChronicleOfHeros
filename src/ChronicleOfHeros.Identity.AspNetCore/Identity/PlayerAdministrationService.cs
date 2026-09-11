@@ -70,5 +70,5 @@ internal sealed class PlayerAdministrationService(
     }
 
     private static string CreateTemporaryCredential() =>
-        $"A{Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToUpperInvariant()}!1";
+        $"Aa{Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToUpperInvariant()}!1";
 }

@@ -8,6 +8,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 builder.AddAspNetCoreIdentity();
+builder.Services.AddScoped(services => new SignInEndpoint(
+    services.GetRequiredService<IAuthenticationService>()));
+builder.Services.AddScoped(services => new ChangePasswordEndpoint(
+    services.GetRequiredService<IAuthenticationService>()));
+builder.Services.AddScoped(services => new RefreshEndpoint(
+    services.GetRequiredService<IAuthenticationService>()));
+builder.Services.AddScoped(services => new SignOutEndpoint(
+    services.GetRequiredService<IAuthenticationService>()));
 
 var app = builder.Build();
 
@@ -16,63 +24,10 @@ app.UseAuthorization();
 
 app.MapDefaultEndpoints();
 
-app.MapPost(
-    "/authentication/sign-in",
-    async (
-        SignInRequest request,
-            IAuthenticationService authenticationService,
-        CancellationToken cancellationToken) =>
-    {
-        return IdentityHttpResults.From(
-            await authenticationService.SignInAsync(request, cancellationToken).ConfigureAwait(false),
-            value => Results.Ok(value));
-    })
-    .AllowAnonymous();
-
-app.MapPost(
-    "/authentication/change-password",
-    async (
-        ChangePasswordRequest request,
-        HttpContext context,
-        IAuthenticationService authenticationService,
-        CancellationToken cancellationToken) =>
-    {
-        var accountId = context.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (!Guid.TryParse(accountId, out var parsedAccountId))
-        {
-            return Results.Unauthorized();
-        }
-
-        return IdentityHttpResults.From(
-            await authenticationService.ChangePasswordAsync(parsedAccountId, request, cancellationToken).ConfigureAwait(false),
-            value => Results.Ok(value));
-    })
-    .RequireAuthorization("PasswordChange");
-
-app.MapPost(
-    "/authentication/refresh",
-    async (
-        RefreshTokenRequest request,
-        IAuthenticationService authenticationService,
-        CancellationToken cancellationToken) =>
-    {
-        return IdentityHttpResults.From(
-        await authenticationService.RefreshAsync(request, cancellationToken).ConfigureAwait(false),
-        value => Results.Ok(value));
-    })
-    .AllowAnonymous();
-
-app.MapPost(
-    "/authentication/sign-out",
-    async (
-        RefreshTokenRequest request,
-        IAuthenticationService authenticationService,
-        CancellationToken cancellationToken) =>
-    {
-        await authenticationService.SignOutAsync(request, cancellationToken).ConfigureAwait(false);
-        return Results.NoContent();
-    })
-    .AllowAnonymous();
+SignInEndpoint.Map(app);
+ChangePasswordEndpoint.Map(app);
+RefreshEndpoint.Map(app);
+SignOutEndpoint.Map(app);
 
 app.MapPost(
     "/players",
