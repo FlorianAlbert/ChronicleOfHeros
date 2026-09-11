@@ -88,7 +88,7 @@ public sealed class IdentityCapabilityFixture : IAsyncLifetime
         await database.StartAsync().ConfigureAwait(false);
         await MigrateDatabaseAsync().ConfigureAwait(false);
 
-        var builder = CreateHostBuilder();
+        var builder = CreateRuntimeHostBuilder();
         builder.AddAspNetCoreIdentity();
         runtimeHost = builder.Build();
         await runtimeHost.StartAsync().ConfigureAwait(false);
@@ -114,14 +114,18 @@ public sealed class IdentityCapabilityFixture : IAsyncLifetime
 
     private async Task MigrateDatabaseAsync()
     {
-        var builder = CreateHostBuilder();
+        var builder = Host.CreateApplicationBuilder();
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["ConnectionStrings:chronicleofheros"] = database.GetConnectionString(),
+        });
         builder.AddAspNetCoreIdentity(options => options.EnableMigrations());
         using var migrationHost = builder.Build();
         await migrationHost.StartAsync().ConfigureAwait(false);
         await migrationHost.WaitForShutdownAsync().ConfigureAwait(false);
     }
 
-    private HostApplicationBuilder CreateHostBuilder()
+    private HostApplicationBuilder CreateRuntimeHostBuilder()
     {
         using var signingKey = RSA.Create(2048);
         var builder = Host.CreateApplicationBuilder();
