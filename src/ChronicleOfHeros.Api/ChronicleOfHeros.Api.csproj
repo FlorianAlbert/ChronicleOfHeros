@@ -1,7 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
-  <PropertyGroup>
-  </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="../ChronicleOfHeros.ServiceDefaults/ChronicleOfHeros.ServiceDefaults.csproj" />
     <ProjectReference Include="../ChronicleOfHeros.Identity.AspNetCore/ChronicleOfHeros.Identity.AspNetCore.csproj" />
