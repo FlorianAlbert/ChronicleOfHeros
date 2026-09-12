@@ -18,44 +18,6 @@ public sealed class AspNetCoreIdentityRegistrationTests
 #pragma warning disable CA1707 // Identifiers should not contain underscores
 
     /// <summary>
-    /// Tests that the contracts assembly does not reference any ASP.NET Core or persistence-related assemblies, ensuring that the contracts remain independent of specific frameworks or implementations.
-    /// </summary>
-    [Fact]
-    public void Contracts_reference_no_asp_net_core_or_persistence_assemblies()
-    {
-        IEnumerable<string?> referencedAssemblies = typeof(IAuthenticationService).Assembly
-            .GetReferencedAssemblies()
-            .Select(assemblyName => assemblyName.Name);
-
-        Assert.DoesNotContain(
-            referencedAssemblies,
-            name => name is not null
-                && (name.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal)
-                    || name.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.Ordinal)
-                    || name.StartsWith("Microsoft.IdentityModel", StringComparison.Ordinal)));
-    }
-
-    /// <summary>
-    /// Tests that the <see cref="AspNetCoreIdentityRegistration"/> implementation exposes only its intended public surface, ensuring that no unintended types are publicly accessible.
-    /// </summary>
-    [Fact]
-    public void Implementation_exposes_only_its_registration_surface()
-    {
-        string[] publicTypeNames = [.. typeof(AspNetCoreIdentityRegistration).Assembly
-            .GetExportedTypes()
-            .Where(type => !type.IsNested)
-            .Select(type => type.FullName!)
-            .OrderBy(typeName => typeName)];
-
-        Assert.Equal(
-            [
-                typeof(AspNetCoreIdentityRegistration).FullName!,
-                typeof(AspNetCoreIdentityRegistrationOptions).FullName!,
-            ],
-            publicTypeNames);
-    }
-
-    /// <summary>
     /// Tests that the runtime registration of the identity services rejects missing JWT configuration at startup, ensuring that the necessary configuration is provided for proper operation.
     /// </summary>
     /// <returns>A task representing the asynchronous operation.</returns>

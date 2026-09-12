@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/ChronicleOfHeros.Architecture.Tests/ChronicleOfHeros.Architecture.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/ChronicleOfHeros.Identity.AspNetCore.Tests/ChronicleOfHeros.Identity.AspNetCore.Tests.csproj" />
     <Project Path="src/ChronicleOfHeros.Identity.AspNetCore/ChronicleOfHeros.Identity.AspNetCore.csproj" />

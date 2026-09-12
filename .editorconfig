@@ -18,5 +18,5 @@ csharp_style_namespace_declarations = file_scoped:suggestion
 csharp_style_expression_bodied_methods = when_on_single_line:suggestion
 
 # Exclude generated Entity Framework Core migrations from analysis
-[src/ChronicleOfHeros.Identity.AspNetCore/Data/Migrations/*.cs]
+[src/ChronicleOfHeros.Identity.AspNetCore/Infrastructure/Data/Migrations/*.cs]
 generated_code = true
