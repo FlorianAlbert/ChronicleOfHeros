@@ -1,20 +1,14 @@
 using System.Net;
 
-using Aspire.Hosting;
-using Aspire.Hosting.ApplicationModel;
-using Aspire.Hosting.Testing;
-
-using Microsoft.Extensions.DependencyInjection;
-
 namespace ChronicleOfHeros.AppHost.Tests;
 
 /// <summary>
 /// This test class is intended to be a smoke test for the ChronicleOfHeros.AppHost application.
 /// </summary>
 [Collection("AppHost integration")]
-public class AppHostSmokeTests
+public class AppHostSmokeTests(LandingPageFixture fixture) : IClassFixture<LandingPageFixture>
 {
-    private static readonly TimeSpan HealthRequestTimeout = TimeSpan.FromSeconds(90);
+    private readonly LandingPageFixture _fixture = fixture;
 
 #pragma warning disable CA1707 // Identifiers should not contain underscores
 
@@ -25,35 +19,19 @@ public class AppHostSmokeTests
     [Fact]
     public async Task Public_root_presents_the_field_notes_landing_core()
     {
-        IDistributedApplicationTestingBuilder appHost = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.ChronicleOfHeros_AppHost>(
-                BootstrapOperatorTestParameters.CreateAppHostArguments(),
-                TestContext.Current.CancellationToken);
+        using HttpClient webClient = _fixture.CreateHttpClient();
 
-        DistributedApplication distributedApplication = await appHost.BuildAsync(TestContext.Current.CancellationToken);
-        await using (distributedApplication.ConfigureAwait(false))
-        {
-            await distributedApplication.StartAsync(TestContext.Current.CancellationToken);
+        Uri landingPageUri = new("/", UriKind.Relative);
+        string landingPage = await webClient.GetStringAsync(landingPageUri, TestContext.Current.CancellationToken);
 
-            ResourceNotificationService resourceNotifications = distributedApplication.Services.GetRequiredService<ResourceNotificationService>();
-
-            _ = await resourceNotifications.WaitForResourceHealthyAsync("web", TestContext.Current.CancellationToken);
-
-            using HttpClient webClient = distributedApplication.CreateHttpClient("web");
-            webClient.Timeout = HealthRequestTimeout;
-
-            Uri landingPageUri = new("/", UriKind.Relative);
-            string landingPage = await webClient.GetStringAsync(landingPageUri, TestContext.Current.CancellationToken);
-
-            Assert.Contains("<title>ChronicleOfHeros | Your character sheet at the table</title>", landingPage, StringComparison.Ordinal);
-            Assert.Contains("An accurate character sheet, ready at the table.", landingPage, StringComparison.Ordinal);
-            Assert.Contains(">Armor<", landingPage, StringComparison.Ordinal);
-            Assert.Contains(">Initiative<", landingPage, StringComparison.Ordinal);
-            Assert.Contains(">Speed<", landingPage, StringComparison.Ordinal);
-            Assert.Matches("<button[^>]*disabled[^>]*>Coming soon</button>", landingPage);
-            Assert.DoesNotContain("prototype-switcher", landingPage, StringComparison.Ordinal);
-            Assert.DoesNotContain("Visual Prototype", landingPage, StringComparison.Ordinal);
-        }
+        Assert.Contains("<title>ChronicleOfHeros | Your character sheet at the table</title>", landingPage, StringComparison.Ordinal);
+        Assert.Contains("An accurate character sheet, ready at the table.", landingPage, StringComparison.Ordinal);
+        Assert.Contains(">Armor<", landingPage, StringComparison.Ordinal);
+        Assert.Contains(">Initiative<", landingPage, StringComparison.Ordinal);
+        Assert.Contains(">Speed<", landingPage, StringComparison.Ordinal);
+        Assert.Matches("<button[^>]*disabled[^>]*>Coming soon</button>", landingPage);
+        Assert.DoesNotContain("prototype-switcher", landingPage, StringComparison.Ordinal);
+        Assert.DoesNotContain("Visual Prototype", landingPage, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -63,33 +41,15 @@ public class AppHostSmokeTests
     [Fact]
     public async Task Health_endpoints_are_available_through_the_web_host()
     {
-        IDistributedApplicationTestingBuilder appHost = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.ChronicleOfHeros_AppHost>(
-                BootstrapOperatorTestParameters.CreateAppHostArguments(),
-                TestContext.Current.CancellationToken);
+        using HttpClient webClient = _fixture.CreateHttpClient();
 
-        DistributedApplication distributedApplication = await appHost.BuildAsync(TestContext.Current.CancellationToken);
-        await using (distributedApplication.ConfigureAwait(false))
-        {
-            await distributedApplication.StartAsync(TestContext.Current.CancellationToken);
+        Uri webHealthUri = new("/health", UriKind.Relative);
+        using HttpResponseMessage webHealthResponse = await webClient.GetAsync(webHealthUri, TestContext.Current.CancellationToken);
+        Uri apiHealthUri = new("/api/health", UriKind.Relative);
+        using HttpResponseMessage apiHealthResponse = await webClient.GetAsync(apiHealthUri, TestContext.Current.CancellationToken);
 
-            ResourceNotificationService resourceNotifications = distributedApplication.Services.GetRequiredService<ResourceNotificationService>();
-
-            _ = await resourceNotifications.WaitForResourceHealthyAsync("postgres", TestContext.Current.CancellationToken);
-            _ = await resourceNotifications.WaitForResourceHealthyAsync("api", TestContext.Current.CancellationToken);
-            _ = await resourceNotifications.WaitForResourceHealthyAsync("web", TestContext.Current.CancellationToken);
-
-            using HttpClient webClient = distributedApplication.CreateHttpClient("web");
-            webClient.Timeout = HealthRequestTimeout;
-
-            Uri webHealthUri = new("/health", UriKind.Relative);
-            HttpResponseMessage webHealthResponse = await webClient.GetAsync(webHealthUri, TestContext.Current.CancellationToken);
-            Uri apiHealthUri = new("/api/health", UriKind.Relative);
-            HttpResponseMessage apiHealthResponse = await webClient.GetAsync(apiHealthUri, TestContext.Current.CancellationToken);
-
-            Assert.Equal(HttpStatusCode.OK, webHealthResponse.StatusCode);
-            Assert.Equal(HttpStatusCode.OK, apiHealthResponse.StatusCode);
-        }
+        Assert.Equal(HttpStatusCode.OK, webHealthResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, apiHealthResponse.StatusCode);
     }
 
 #pragma warning restore CA1707 // Identifiers should not contain underscores
