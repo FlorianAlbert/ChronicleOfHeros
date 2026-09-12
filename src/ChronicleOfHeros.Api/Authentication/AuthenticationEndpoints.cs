@@ -4,11 +4,43 @@ using ChronicleOfHeros.Identity.Contracts;
 
 namespace ChronicleOfHeros.Api.Authentication;
 
+internal static class AuthenticationEndpointsExtensions
+{
+    extension(WebApplicationBuilder builder)
+    {
+        public WebApplicationBuilder AddAuthenticationEndpoints()
+        {
+            _ = builder.Services.AddScoped(services => new SignInEndpoint(
+                services.GetRequiredService<IAuthenticationService>()));
+            _ = builder.Services.AddScoped(services => new ChangePasswordEndpoint(
+                services.GetRequiredService<IAuthenticationService>()));
+            _ = builder.Services.AddScoped(services => new RefreshEndpoint(
+                services.GetRequiredService<IAuthenticationService>()));
+            _ = builder.Services.AddScoped(services => new SignOutEndpoint(
+                services.GetRequiredService<IAuthenticationService>()));
+
+            return builder;
+        }
+    }
+
+    extension(WebApplication webApplication)
+    {
+        public WebApplication MapAuthenticationEndpoints()
+        {
+            SignInEndpoint.Map(webApplication);
+            ChangePasswordEndpoint.Map(webApplication);
+            RefreshEndpoint.Map(webApplication);
+            SignOutEndpoint.Map(webApplication);
+            return webApplication;
+        }
+    }
+}
+
 internal sealed class SignInEndpoint(IAuthenticationService authenticationService)
 {
     internal static void Map(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost(
+        _ = endpoints.MapPost(
             "/authentication/sign-in",
             async (
                 SignInRequest request,
@@ -30,7 +62,7 @@ internal sealed class ChangePasswordEndpoint(IAuthenticationService authenticati
 {
     internal static void Map(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost(
+        _ = endpoints.MapPost(
             "/authentication/change-password",
             async (
                 ChangePasswordRequest request,
@@ -48,13 +80,10 @@ internal sealed class ChangePasswordEndpoint(IAuthenticationService authenticati
         HttpContext context,
         CancellationToken cancellationToken)
     {
-        var accountId = context.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (!Guid.TryParse(accountId, out var parsedAccountId))
-        {
-            return Results.Unauthorized();
-        }
-
-        return IdentityHttpResults.From(
+        string? accountId = context.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        return !Guid.TryParse(accountId, out Guid parsedAccountId)
+            ? Results.Unauthorized()
+            : IdentityHttpResults.From(
             await authenticationService.ChangePasswordAsync(parsedAccountId, request, cancellationToken).ConfigureAwait(false),
             value => Results.Ok(value));
     }
@@ -64,7 +93,7 @@ internal sealed class RefreshEndpoint(IAuthenticationService authenticationServi
 {
     internal static void Map(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost(
+        _ = endpoints.MapPost(
             "/authentication/refresh",
             async (
                 RefreshTokenRequest request,
@@ -86,7 +115,7 @@ internal sealed class SignOutEndpoint(IAuthenticationService authenticationServi
 {
     internal static void Map(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost(
+        _ = endpoints.MapPost(
             "/authentication/sign-out",
             async (
                 RefreshTokenRequest request,

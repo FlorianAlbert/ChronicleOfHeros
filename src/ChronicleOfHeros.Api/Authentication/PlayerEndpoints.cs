@@ -4,11 +4,40 @@ using ChronicleOfHeros.Identity.Contracts;
 
 namespace ChronicleOfHeros.Api.Authentication;
 
+internal static class PlayerEndpointsExtensions
+{
+    extension(WebApplicationBuilder builder)
+    {
+        public WebApplicationBuilder AddPlayerEndpoints()
+        {
+            _ = builder.Services.AddScoped(services => new EnrollPlayerEndpoint(
+                services.GetRequiredService<IPlayerAdministrationService>()));
+            _ = builder.Services.AddScoped(services => new ResetPlayerPasswordEndpoint(
+                services.GetRequiredService<IPlayerAdministrationService>()));
+            _ = builder.Services.AddScoped(services => new CurrentPlayerEndpoint(
+                services.GetRequiredService<IPlayerIdentityService>()));
+
+            return builder;
+        }
+    }
+
+    extension(WebApplication webApplication)
+    {
+        public WebApplication MapPlayerEndpoints()
+        {
+            EnrollPlayerEndpoint.Map(webApplication);
+            ResetPlayerPasswordEndpoint.Map(webApplication);
+            CurrentPlayerEndpoint.Map(webApplication);
+            return webApplication;
+        }
+    }
+}
+
 internal sealed class EnrollPlayerEndpoint(IPlayerAdministrationService playerAdministrationService)
 {
     internal static void Map(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost(
+        _ = endpoints.MapPost(
             "/players",
             async (
                 EnrollPlayerRequest request,
@@ -30,7 +59,7 @@ internal sealed class ResetPlayerPasswordEndpoint(IPlayerAdministrationService p
 {
     internal static void Map(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost(
+        _ = endpoints.MapPost(
             "/players/{username}/reset-password",
             async (
                 string username,
@@ -54,7 +83,7 @@ internal sealed class CurrentPlayerEndpoint(IPlayerIdentityService playerIdentit
 {
     internal static void Map(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet(
+        _ = endpoints.MapGet(
             "/players/me",
             async (
                 HttpContext context,
@@ -68,13 +97,10 @@ internal sealed class CurrentPlayerEndpoint(IPlayerIdentityService playerIdentit
 
     private async Task<IResult> HandleAsync(HttpContext context, CancellationToken cancellationToken)
     {
-        var accountId = context.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (!Guid.TryParse(accountId, out var parsedAccountId))
-        {
-            return Results.Unauthorized();
-        }
-
-        return IdentityHttpResults.From(
+        string? accountId = context.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        return !Guid.TryParse(accountId, out Guid parsedAccountId)
+            ? Results.Unauthorized()
+            : IdentityHttpResults.From(
             await playerIdentityService.GetAsync(parsedAccountId, cancellationToken).ConfigureAwait(false),
             value => Results.Ok(value));
     }

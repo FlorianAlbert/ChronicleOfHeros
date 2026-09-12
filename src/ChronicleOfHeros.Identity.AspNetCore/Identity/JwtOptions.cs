@@ -2,6 +2,9 @@ using Microsoft.Extensions.Configuration;
 
 namespace ChronicleOfHeros.Identity.AspNetCore.Identity;
 
+// This class gets used by the dependency injection system
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
+
 internal sealed class JwtOptions
 {
     public const string ConfigurationSectionName = "Jwt";
@@ -14,7 +17,7 @@ internal sealed class JwtOptions
 
     internal void ConfigureFrom(IConfiguration configuration)
     {
-        var section = configuration.GetSection(ConfigurationSectionName);
+        IConfigurationSection section = configuration.GetSection(ConfigurationSectionName);
         SigningPrivateKey = section["SigningPrivateKey"];
         Issuer = section["Issuer"];
         Audience = section["Audience"];
@@ -25,3 +28,5 @@ internal sealed class JwtOptions
         && !string.IsNullOrWhiteSpace(Issuer)
         && !string.IsNullOrWhiteSpace(Audience);
 }
+
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes

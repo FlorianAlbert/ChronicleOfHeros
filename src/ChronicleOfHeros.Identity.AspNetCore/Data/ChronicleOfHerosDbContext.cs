@@ -7,6 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ChronicleOfHeros.Identity.AspNetCore.Data;
 
+// This class gets used by the dependency injection system 
+// and may not be directly instantiated.
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
+
 internal sealed class ChronicleOfHerosDbContext(DbContextOptions<ChronicleOfHerosDbContext> options)
     : IdentityDbContext<ApplicationUser, IdentityRole, string>(options)
 {
@@ -15,7 +19,9 @@ internal sealed class ChronicleOfHerosDbContext(DbContextOptions<ChronicleOfHero
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.ApplyConfiguration(new ApplicationUserConfiguration());
-        modelBuilder.ApplyConfiguration(new RefreshSessionConfiguration());
+        _ = modelBuilder.ApplyConfiguration(new ApplicationUserConfiguration());
+        _ = modelBuilder.ApplyConfiguration(new RefreshSessionConfiguration());
     }
 }
+
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes

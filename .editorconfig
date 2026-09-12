@@ -11,93 +11,12 @@ csharp_new_line_before_members_in_object_initializers = true
 csharp_new_line_before_members_in_anonymous_types = true
 csharp_new_line_between_query_expression_clauses = true
 
+# Prefer modern C# 10+ File-Scoped Namespaces over Block Namespaces
+csharp_style_namespace_declarations = file_scoped:suggestion
+
+# Prefer modern Expression-Bodied Methods when code fits on a single line
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+
 # Exclude generated Entity Framework Core migrations from analysis
 [src/ChronicleOfHeros.Identity.AspNetCore/Data/Migrations/*.cs]
 generated_code = true
-
-# C# 14 extension blocks are incorrectly reported as public nested types.
-[src/ChronicleOfHeros.ServiceDefaults/Extensions.cs]
-dotnet_diagnostic.CA1034.severity = none
-
-[src/ChronicleOfHeros.Identity.AspNetCore/AspNetCoreIdentityRegistration.cs]
-dotnet_diagnostic.CA1034.severity = none
-
-# These types are instantiated through DI, options binding, EF Core, or hosted-service registration.
-[src/ChronicleOfHeros.Identity.AspNetCore/BootstrapOperatorHostedService.cs]
-dotnet_diagnostic.CA1812.severity = none
-
-[src/ChronicleOfHeros.Identity.AspNetCore/IdentityMigrationHostedService.cs]
-dotnet_diagnostic.CA1812.severity = none
-
-[src/ChronicleOfHeros.Identity.AspNetCore/Data/ChronicleOfHerosDbContext.cs]
-dotnet_diagnostic.CA1812.severity = none
-
-[src/ChronicleOfHeros.Identity.AspNetCore/Identity/AuthenticationService.cs]
-dotnet_diagnostic.CA1812.severity = none
-
-[src/ChronicleOfHeros.Identity.AspNetCore/Identity/AuthenticationTokenService.cs]
-dotnet_diagnostic.CA1812.severity = none
-
-[src/ChronicleOfHeros.Identity.AspNetCore/Identity/BootstrapOperatorOptions.cs]
-dotnet_diagnostic.CA1812.severity = none
-
-[src/ChronicleOfHeros.Identity.AspNetCore/Identity/JwtOptions.cs]
-dotnet_diagnostic.CA1812.severity = none
-
-[src/ChronicleOfHeros.Identity.AspNetCore/Identity/PlayerAdministrationService.cs]
-dotnet_diagnostic.CA1812.severity = none
-
-[src/ChronicleOfHeros.Identity.AspNetCore/Identity/PlayerIdentityService.cs]
-dotnet_diagnostic.CA1812.severity = none
-
-# These public symbols are consumed by the Web host and integration tests.
-[src/ChronicleOfHeros.Web.Client/Localization/SharedResources.cs]
-dotnet_diagnostic.CA1515.severity = none
-
-[src/ChronicleOfHeros.Web.Client/Services/Localization/MissingTranslationDiagnosticStringLocalizerFactory.cs]
-dotnet_diagnostic.CA1515.severity = none
-
-# The executable host's top-level statements generate a public Program type.
-[src/ChronicleOfHeros.Web/**.cs]
-dotnet_diagnostic.CA1515.severity = none
-
-# Scenario-style xUnit names use underscores for readability.
-[src/ChronicleOfHeros.Identity.AspNetCore.Tests/AspNetCoreIdentityRegistrationTests.cs]
-dotnet_diagnostic.CA1707.severity = none
-
-[src/ChronicleOfHeros.Identity.AspNetCore.Tests/IdentityCapabilityTests.cs]
-dotnet_diagnostic.CA1515.severity = none
-dotnet_diagnostic.CA1707.severity = none
-
-[src/ChronicleOfHeros.AppHost.Tests/AppHostSmokeTests.cs]
-dotnet_diagnostic.CA1307.severity = none
-dotnet_diagnostic.CA1707.severity = none
-dotnet_diagnostic.CA2234.severity = none
-
-[src/ChronicleOfHeros.AppHost.Tests/AuthenticationHttpTests.cs]
-dotnet_diagnostic.CA1308.severity = none
-dotnet_diagnostic.CA1707.severity = none
-dotnet_diagnostic.CA1849.severity = none
-dotnet_diagnostic.CA2234.severity = none
-
-[src/ChronicleOfHeros.AppHost.Tests/IdentityBootstrapTests.cs]
-dotnet_diagnostic.CA1707.severity = none
-
-[src/ChronicleOfHeros.AppHost.Tests/LandingPageBrowserTests.cs]
-dotnet_diagnostic.CA1054.severity = none
-dotnet_diagnostic.CA1307.severity = none
-dotnet_diagnostic.CA1707.severity = none
-dotnet_diagnostic.CA2234.severity = none
-
-[src/ChronicleOfHeros.AppHost.Tests/LandingPageFixture.cs]
-dotnet_diagnostic.CA1062.severity = none
-dotnet_diagnostic.CA1515.severity = none
-dotnet_diagnostic.CA1859.severity = none
-dotnet_diagnostic.CA2000.severity = none
-dotnet_diagnostic.CA5400.severity = none
-
-[src/ChronicleOfHeros.AppHost.Tests/TranslationResourceTests.cs]
-dotnet_diagnostic.CA1307.severity = none
-dotnet_diagnostic.CA1707.severity = none
-dotnet_diagnostic.CA1812.severity = none
-dotnet_diagnostic.CA2000.severity = none

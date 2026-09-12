@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Security.Cryptography;
 
 using Aspire.Hosting;
@@ -17,7 +16,7 @@ internal static class BootstrapOperatorTestParameters
 
     internal static string[] CreateAppHostArguments()
     {
-        using var rsa = RSA.Create(2048);
+        using RSA rsa = RSA.Create(2048);
 
         return
         [
@@ -36,6 +35,9 @@ internal static class BootstrapOperatorTestParameters
 [Collection("AppHost integration")]
 public sealed class IdentityBootstrapTests
 {
+
+#pragma warning disable CA1707 // Identifiers should not contain underscores
+
     /// <summary>
     /// Verifies that the ChronicleOfHeros.AppHost project runs migrations and bootstraps an operator with a temporary credential, allowing sign-in via the API.
     /// </summary>
@@ -43,7 +45,7 @@ public sealed class IdentityBootstrapTests
     [Fact]
     public async Task Startup_runs_migrations_and_bootstraps_an_operator_with_a_temporary_credential()
     {
-        var appHost = await DistributedApplicationTestingBuilder
+        IDistributedApplicationTestingBuilder appHost = await DistributedApplicationTestingBuilder
             .CreateAsync<Projects.ChronicleOfHeros_AppHost>(
                 BootstrapOperatorTestParameters.CreateAppHostArguments(),
                 TestContext.Current.CancellationToken);
@@ -53,15 +55,15 @@ public sealed class IdentityBootstrapTests
         {
             await distributedApplication.StartAsync(TestContext.Current.CancellationToken);
 
-            var resourceNotifications = distributedApplication.Services.GetRequiredService<ResourceNotificationService>();
-            await resourceNotifications.WaitForResourceHealthyAsync("api", TestContext.Current.CancellationToken);
+            ResourceNotificationService resourceNotifications = distributedApplication.Services.GetRequiredService<ResourceNotificationService>();
+            _ = await resourceNotifications.WaitForResourceHealthyAsync("api", TestContext.Current.CancellationToken);
 
-            using var apiClient = distributedApplication.CreateHttpClient("api");
-            using var signInResponse = await apiClient.PostAsJsonAsync(
+            using HttpClient apiClient = distributedApplication.CreateHttpClient("api");
+            using HttpResponseMessage signInResponse = await apiClient.PostAsJsonAsync(
                 "/authentication/sign-in",
                 new
                 {
-                    Username = BootstrapOperatorTestParameters.Username,
+                    BootstrapOperatorTestParameters.Username,
                     Password = BootstrapOperatorTestParameters.TemporaryPassword,
                 },
                 TestContext.Current.CancellationToken);
@@ -69,4 +71,7 @@ public sealed class IdentityBootstrapTests
             Assert.Equal(HttpStatusCode.OK, signInResponse.StatusCode);
         }
     }
+
+#pragma warning restore CA1707 // Identifiers should not contain underscores
+
 }

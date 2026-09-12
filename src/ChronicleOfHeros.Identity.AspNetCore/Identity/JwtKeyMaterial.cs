@@ -31,10 +31,10 @@ internal sealed class JwtKeyMaterial : IDisposable
 
     public static JwtKeyMaterial Create(JwtOptions options)
     {
-        var signingRsa = RSA.Create();
+        RSA signingRsa = RSA.Create();
         signingRsa.ImportPkcs8PrivateKey(Convert.FromBase64String(options.SigningPrivateKey!), out _);
 
-        var validationRsa = RSA.Create();
+        RSA validationRsa = RSA.Create();
         validationRsa.ImportSubjectPublicKeyInfo(signingRsa.ExportSubjectPublicKeyInfo(), out _);
 
         return new JwtKeyMaterial(signingRsa, validationRsa);

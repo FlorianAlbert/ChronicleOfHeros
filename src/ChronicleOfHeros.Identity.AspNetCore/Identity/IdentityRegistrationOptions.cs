@@ -18,8 +18,8 @@ internal static class IdentityRegistrationOptionsExtensions
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 IssuerSigningKey = jwtKeyMaterial.ValidationKey,
-                ValidIssuer = jwtOptions.Issuer!,
-                ValidAudience = jwtOptions.Audience!,
+                ValidIssuer = jwtOptions.Issuer,
+                ValidAudience = jwtOptions.Audience,
                 ValidateAudience = true,
                 ValidateIssuer = true,
                 ValidateIssuerSigningKey = true,

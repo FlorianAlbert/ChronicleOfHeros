@@ -5,15 +5,15 @@ namespace ChronicleOfHeros.Identity.Contracts;
 /// </summary>
 public interface IPlayerIdentityService
 {
-	/// <summary>
-	/// Retrieves the identity information for the specified Player account.
-	/// </summary>
-	/// <param name="accountId">The unique identifier of the Player account.</param>
-	/// <param name="cancellationToken">The cancellation token.</param>
-	/// <returns>The result of the Player identity operation.</returns>
-	Task<IdentityOperationResult<PlayerIdentityResponse>> GetAsync(
-		Guid accountId,
-		CancellationToken cancellationToken);
+    /// <summary>
+    /// Retrieves the identity information for the specified Player account.
+    /// </summary>
+    /// <param name="accountId">The unique identifier of the Player account.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The result of the Player identity operation.</returns>
+    Task<IdentityOperationResult<PlayerIdentityResponse>> GetAsync(
+        Guid accountId,
+        CancellationToken cancellationToken);
 }
 
 /// <summary>

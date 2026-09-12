@@ -8,7 +8,9 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
+#pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace Microsoft.Extensions.Hosting;
+#pragma warning restore IDE0130 // Namespace does not match folder structure
 
 /// <summary>
 /// Extension methods for configuring service defaults in a host application builder.
@@ -26,14 +28,14 @@ public static class ServiceDefaultsExtensions
         /// <returns>The modified host application builder.</returns>
         public TBuilder AddServiceDefaults()
         {
-            builder.ConfigureOpenTelemetry();
-            builder.AddDefaultHealthChecks();
-            builder.Services.AddServiceDiscovery();
-            builder.Services.ConfigureHttpClientDefaults(http =>
-            {
-                http.AddStandardResilienceHandler();
-                http.AddServiceDiscovery();
-            });
+            _ = builder.ConfigureOpenTelemetry();
+            _ = builder.AddDefaultHealthChecks();
+            _ = builder.Services.AddServiceDiscovery()
+                                .ConfigureHttpClientDefaults(http =>
+                                {
+                                    _ = http.AddStandardResilienceHandler();
+                                    _ = http.AddServiceDiscovery();
+                                });
 
             return builder;
         }
@@ -44,13 +46,13 @@ public static class ServiceDefaultsExtensions
         /// <returns>The modified host application builder.</returns>
         public TBuilder ConfigureOpenTelemetry()
         {
-            builder.Logging.AddOpenTelemetry(logging =>
+            _ = builder.Logging.AddOpenTelemetry(logging =>
             {
                 logging.IncludeFormattedMessage = true;
                 logging.IncludeScopes = true;
             });
 
-            builder.Services.AddOpenTelemetry()
+            _ = builder.Services.AddOpenTelemetry()
                 .WithMetrics(metrics => metrics
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
@@ -62,7 +64,7 @@ public static class ServiceDefaultsExtensions
                         !context.Request.Path.StartsWithSegments(AlivenessEndpointPath, StringComparison.OrdinalIgnoreCase))
                     .AddHttpClientInstrumentation());
 
-            AddOpenTelemetryExporters(builder);
+            _ = AddOpenTelemetryExporters(builder);
 
             return builder;
         }
@@ -74,7 +76,7 @@ public static class ServiceDefaultsExtensions
         /// <returns>The modified host application builder.</returns>
         public TBuilder AddDefaultHealthChecks()
         {
-            builder.Services.AddHealthChecks()
+            _ = builder.Services.AddHealthChecks()
                 .AddCheck("self", () => HealthCheckResult.Healthy(), ["live"]);
 
             return builder;
@@ -91,8 +93,8 @@ public static class ServiceDefaultsExtensions
         {
             if (app.Environment.IsDevelopment())
             {
-                app.MapHealthChecks(HealthEndpointPath);
-                app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions
+                _ = app.MapHealthChecks(HealthEndpointPath);
+                _ = app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions
                 {
                     Predicate = registration => registration.Tags.Contains("live")
                 });
@@ -106,7 +108,7 @@ public static class ServiceDefaultsExtensions
     {
         if (!string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]))
         {
-            builder.Services.AddOpenTelemetry().UseOtlpExporter();
+            _ = builder.Services.AddOpenTelemetry().UseOtlpExporter();
         }
 
         return builder;

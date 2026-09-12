@@ -16,19 +16,21 @@ public sealed class TranslationResourceTests
 {
     private static readonly string[] SupportedDisplayLanguages = ["de-DE"];
 
+#pragma warning disable CA1707 // Identifiers should not contain underscores
+
     /// <summary>
     /// Verifies that when a requested translation key is missing for a specific language, the application falls back to the canonical English value. This test sets the current culture to German (de-DE) and checks that the missing translation key returns the expected English fallback value without indicating a resource not found error.
     /// </summary>
     [Fact]
     public void Missing_requested_language_key_uses_the_canonical_English_value()
     {
-        using var cultureScope = new CultureScope("de-DE");
-        using var loggerFactory = LoggerFactory.Create(_ => { });
-        var localizerFactory = new MissingTranslationDiagnosticStringLocalizerFactory(
+        using CultureScope cultureScope = new("de-DE");
+        using ILoggerFactory loggerFactory = LoggerFactory.Create(_ => { });
+        MissingTranslationDiagnosticStringLocalizerFactory localizerFactory = new(
             Options.Create(new LocalizationOptions()),
             loggerFactory);
 
-        var value = localizerFactory.Create(typeof(TranslationFallbackProbe))["EnglishFallback"];
+        LocalizedString value = localizerFactory.Create(typeof(TranslationFallbackProbe))["EnglishFallback"];
 
         Assert.Equal("English fallback", value.Value);
         Assert.False(value.ResourceNotFound);
@@ -40,20 +42,20 @@ public sealed class TranslationResourceTests
     [Fact]
     public void Missing_canonical_English_key_displays_the_key_and_records_a_diagnostic()
     {
-        using var cultureScope = new CultureScope("en-US");
-        var loggerProvider = new RecordingLoggerProvider();
-        using var loggerFactory = LoggerFactory.Create(builder => builder.AddProvider(loggerProvider));
-        var localizerFactory = new MissingTranslationDiagnosticStringLocalizerFactory(
+        using CultureScope cultureScope = new("en-US");
+        using RecordingLoggerProvider loggerProvider = new();
+        using ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddProvider(loggerProvider));
+        MissingTranslationDiagnosticStringLocalizerFactory localizerFactory = new(
             Options.Create(new LocalizationOptions()),
             loggerFactory);
 
-        var value = localizerFactory.Create(typeof(TranslationFallbackProbe))["AbsentEnglish"];
+        LocalizedString value = localizerFactory.Create(typeof(TranslationFallbackProbe))["AbsentEnglish"];
 
         Assert.Equal("AbsentEnglish", value.Value);
         Assert.True(value.ResourceNotFound);
-        var diagnostic = Assert.Single(loggerProvider.Entries);
+        LogEntry diagnostic = Assert.Single(loggerProvider.Entries);
         Assert.Equal(LogLevel.Warning, diagnostic.LogLevel);
-        Assert.Contains("Translation key AbsentEnglish is missing from its canonical English resource.", diagnostic.Message);
+        Assert.Contains("Translation key AbsentEnglish is missing from its canonical English resource.", diagnostic.Message, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -62,8 +64,8 @@ public sealed class TranslationResourceTests
     [Fact]
     public void Production_translation_resources_match_their_canonical_English_keys()
     {
-        var repositoryRoot = FindRepositoryRoot();
-        var canonicalResources = new[]
+        string repositoryRoot = FindRepositoryRoot();
+        IOrderedEnumerable<string> canonicalResources = new[]
             {
                 Path.Combine(repositoryRoot, "src", "ChronicleOfHeros.Web"),
                 Path.Combine(repositoryRoot, "src", "ChronicleOfHeros.Web.Client"),
@@ -72,13 +74,13 @@ public sealed class TranslationResourceTests
             .Where(path => !Path.GetFileNameWithoutExtension(path).EndsWith(".de-DE", StringComparison.Ordinal))
             .OrderBy(path => path, StringComparer.Ordinal);
 
-        foreach (var canonicalResource in canonicalResources)
+        foreach (string canonicalResource in canonicalResources)
         {
-            var canonicalKeys = GetResourceKeys(canonicalResource);
+            string[] canonicalKeys = GetResourceKeys(canonicalResource);
 
-            foreach (var displayLanguage in SupportedDisplayLanguages)
+            foreach (string displayLanguage in SupportedDisplayLanguages)
             {
-                var localizedResource = Path.ChangeExtension(canonicalResource, $"{displayLanguage}.resx");
+                string localizedResource = Path.ChangeExtension(canonicalResource, $"{displayLanguage}.resx");
                 Assert.True(
                     File.Exists(localizedResource),
                     $"{localizedResource} is required for the supported {displayLanguage} display language.");
@@ -87,9 +89,11 @@ public sealed class TranslationResourceTests
         }
     }
 
+#pragma warning restore CA1707 // Identifiers should not contain underscores
+
     private static string FindRepositoryRoot()
     {
-        for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
+        for (DirectoryInfo? directory = new(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
         {
             if (File.Exists(Path.Combine(directory.FullName, "ChronicleOfHeros.slnx")))
             {
@@ -114,7 +118,7 @@ public sealed class TranslationResourceTests
 
         public CultureScope(string cultureName)
         {
-            var culture = CultureInfo.GetCultureInfo(cultureName);
+            CultureInfo culture = CultureInfo.GetCultureInfo(cultureName);
             CultureInfo.CurrentCulture = culture;
             CultureInfo.CurrentUICulture = culture;
         }
@@ -148,16 +152,19 @@ public sealed class TranslationResourceTests
             EventId eventId,
             TState state,
             Exception? exception,
-            Func<TState, Exception?, string> formatter)
-        {
-            entries.Add(new(logLevel, formatter(state, exception)));
-        }
+            Func<TState, Exception?, string> formatter) => entries.Add(new(logLevel, formatter(state, exception)));
     }
 
     private sealed record LogEntry(LogLevel LogLevel, string Message);
 }
 
+// TranslationFallbackProbe is used for creating an IStringLocalizer instance for testing purposes,
+// allowing the test framework to simulate translation key lookups and fallback behavior without relying on actual application resources.
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
+
 /// <summary>
 /// A probe class used for testing translation resource behavior. This class serves as a placeholder for localization tests, allowing the test framework to verify the handling of translation keys and fallbacks without relying on actual application logic. It is used to simulate scenarios where translation keys may be missing or require fallback to canonical English values.
 /// </summary>
 internal sealed class TranslationFallbackProbe;
+
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes

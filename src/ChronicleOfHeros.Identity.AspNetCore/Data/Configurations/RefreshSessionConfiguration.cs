@@ -9,16 +9,16 @@ internal sealed class RefreshSessionConfiguration : IEntityTypeConfiguration<Ref
 {
     public void Configure(EntityTypeBuilder<RefreshSession> builder)
     {
-        builder.ToTable("RefreshSessions");
-        builder.HasKey(session => session.Id);
-        builder.Property(session => session.UserId).IsRequired();
-        builder.Property(session => session.TokenHash).IsRequired();
-        builder.Property(session => session.FamilyId).IsRequired();
-        builder.Property(session => session.CreatedAtUtc).IsRequired();
-        builder.Property(session => session.ExpiresAtUtc).IsRequired();
-        builder.Property(session => session.FamilyExpiresAtUtc).IsRequired();
-        builder.HasIndex(session => session.UserId);
-        builder.HasOne(session => session.User)
+        _ = builder.ToTable("RefreshSessions");
+        _ = builder.HasKey(session => session.Id);
+        _ = builder.Property(session => session.UserId).IsRequired();
+        _ = builder.Property(session => session.TokenHash).IsRequired();
+        _ = builder.Property(session => session.FamilyId).IsRequired();
+        _ = builder.Property(session => session.CreatedAtUtc).IsRequired();
+        _ = builder.Property(session => session.ExpiresAtUtc).IsRequired();
+        _ = builder.Property(session => session.FamilyExpiresAtUtc).IsRequired();
+        _ = builder.HasIndex(session => session.UserId);
+        _ = builder.HasOne(session => session.User)
             .WithMany()
             .HasForeignKey(session => session.UserId)
             .OnDelete(DeleteBehavior.Cascade);

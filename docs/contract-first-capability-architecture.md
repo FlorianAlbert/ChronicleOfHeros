@@ -63,7 +63,7 @@ flowchart TD
 ## C# extension conventions
 
 - Extension containers represent adapter behavior and use an `Extensions` suffix. Services represent runtime behavior and do not use that suffix.
-- Declare extension methods and extension members with C# 14 `extension(...)` blocks. Do not add legacy `this` extension parameters.
+- Declare extension methods and extension members with C# 14+ `extension(...)` blocks. Do not add legacy `this` extension parameters.
 
 ## Host and endpoint composition
 

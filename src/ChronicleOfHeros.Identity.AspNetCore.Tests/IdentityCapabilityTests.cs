@@ -17,6 +17,9 @@ namespace ChronicleOfHeros.Identity.AspNetCore.Tests;
 public sealed class IdentityCapabilityTests(IdentityCapabilityFixture fixture)
     : IClassFixture<IdentityCapabilityFixture>
 {
+
+#pragma warning disable CA1707 // Identifiers should not contain underscores
+
     /// <summary>
     /// Tests that the player enrollment process rejects an invalid username, ensuring that the system enforces proper validation rules for usernames during the enrollment process.
     /// </summary>
@@ -24,10 +27,10 @@ public sealed class IdentityCapabilityTests(IdentityCapabilityFixture fixture)
     [Fact]
     public async Task Player_enrollment_rejects_an_invalid_username()
     {
-        using var scope = fixture.CreateScope();
-        var playerAdministrationService = scope.ServiceProvider.GetRequiredService<IPlayerAdministrationService>();
+        using IServiceScope scope = fixture.CreateScope();
+        IPlayerAdministrationService playerAdministrationService = scope.ServiceProvider.GetRequiredService<IPlayerAdministrationService>();
 
-        var result = await playerAdministrationService.EnrollAsync(
+        IdentityOperationResult<PlayerEnrollmentResponse> result = await playerAdministrationService.EnrollAsync(
             new EnrollPlayerRequest("invalid username"),
             TestContext.Current.CancellationToken);
 
@@ -44,17 +47,17 @@ public sealed class IdentityCapabilityTests(IdentityCapabilityFixture fixture)
     [Fact]
     public async Task Enrolled_player_identity_is_available_through_the_identity_contract()
     {
-        using var scope = fixture.CreateScope();
-        var playerAdministrationService = scope.ServiceProvider.GetRequiredService<IPlayerAdministrationService>();
-        var enrollment = await playerAdministrationService.EnrollAsync(
+        using IServiceScope scope = fixture.CreateScope();
+        IPlayerAdministrationService playerAdministrationService = scope.ServiceProvider.GetRequiredService<IPlayerAdministrationService>();
+        IdentityOperationResult<PlayerEnrollmentResponse> enrollment = await playerAdministrationService.EnrollAsync(
             new EnrollPlayerRequest("IdentityContractPlayer"),
             TestContext.Current.CancellationToken);
 
         Assert.Null(enrollment.Failure);
         Assert.NotNull(enrollment.Value);
 
-        var playerIdentityService = scope.ServiceProvider.GetRequiredService<IPlayerIdentityService>();
-        var result = await playerIdentityService.GetAsync(
+        IPlayerIdentityService playerIdentityService = scope.ServiceProvider.GetRequiredService<IPlayerIdentityService>();
+        IdentityOperationResult<PlayerIdentityResponse> result = await playerIdentityService.GetAsync(
             enrollment.Value.AccountId,
             TestContext.Current.CancellationToken);
 
@@ -69,24 +72,24 @@ public sealed class IdentityCapabilityTests(IdentityCapabilityFixture fixture)
     [Fact]
     public async Task Enrolled_player_must_replace_the_temporary_credential_before_normal_sign_in()
     {
-        using var scope = fixture.CreateScope();
-        var playerAdministrationService = scope.ServiceProvider.GetRequiredService<IPlayerAdministrationService>();
-        var enrollment = await playerAdministrationService.EnrollAsync(
+        using IServiceScope scope = fixture.CreateScope();
+        IPlayerAdministrationService playerAdministrationService = scope.ServiceProvider.GetRequiredService<IPlayerAdministrationService>();
+        IdentityOperationResult<PlayerEnrollmentResponse> enrollment = await playerAdministrationService.EnrollAsync(
             new EnrollPlayerRequest("EnrolledPlayer"),
             TestContext.Current.CancellationToken);
 
         Assert.Null(enrollment.Failure);
         Assert.NotNull(enrollment.Value);
 
-        var authenticationService = scope.ServiceProvider.GetRequiredService<IAuthenticationService>();
-        var temporarySignIn = await authenticationService.SignInAsync(
+        IAuthenticationService authenticationService = scope.ServiceProvider.GetRequiredService<IAuthenticationService>();
+        IdentityOperationResult<AccessTokenResponse> temporarySignIn = await authenticationService.SignInAsync(
             new SignInRequest("enrolledplayer", enrollment.Value.TemporaryCredential.TemporaryCredential),
             TestContext.Current.CancellationToken);
 
         Assert.Null(temporarySignIn.Failure);
-        Assert.IsType<RestrictedAccessTokenResponse>(temporarySignIn.Value);
+        _ = Assert.IsType<RestrictedAccessTokenResponse>(temporarySignIn.Value);
 
-        var passwordChange = await authenticationService.ChangePasswordAsync(
+        IdentityOperationResult<TokenPairResponse> passwordChange = await authenticationService.ChangePasswordAsync(
             enrollment.Value.AccountId,
             new ChangePasswordRequest(
                 enrollment.Value.TemporaryCredential.TemporaryCredential,
@@ -94,7 +97,7 @@ public sealed class IdentityCapabilityTests(IdentityCapabilityFixture fixture)
             TestContext.Current.CancellationToken);
 
         Assert.Null(passwordChange.Failure);
-        Assert.IsType<TokenPairResponse>(passwordChange.Value);
+        _ = Assert.IsType<TokenPairResponse>(passwordChange.Value);
     }
 
     /// <summary>
@@ -104,17 +107,17 @@ public sealed class IdentityCapabilityTests(IdentityCapabilityFixture fixture)
     [Fact]
     public async Task Refresh_rotation_replay_and_sign_out_are_isolated_to_their_sign_in_session_family()
     {
-        using var scope = fixture.CreateScope();
-        var playerAdministrationService = scope.ServiceProvider.GetRequiredService<IPlayerAdministrationService>();
-        var authenticationService = scope.ServiceProvider.GetRequiredService<IAuthenticationService>();
-        var enrollment = await playerAdministrationService.EnrollAsync(
+        using IServiceScope scope = fixture.CreateScope();
+        IPlayerAdministrationService playerAdministrationService = scope.ServiceProvider.GetRequiredService<IPlayerAdministrationService>();
+        IAuthenticationService authenticationService = scope.ServiceProvider.GetRequiredService<IAuthenticationService>();
+        IdentityOperationResult<PlayerEnrollmentResponse> enrollment = await playerAdministrationService.EnrollAsync(
             new EnrollPlayerRequest("RefreshLifecyclePlayer"),
             TestContext.Current.CancellationToken);
 
         Assert.Null(enrollment.Failure);
         Assert.NotNull(enrollment.Value);
 
-        var passwordChange = await authenticationService.ChangePasswordAsync(
+        IdentityOperationResult<TokenPairResponse> passwordChange = await authenticationService.ChangePasswordAsync(
             enrollment.Value.AccountId,
             new ChangePasswordRequest(
                 enrollment.Value.TemporaryCredential.TemporaryCredential,
@@ -122,44 +125,44 @@ public sealed class IdentityCapabilityTests(IdentityCapabilityFixture fixture)
             TestContext.Current.CancellationToken);
 
         Assert.Null(passwordChange.Failure);
-        var firstFamily = Assert.IsType<TokenPairResponse>(passwordChange.Value);
+        TokenPairResponse firstFamily = Assert.IsType<TokenPairResponse>(passwordChange.Value);
 
-        var secondSignIn = await authenticationService.SignInAsync(
+        IdentityOperationResult<AccessTokenResponse> secondSignIn = await authenticationService.SignInAsync(
             new SignInRequest("RefreshLifecyclePlayer", "Refresh-lifecycle-password1!"),
             TestContext.Current.CancellationToken);
 
         Assert.Null(secondSignIn.Failure);
-        var secondFamily = Assert.IsType<TokenPairResponse>(secondSignIn.Value);
+        TokenPairResponse secondFamily = Assert.IsType<TokenPairResponse>(secondSignIn.Value);
 
-        var firstRefresh = await authenticationService.RefreshAsync(
+        IdentityOperationResult<TokenPairResponse> firstRefresh = await authenticationService.RefreshAsync(
             new RefreshTokenRequest(firstFamily.RefreshToken),
             TestContext.Current.CancellationToken);
 
         Assert.Null(firstRefresh.Failure);
-        var firstFamilyReplacement = Assert.IsType<TokenPairResponse>(firstRefresh.Value);
+        TokenPairResponse firstFamilyReplacement = Assert.IsType<TokenPairResponse>(firstRefresh.Value);
         Assert.NotEqual(firstFamily.RefreshToken, firstFamilyReplacement.RefreshToken);
 
-        var replay = await authenticationService.RefreshAsync(
+        IdentityOperationResult<TokenPairResponse> replay = await authenticationService.RefreshAsync(
             new RefreshTokenRequest(firstFamily.RefreshToken),
             TestContext.Current.CancellationToken);
-        var replayedFamilyRefresh = await authenticationService.RefreshAsync(
+        IdentityOperationResult<TokenPairResponse> replayedFamilyRefresh = await authenticationService.RefreshAsync(
             new RefreshTokenRequest(firstFamilyReplacement.RefreshToken),
             TestContext.Current.CancellationToken);
 
         Assert.Equal(IdentityFailureKind.Unauthorized, replay.Failure?.Kind);
         Assert.Equal(IdentityFailureKind.Unauthorized, replayedFamilyRefresh.Failure?.Kind);
 
-        var secondRefresh = await authenticationService.RefreshAsync(
+        IdentityOperationResult<TokenPairResponse> secondRefresh = await authenticationService.RefreshAsync(
             new RefreshTokenRequest(secondFamily.RefreshToken),
             TestContext.Current.CancellationToken);
 
         Assert.Null(secondRefresh.Failure);
-        var secondFamilyReplacement = Assert.IsType<TokenPairResponse>(secondRefresh.Value);
+        TokenPairResponse secondFamilyReplacement = Assert.IsType<TokenPairResponse>(secondRefresh.Value);
 
         await authenticationService.SignOutAsync(
             new RefreshTokenRequest(secondFamilyReplacement.RefreshToken),
             TestContext.Current.CancellationToken);
-        var signedOutFamilyRefresh = await authenticationService.RefreshAsync(
+        IdentityOperationResult<TokenPairResponse> signedOutFamilyRefresh = await authenticationService.RefreshAsync(
             new RefreshTokenRequest(secondFamilyReplacement.RefreshToken),
             TestContext.Current.CancellationToken);
 
@@ -173,17 +176,17 @@ public sealed class IdentityCapabilityTests(IdentityCapabilityFixture fixture)
     [Fact]
     public async Task Password_change_revokes_every_existing_refresh_session()
     {
-        using var scope = fixture.CreateScope();
-        var playerAdministrationService = scope.ServiceProvider.GetRequiredService<IPlayerAdministrationService>();
-        var authenticationService = scope.ServiceProvider.GetRequiredService<IAuthenticationService>();
-        var enrollment = await playerAdministrationService.EnrollAsync(
+        using IServiceScope scope = fixture.CreateScope();
+        IPlayerAdministrationService playerAdministrationService = scope.ServiceProvider.GetRequiredService<IPlayerAdministrationService>();
+        IAuthenticationService authenticationService = scope.ServiceProvider.GetRequiredService<IAuthenticationService>();
+        IdentityOperationResult<PlayerEnrollmentResponse> enrollment = await playerAdministrationService.EnrollAsync(
             new EnrollPlayerRequest("PasswordChangePlayer"),
             TestContext.Current.CancellationToken);
 
         Assert.Null(enrollment.Failure);
         Assert.NotNull(enrollment.Value);
 
-        var initialPasswordChange = await authenticationService.ChangePasswordAsync(
+        IdentityOperationResult<TokenPairResponse> initialPasswordChange = await authenticationService.ChangePasswordAsync(
             enrollment.Value.AccountId,
             new ChangePasswordRequest(
                 enrollment.Value.TemporaryCredential.TemporaryCredential,
@@ -191,27 +194,27 @@ public sealed class IdentityCapabilityTests(IdentityCapabilityFixture fixture)
             TestContext.Current.CancellationToken);
 
         Assert.Null(initialPasswordChange.Failure);
-        var firstFamily = Assert.IsType<TokenPairResponse>(initialPasswordChange.Value);
+        TokenPairResponse firstFamily = Assert.IsType<TokenPairResponse>(initialPasswordChange.Value);
 
-        var secondSignIn = await authenticationService.SignInAsync(
+        IdentityOperationResult<AccessTokenResponse> secondSignIn = await authenticationService.SignInAsync(
             new SignInRequest("PasswordChangePlayer", "Initial-player-password1!"),
             TestContext.Current.CancellationToken);
 
         Assert.Null(secondSignIn.Failure);
-        var secondFamily = Assert.IsType<TokenPairResponse>(secondSignIn.Value);
+        TokenPairResponse secondFamily = Assert.IsType<TokenPairResponse>(secondSignIn.Value);
 
-        var subsequentPasswordChange = await authenticationService.ChangePasswordAsync(
+        IdentityOperationResult<TokenPairResponse> subsequentPasswordChange = await authenticationService.ChangePasswordAsync(
             enrollment.Value.AccountId,
             new ChangePasswordRequest("Initial-player-password1!", "Updated-player-password1!"),
             TestContext.Current.CancellationToken);
 
         Assert.Null(subsequentPasswordChange.Failure);
-        Assert.IsType<TokenPairResponse>(subsequentPasswordChange.Value);
+        _ = Assert.IsType<TokenPairResponse>(subsequentPasswordChange.Value);
 
-        var firstFamilyRefresh = await authenticationService.RefreshAsync(
+        IdentityOperationResult<TokenPairResponse> firstFamilyRefresh = await authenticationService.RefreshAsync(
             new RefreshTokenRequest(firstFamily.RefreshToken),
             TestContext.Current.CancellationToken);
-        var secondFamilyRefresh = await authenticationService.RefreshAsync(
+        IdentityOperationResult<TokenPairResponse> secondFamilyRefresh = await authenticationService.RefreshAsync(
             new RefreshTokenRequest(secondFamily.RefreshToken),
             TestContext.Current.CancellationToken);
 
@@ -219,7 +222,12 @@ public sealed class IdentityCapabilityTests(IdentityCapabilityFixture fixture)
         Assert.Equal(IdentityFailureKind.Unauthorized, secondFamilyRefresh.Failure?.Kind);
     }
 
+#pragma warning restore CA1707 // Identifiers should not contain underscores
+
 }
+
+// xUnit requires public types for fixtures.
+#pragma warning disable CA1515 // Consider making public types internal
 
 /// <summary>
 /// Fixture for the identity capability tests, providing a PostgreSQL database container and a runtime host with the identity services registered, ensuring that the tests have a consistent and isolated environment for testing the identity functionality.
@@ -235,8 +243,8 @@ public sealed class IdentityCapabilityFixture : IAsyncLifetime
         await database.StartAsync().ConfigureAwait(false);
         await MigrateDatabaseAsync().ConfigureAwait(false);
 
-        var builder = CreateRuntimeHostBuilder();
-        builder.AddAspNetCoreIdentity();
+        HostApplicationBuilder builder = CreateRuntimeHostBuilder();
+        _ = builder.AddAspNetCoreIdentity();
         runtimeHost = builder.Build();
         await runtimeHost.StartAsync().ConfigureAwait(false);
     }
@@ -261,22 +269,22 @@ public sealed class IdentityCapabilityFixture : IAsyncLifetime
 
     private async Task MigrateDatabaseAsync()
     {
-        var builder = Host.CreateApplicationBuilder();
-        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        HostApplicationBuilder builder = Host.CreateApplicationBuilder();
+        _ = builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["ConnectionStrings:chronicleofheros"] = database.GetConnectionString(),
         });
-        builder.AddAspNetCoreIdentity(options => options.EnableMigrations());
-        using var migrationHost = builder.Build();
+        _ = builder.AddAspNetCoreIdentity(options => options.EnableMigrations());
+        using IHost migrationHost = builder.Build();
         await migrationHost.StartAsync().ConfigureAwait(false);
         await migrationHost.WaitForShutdownAsync().ConfigureAwait(false);
     }
 
     private HostApplicationBuilder CreateRuntimeHostBuilder()
     {
-        using var signingKey = RSA.Create(2048);
-        var builder = Host.CreateApplicationBuilder();
-        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        using RSA signingKey = RSA.Create(2048);
+        HostApplicationBuilder builder = Host.CreateApplicationBuilder();
+        _ = builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["ConnectionStrings:chronicleofheros"] = database.GetConnectionString(),
             ["Jwt:SigningPrivateKey"] = Convert.ToBase64String(signingKey.ExportPkcs8PrivateKey()),
@@ -289,3 +297,5 @@ public sealed class IdentityCapabilityFixture : IAsyncLifetime
         return builder;
     }
 }
+
+#pragma warning restore CA1515 // Consider making public types internal

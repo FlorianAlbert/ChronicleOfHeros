@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.Identity;
 
 namespace ChronicleOfHeros.Identity.AspNetCore.Identity;
 
+// This class gets used by the dependency injection system 
+// and may not be directly instantiated.
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
+
 internal sealed class AuthenticationService(
     UserManager<ApplicationUser> userManager,
     AuthenticationTokenService tokenService) : IAuthenticationService
@@ -12,8 +16,8 @@ internal sealed class AuthenticationService(
         SignInRequest request,
         CancellationToken cancellationToken)
     {
-        var username = request.Username?.Trim();
-        var user = string.IsNullOrWhiteSpace(username)
+        string? username = request.Username?.Trim();
+        ApplicationUser? user = string.IsNullOrWhiteSpace(username)
             ? null
             : await userManager.FindByNameAsync(username).ConfigureAwait(false);
         if (user is null || !user.IsActive || !await userManager.CheckPasswordAsync(user, request.Password ?? string.Empty).ConfigureAwait(false))
@@ -27,7 +31,7 @@ internal sealed class AuthenticationService(
                 tokenService.CreateRestrictedAccessToken(user));
         }
 
-        var roles = await userManager.GetRolesAsync(user).ConfigureAwait(false);
+        IList<string> roles = await userManager.GetRolesAsync(user).ConfigureAwait(false);
         return IdentityOperationResults.Success<AccessTokenResponse>(
             await tokenService.CreateNormalTokenPairAsync(user, roles, cancellationToken).ConfigureAwait(false));
     }
@@ -37,13 +41,13 @@ internal sealed class AuthenticationService(
         ChangePasswordRequest request,
         CancellationToken cancellationToken)
     {
-        var user = await userManager.FindByIdAsync(accountId.ToString()).ConfigureAwait(false);
+        ApplicationUser? user = await userManager.FindByIdAsync(accountId.ToString()).ConfigureAwait(false);
         if (user is null || !user.IsActive || !await userManager.CheckPasswordAsync(user, request.CurrentPassword ?? string.Empty).ConfigureAwait(false))
         {
             return IdentityOperationResults.Unauthorized<TokenPairResponse>();
         }
 
-        var passwordChange = await userManager.ChangePasswordAsync(
+        IdentityResult passwordChange = await userManager.ChangePasswordAsync(
             user,
             request.CurrentPassword ?? string.Empty,
             request.NewPassword ?? string.Empty).ConfigureAwait(false);
@@ -53,14 +57,14 @@ internal sealed class AuthenticationService(
         }
 
         user.MustChangePassword = false;
-        var userUpdate = await userManager.UpdateAsync(user).ConfigureAwait(false);
+        IdentityResult userUpdate = await userManager.UpdateAsync(user).ConfigureAwait(false);
         if (!userUpdate.Succeeded)
         {
             return IdentityOperationResults.Validation<TokenPairResponse>(userUpdate);
         }
 
         await tokenService.RevokeAllRefreshSessionsAsync(user.Id, cancellationToken).ConfigureAwait(false);
-        var roles = await userManager.GetRolesAsync(user).ConfigureAwait(false);
+        IList<string> roles = await userManager.GetRolesAsync(user).ConfigureAwait(false);
         return IdentityOperationResults.Success(
             await tokenService.CreateNormalTokenPairAsync(user, roles, cancellationToken).ConfigureAwait(false));
     }
@@ -69,7 +73,7 @@ internal sealed class AuthenticationService(
         RefreshTokenRequest request,
         CancellationToken cancellationToken)
     {
-        var tokenPair = await tokenService.RefreshNormalTokenPairAsync(
+        TokenPairResponse? tokenPair = await tokenService.RefreshNormalTokenPairAsync(
             request.RefreshToken,
             userManager,
             cancellationToken).ConfigureAwait(false);
@@ -82,3 +86,5 @@ internal sealed class AuthenticationService(
     public Task SignOutAsync(RefreshTokenRequest request, CancellationToken cancellationToken) =>
         tokenService.RevokeRefreshSessionFamilyForTokenAsync(request.RefreshToken, cancellationToken);
 }
+
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes

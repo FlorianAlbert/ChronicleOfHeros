@@ -14,13 +14,16 @@ namespace ChronicleOfHeros.Identity.AspNetCore.Tests;
 /// </summary>
 public sealed class AspNetCoreIdentityRegistrationTests
 {
+
+#pragma warning disable CA1707 // Identifiers should not contain underscores
+
     /// <summary>
     /// Tests that the contracts assembly does not reference any ASP.NET Core or persistence-related assemblies, ensuring that the contracts remain independent of specific frameworks or implementations.
     /// </summary>
     [Fact]
     public void Contracts_reference_no_asp_net_core_or_persistence_assemblies()
     {
-        var referencedAssemblies = typeof(IAuthenticationService).Assembly
+        IEnumerable<string?> referencedAssemblies = typeof(IAuthenticationService).Assembly
             .GetReferencedAssemblies()
             .Select(assemblyName => assemblyName.Name);
 
@@ -38,12 +41,11 @@ public sealed class AspNetCoreIdentityRegistrationTests
     [Fact]
     public void Implementation_exposes_only_its_registration_surface()
     {
-        var publicTypeNames = typeof(AspNetCoreIdentityRegistration).Assembly
+        string[] publicTypeNames = [.. typeof(AspNetCoreIdentityRegistration).Assembly
             .GetExportedTypes()
             .Where(type => !type.IsNested)
             .Select(type => type.FullName!)
-            .OrderBy(typeName => typeName)
-            .ToArray();
+            .OrderBy(typeName => typeName)];
 
         Assert.Equal(
             [
@@ -60,16 +62,16 @@ public sealed class AspNetCoreIdentityRegistrationTests
     [Fact]
     public async Task Runtime_registration_rejects_missing_jwt_configuration_at_startup()
     {
-        var builder = Host.CreateApplicationBuilder();
-        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        HostApplicationBuilder builder = Host.CreateApplicationBuilder();
+        _ = builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["ConnectionStrings:chronicleofheros"] = "Host=localhost;Database=identity-tests;Username=postgres;Password=postgres",
         });
 
-        builder.AddAspNetCoreIdentity();
-        using var host = builder.Build();
+        _ = builder.AddAspNetCoreIdentity();
+        using IHost host = builder.Build();
 
-        var exception = await Assert.ThrowsAsync<OptionsValidationException>(() =>
+        OptionsValidationException exception = await Assert.ThrowsAsync<OptionsValidationException>(() =>
             host.StartAsync(TestContext.Current.CancellationToken));
 
         Assert.Contains("JWT configuration is required.", exception.Message, StringComparison.Ordinal);
@@ -81,9 +83,9 @@ public sealed class AspNetCoreIdentityRegistrationTests
     [Fact]
     public void Registration_exposes_the_identity_contracts_without_host_assembled_dependencies()
     {
-        using var signingKey = RSA.Create(2048);
-        var builder = Host.CreateApplicationBuilder();
-        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        using RSA signingKey = RSA.Create(2048);
+        HostApplicationBuilder builder = Host.CreateApplicationBuilder();
+        _ = builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["ConnectionStrings:chronicleofheros"] = "Host=localhost;Database=identity-tests;Username=postgres;Password=postgres",
             ["Jwt:SigningPrivateKey"] = Convert.ToBase64String(signingKey.ExportPkcs8PrivateKey()),
@@ -91,15 +93,18 @@ public sealed class AspNetCoreIdentityRegistrationTests
             ["Jwt:Audience"] = "identity-tests",
         });
 
-        builder.AddAspNetCoreIdentity();
+        _ = builder.AddAspNetCoreIdentity();
 
-        using var services = builder.Services.BuildServiceProvider();
+        using ServiceProvider services = builder.Services.BuildServiceProvider();
 
-        Assert.IsType<IAuthenticationService>(
+        _ = Assert.IsType<IAuthenticationService>(
             services.GetRequiredService<IAuthenticationService>(), exactMatch: false);
-        Assert.IsType<IPlayerAdministrationService>(
+        _ = Assert.IsType<IPlayerAdministrationService>(
             services.GetRequiredService<IPlayerAdministrationService>(), exactMatch: false);
-        Assert.IsType<IPlayerIdentityService>(
+        _ = Assert.IsType<IPlayerIdentityService>(
             services.GetRequiredService<IPlayerIdentityService>(), exactMatch: false);
     }
+
+#pragma warning restore CA1707 // Identifiers should not contain underscores
+
 }

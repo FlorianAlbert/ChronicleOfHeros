@@ -10,7 +10,7 @@ using Microsoft.Extensions.Localization;
 using Yarp.ReverseProxy.Forwarder;
 using Yarp.ReverseProxy.Transforms;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
@@ -23,13 +23,13 @@ builder.Services.AddHttpForwarderWithServiceDiscovery()
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
-var supportedCultures = new[] { "en-US", "de-DE" };
+string[] supportedCultures = ["en-US", "de-DE"];
 builder.Services.AddLocalization();
 builder.Services.AddSingleton<IStringLocalizerFactory, MissingTranslationDiagnosticStringLocalizerFactory>();
 builder.Services.Configure<RequestLocalizationOptions>(
     options => options.ConfigureDisplayLanguages(supportedCultures));
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -38,9 +38,9 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/error", createScopeForErrors: true);
+    _ = app.UseExceptionHandler("/error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+    _ = app.UseHsts();
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
@@ -65,8 +65,8 @@ app.MapPost("/display-language", async (HttpContext context, IAntiforgery antifo
         return Results.BadRequest();
     }
 
-    var form = await context.Request.ReadFormAsync(context.RequestAborted).ConfigureAwait(false);
-    var selectedCulture = supportedCultures.FirstOrDefault(culture =>
+    IFormCollection form = await context.Request.ReadFormAsync(context.RequestAborted).ConfigureAwait(false);
+    string? selectedCulture = supportedCultures.FirstOrDefault(culture =>
         string.Equals(culture, form["locale"], StringComparison.OrdinalIgnoreCase));
 
     if (selectedCulture is not null)
@@ -90,15 +90,17 @@ app.MapPost("/display-language", async (HttpContext context, IAntiforgery antifo
 
 app.MapForwarder("/api/{**catch-all}", "https+http://api", transformBuilder =>
 {
-    transformBuilder.AddPathRemovePrefix("/api");
+    _ = transformBuilder.AddPathRemovePrefix("/api");
 });
 
 app.MapDefaultEndpoints();
 
 app.Run();
 
-static string GetSafeLocalReturnPath(string? returnUrl) =>
-    IsSafeLocalReturnPath(returnUrl) ? returnUrl! : "/";
+static string GetSafeLocalReturnPath(string? returnUrl)
+{
+    return IsSafeLocalReturnPath(returnUrl) ? returnUrl! : "/";
+}
 
 static bool IsSafeLocalReturnPath(string? returnUrl)
 {
@@ -109,13 +111,13 @@ static bool IsSafeLocalReturnPath(string? returnUrl)
         return false;
     }
 
-    var pathEnd = returnUrl.IndexOfAny(['?', '#']);
-    var encodedPath = pathEnd < 0 ? returnUrl : returnUrl[..pathEnd];
-    var decodedPath = encodedPath;
+    int pathEnd = returnUrl.IndexOfAny(['?', '#']);
+    string encodedPath = pathEnd < 0 ? returnUrl : returnUrl[..pathEnd];
+    string decodedPath = encodedPath;
 
     while (true)
     {
-        var nextPath = Uri.UnescapeDataString(decodedPath);
+        string nextPath = Uri.UnescapeDataString(decodedPath);
         if (nextPath == decodedPath)
         {
             break;

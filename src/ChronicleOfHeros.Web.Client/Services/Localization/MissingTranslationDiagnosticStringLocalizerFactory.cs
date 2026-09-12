@@ -3,6 +3,9 @@ using Microsoft.Extensions.Options;
 
 namespace ChronicleOfHeros.Web.Client.Services.Localization;
 
+// This class gets used by the server project as well
+#pragma warning disable CA1515 // Consider making public types internal
+
 /// <summary>
 /// A factory for creating <see cref="MissingTranslationDiagnosticStringLocalizer"/> instances that wrap the default <see cref="ResourceManagerStringLocalizerFactory"/>.
 /// </summary>
@@ -23,10 +26,12 @@ public sealed class MissingTranslationDiagnosticStringLocalizerFactory(
         CreateLocalizer(_innerFactory.Create(baseName, location), baseName);
 
     private MissingTranslationDiagnosticStringLocalizer CreateLocalizer(IStringLocalizer innerLocalizer, string resourceName) =>
-        new MissingTranslationDiagnosticStringLocalizer(
+        new(
             innerLocalizer,
             loggerFactory.CreateLogger($"{nameof(MissingTranslationDiagnosticStringLocalizerFactory)}.{resourceName}"));
 }
+
+#pragma warning restore CA1515 // Consider making public types internal
 
 internal sealed partial class MissingTranslationDiagnosticStringLocalizer(
     IStringLocalizer innerLocalizer,

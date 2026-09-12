@@ -13,11 +13,11 @@ internal static class BootstrapOperatorInitializer
     {
         internal async Task InitializeBootstrapOperatorAsync(CancellationToken cancellationToken)
         {
-            var scope = services.CreateAsyncScope();
+            AsyncServiceScope scope = services.CreateAsyncScope();
             await using (scope.ConfigureAwait(false))
             {
-                var dbContext = scope.ServiceProvider.GetRequiredService<ChronicleOfHerosDbContext>();
-                var operatorExists = await dbContext.UserRoles.AnyAsync(
+                ChronicleOfHerosDbContext dbContext = scope.ServiceProvider.GetRequiredService<ChronicleOfHerosDbContext>();
+                bool operatorExists = await dbContext.UserRoles.AnyAsync(
                     userRole => dbContext.Roles.Any(role =>
                         role.Id == userRole.RoleId && role.Name == ApplicationRoles.Operator),
                     cancellationToken).ConfigureAwait(false);
@@ -27,8 +27,8 @@ internal static class BootstrapOperatorInitializer
                     return;
                 }
 
-                var options = scope.ServiceProvider.GetRequiredService<IOptions<BootstrapOperatorOptions>>().Value;
-                var username = options.Username?.Trim();
+                BootstrapOperatorOptions options = scope.ServiceProvider.GetRequiredService<IOptions<BootstrapOperatorOptions>>().Value;
+                string? username = options.Username?.Trim();
 
                 if (!IsValidConfiguration(username, options.TemporaryPassword))
                 {
@@ -36,12 +36,12 @@ internal static class BootstrapOperatorInitializer
                         "Bootstrap Operator configuration must contain a valid username and temporary password.");
                 }
 
-                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+                RoleManager<IdentityRole> roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
                 await EnsureRoleExistsAsync(roleManager, ApplicationRoles.Player).ConfigureAwait(false);
                 await EnsureRoleExistsAsync(roleManager, ApplicationRoles.Operator).ConfigureAwait(false);
 
-                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-                var user = new ApplicationUser
+                UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+                ApplicationUser user = new()
                 {
                     UserName = username,
                 };

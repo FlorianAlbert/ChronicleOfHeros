@@ -9,7 +9,7 @@ internal sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Ap
 {
     public void Configure(EntityTypeBuilder<ApplicationUser> builder)
     {
-        builder.Property(user => user.IsActive).IsRequired();
-        builder.Property(user => user.MustChangePassword).IsRequired();
+        _ = builder.Property(user => user.IsActive).IsRequired();
+        _ = builder.Property(user => user.MustChangePassword).IsRequired();
     }
 }

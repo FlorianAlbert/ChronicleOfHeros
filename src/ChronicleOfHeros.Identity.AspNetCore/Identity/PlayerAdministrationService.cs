@@ -6,6 +6,10 @@ using Microsoft.AspNetCore.Identity;
 
 namespace ChronicleOfHeros.Identity.AspNetCore.Identity;
 
+// This class gets used by the dependency injection system 
+// and may not be directly instantiated.
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
+
 internal sealed class PlayerAdministrationService(
     UserManager<ApplicationUser> userManager,
     AuthenticationTokenService tokenService) : IPlayerAdministrationService
@@ -14,7 +18,7 @@ internal sealed class PlayerAdministrationService(
         EnrollPlayerRequest request,
         CancellationToken cancellationToken)
     {
-        var username = request.Username?.Trim();
+        string? username = request.Username?.Trim();
         if (!UsernameValidator.IsValid(username))
         {
             return IdentityOperationResults.Validation<PlayerEnrollmentResponse>(
@@ -24,18 +28,18 @@ internal sealed class PlayerAdministrationService(
                 });
         }
 
-        var temporaryCredential = CreateTemporaryCredential();
-        var user = new ApplicationUser { UserName = username };
-        var creation = await userManager.CreateAsync(user, temporaryCredential).ConfigureAwait(false);
+        string temporaryCredential = CreateTemporaryCredential();
+        ApplicationUser user = new() { UserName = username };
+        IdentityResult creation = await userManager.CreateAsync(user, temporaryCredential).ConfigureAwait(false);
         if (!creation.Succeeded)
         {
             return IdentityOperationResults.Validation<PlayerEnrollmentResponse>(creation);
         }
 
-        var roleAssignment = await userManager.AddToRoleAsync(user, ApplicationRoles.Player).ConfigureAwait(false);
+        IdentityResult roleAssignment = await userManager.AddToRoleAsync(user, ApplicationRoles.Player).ConfigureAwait(false);
         if (!roleAssignment.Succeeded)
         {
-            await userManager.DeleteAsync(user).ConfigureAwait(false);
+            _ = await userManager.DeleteAsync(user).ConfigureAwait(false);
             return IdentityOperationResults.Validation<PlayerEnrollmentResponse>(roleAssignment);
         }
 
@@ -48,15 +52,15 @@ internal sealed class PlayerAdministrationService(
         ResetPasswordRequest request,
         CancellationToken cancellationToken)
     {
-        var user = await userManager.FindByNameAsync(request.Username.Trim()).ConfigureAwait(false);
+        ApplicationUser? user = await userManager.FindByNameAsync(request.Username.Trim()).ConfigureAwait(false);
         if (user is null)
         {
             return IdentityOperationResults.NotFound<TemporaryCredentialResponse>();
         }
 
-        var temporaryCredential = CreateTemporaryCredential();
+        string temporaryCredential = CreateTemporaryCredential();
         user.MustChangePassword = true;
-        var passwordReset = await userManager.ResetPasswordAsync(
+        IdentityResult passwordReset = await userManager.ResetPasswordAsync(
             user,
             await userManager.GeneratePasswordResetTokenAsync(user).ConfigureAwait(false),
             temporaryCredential).ConfigureAwait(false);
@@ -72,3 +76,5 @@ internal sealed class PlayerAdministrationService(
     private static string CreateTemporaryCredential() =>
         $"Aa{Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToUpperInvariant()}!1";
 }
+
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes

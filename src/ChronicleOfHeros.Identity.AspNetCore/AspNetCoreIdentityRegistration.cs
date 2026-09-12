@@ -39,7 +39,7 @@ public static class AspNetCoreIdentityRegistration
             Action<AspNetCoreIdentityRegistrationOptions>? configure = null)
         {
             ArgumentNullException.ThrowIfNull(builder);
-            var registrationOptions = new AspNetCoreIdentityRegistrationOptions();
+            AspNetCoreIdentityRegistrationOptions registrationOptions = new();
             configure?.Invoke(registrationOptions);
 
             builder.AddNpgsqlDbContext<ChronicleOfHerosDbContext>(
@@ -47,35 +47,35 @@ public static class AspNetCoreIdentityRegistration
                 options => options.ConfigureIdentityPersistence());
             if (registrationOptions.MigrationsEnabled)
             {
-                builder.Services.AddHostedService<IdentityMigrationHostedService>();
+                _ = builder.Services.AddHostedService<IdentityMigrationHostedService>();
                 return builder;
             }
 
-            builder.Services.AddOptions<JwtOptions>()
+            _ = builder.Services.AddOptions<JwtOptions>()
                 .Configure(options => options.ConfigureFrom(builder.Configuration))
                 .Validate(options => options.HasRequiredValues(), "JWT configuration is required.")
                 .ValidateOnStart();
-            builder.Services.Configure<BootstrapOperatorOptions>(options =>
+            _ = builder.Services.Configure<BootstrapOperatorOptions>(options =>
                 options.ConfigureFrom(builder.Configuration));
-            builder.Services.AddSingleton<JwtKeyMaterial>(services =>
+            _ = builder.Services.AddSingleton(services =>
                 JwtKeyMaterial.Create(services.GetRequiredService<IOptions<JwtOptions>>().Value));
-            builder.Services.AddSingleton(TimeProvider.System);
-            builder.Services.AddScoped<AuthenticationTokenService>();
-            builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
-            builder.Services.AddScoped<IPlayerAdministrationService, PlayerAdministrationService>();
-            builder.Services.AddScoped<IPlayerIdentityService, PlayerIdentityService>();
-            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            _ = builder.Services.AddSingleton(TimeProvider.System);
+            _ = builder.Services.AddScoped<AuthenticationTokenService>();
+            _ = builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+            _ = builder.Services.AddScoped<IPlayerAdministrationService, PlayerAdministrationService>();
+            _ = builder.Services.AddScoped<IPlayerIdentityService, PlayerIdentityService>();
+            _ = builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer();
-            builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+            _ = builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
                 .Configure<IOptions<JwtOptions>, JwtKeyMaterial>((options, jwtOptions, jwtKeyMaterial) =>
                     options.ConfigureIdentityJwt(jwtOptions.Value, jwtKeyMaterial));
-            builder.Services.AddAuthorization(options => options.ConfigureIdentityPolicies());
-            builder.Services.AddIdentityCore<ApplicationUser>(options => options.ConfigureIdentityPasswords())
+            _ = builder.Services.AddAuthorization(options => options.ConfigureIdentityPolicies());
+            _ = builder.Services.AddIdentityCore<ApplicationUser>(options => options.ConfigureIdentityPasswords())
                 .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<ChronicleOfHerosDbContext>()
                 .AddDefaultTokenProviders();
 
-            builder.Services.AddHostedService<BootstrapOperatorHostedService>();
+            _ = builder.Services.AddHostedService<BootstrapOperatorHostedService>();
 
             return builder;
         }

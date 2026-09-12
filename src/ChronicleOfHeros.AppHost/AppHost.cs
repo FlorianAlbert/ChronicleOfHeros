@@ -1,18 +1,19 @@
-var builder = DistributedApplication.CreateBuilder(args);
+IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(args);
 
-var database = builder.AddPostgres("postgres")
+IResourceBuilder<PostgresDatabaseResource> database = builder.AddPostgres("postgres")
     .AddDatabase("chronicleofheros");
-var bootstrapOperatorUsername = builder.AddParameter("bootstrap-operator-username");
-var bootstrapOperatorTemporaryPassword = builder.AddParameter("bootstrap-operator-temporary-password", secret: true);
-var jwtSigningPrivateKey = builder.AddParameter("jwt-signing-private-key", secret: true);
-var jwtIssuer = builder.AddParameter("jwt-issuer");
-var jwtAudience = builder.AddParameter("jwt-audience");
 
-var migrations = builder.AddProject<Projects.ChronicleOfHeros_Migrations>("migrations")
+IResourceBuilder<ParameterResource> bootstrapOperatorUsername = builder.AddParameter("bootstrap-operator-username");
+IResourceBuilder<ParameterResource> bootstrapOperatorTemporaryPassword = builder.AddParameter("bootstrap-operator-temporary-password", secret: true);
+IResourceBuilder<ParameterResource> jwtSigningPrivateKey = builder.AddParameter("jwt-signing-private-key", secret: true);
+IResourceBuilder<ParameterResource> jwtIssuer = builder.AddParameter("jwt-issuer");
+IResourceBuilder<ParameterResource> jwtAudience = builder.AddParameter("jwt-audience");
+
+IResourceBuilder<ProjectResource> migrations = builder.AddProject<Projects.ChronicleOfHeros_Migrations>("migrations")
     .WithReference(database)
     .WaitFor(database);
 
-var api = builder.AddProject<Projects.ChronicleOfHeros_Api>("api")
+IResourceBuilder<ProjectResource> api = builder.AddProject<Projects.ChronicleOfHeros_Api>("api")
     .WithReference(database)
     .WithEnvironment("BootstrapOperator__Username", bootstrapOperatorUsername)
     .WithEnvironment("BootstrapOperator__TemporaryPassword", bootstrapOperatorTemporaryPassword)

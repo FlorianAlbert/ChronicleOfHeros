@@ -1,6 +1,7 @@
 using System.Globalization;
 
 using Microsoft.AspNetCore.Localization;
+using Microsoft.Net.Http.Headers;
 
 namespace ChronicleOfHeros.Web.Services.Localization;
 
@@ -15,19 +16,19 @@ internal sealed class DisplayLanguageRequestCultureProvider(IEnumerable<string> 
     {
         ArgumentNullException.ThrowIfNull(httpContext);
 
-        var preferredCulture = FindSupportedConcreteCulture(httpContext.Request.Cookies[PreferenceCookieName]);
+        CultureInfo? preferredCulture = FindSupportedConcreteCulture(httpContext.Request.Cookies[PreferenceCookieName]);
         if (preferredCulture is not null)
         {
             return Task.FromResult<ProviderCultureResult?>(new(preferredCulture.Name));
         }
 
-        var browserLanguages = httpContext.Request.GetTypedHeaders().AcceptLanguage;
+        IList<StringWithQualityHeaderValue>? browserLanguages = httpContext.Request.GetTypedHeaders().AcceptLanguage;
         if (browserLanguages is null)
         {
             return Task.FromResult<ProviderCultureResult?>(null);
         }
 
-        foreach (var browserLanguage in browserLanguages.OrderByDescending(language => language.Quality ?? 1))
+        foreach (StringWithQualityHeaderValue browserLanguage in browserLanguages.OrderByDescending(language => language.Quality ?? 1))
         {
             if (browserLanguage.Quality == 0 || browserLanguage.Value == "*")
             {
@@ -44,7 +45,7 @@ internal sealed class DisplayLanguageRequestCultureProvider(IEnumerable<string> 
                 continue;
             }
 
-            var supportedCulture = FindSupportedCulture(requestedCulture);
+            CultureInfo? supportedCulture = FindSupportedCulture(requestedCulture);
 
             if (supportedCulture is not null)
             {
@@ -63,7 +64,7 @@ internal sealed class DisplayLanguageRequestCultureProvider(IEnumerable<string> 
 
     private CultureInfo? FindSupportedCulture(CultureInfo requestedCulture)
     {
-        var exactCulture = _supportedCultures.FirstOrDefault(culture =>
+        CultureInfo? exactCulture = _supportedCultures.FirstOrDefault(culture =>
             string.Equals(culture.Name, requestedCulture.Name, StringComparison.OrdinalIgnoreCase));
 
         return exactCulture ?? _supportedCultures.FirstOrDefault(culture =>

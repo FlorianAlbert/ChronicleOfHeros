@@ -8,7 +8,7 @@ internal static class RequestLocalizationOptionsExtensions
     {
         internal void ConfigureDisplayLanguages(string[] supportedCultures)
         {
-            options.SetDefaultCulture("en-US")
+            _ = options.SetDefaultCulture("en-US")
                 .AddSupportedCultures(supportedCultures)
                 .AddSupportedUICultures(supportedCultures);
             options.RequestCultureProviders =

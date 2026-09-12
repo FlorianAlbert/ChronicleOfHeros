@@ -8,19 +8,16 @@ namespace ChronicleOfHeros.AppHost.Tests;
 /// <summary>
 /// Tests for the landing page experience in a browser, including localization, accessibility, and responsive design.
 /// </summary>
+/// <remarks>
+/// Initializes a new instance of the <see cref="LandingPageBrowserTests"/> class with the specified fixture.
+/// </remarks>
+/// <param name="fixture">The landing page fixture.</param>
 [Collection("AppHost integration")]
-public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
+public class LandingPageBrowserTests(LandingPageFixture fixture) : IClassFixture<LandingPageFixture>
 {
-    private readonly LandingPageFixture _fixture;
+    private readonly LandingPageFixture _fixture = fixture;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="LandingPageBrowserTests"/> class with the specified fixture.
-    /// </summary>
-    /// <param name="fixture">The landing page fixture.</param>
-    public LandingPageBrowserTests(LandingPageFixture fixture)
-    {
-        _fixture = fixture;
-    }
+#pragma warning disable CA1707 // Identifiers should not contain underscores
 
     /// <summary>
     /// Tests that the public root page presents the field notes landing core in a browser, verifying the title, favicon, headings, and other elements for correctness.
@@ -31,7 +28,7 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     {
         await WithPublicPageAsync(async (page, baseAddress) =>
         {
-            await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
+            _ = await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
 
             await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros | Your character sheet at the table").ConfigureAwait(false);
             await Assertions.Expect(page.Locator("link[rel='icon']")).ToHaveAttributeAsync("href", "favicon.svg").ConfigureAwait(false);
@@ -57,21 +54,22 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     [InlineData("fr-FR, de-CH;q=0.9, en-US;q=0.8")]
     public async Task Public_root_renders_German_for_a_German_browser_preference(string browserLanguage)
     {
-        using var webClient = _fixture.CreateHttpClient();
+        using HttpClient webClient = _fixture.CreateHttpClient();
         webClient.DefaultRequestHeaders.AcceptLanguage.ParseAdd(browserLanguage);
 
-        using var response = await webClient.GetAsync("/", TestContext.Current.CancellationToken);
-        var landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        var decodedLandingPage = WebUtility.HtmlDecode(landingPage);
+        Uri landingPageUri = new("/", UriKind.Relative);
+        using HttpResponseMessage response = await webClient.GetAsync(landingPageUri, TestContext.Current.CancellationToken);
+        string landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        string decodedLandingPage = WebUtility.HtmlDecode(landingPage);
 
         Assert.Equal(["de-DE"], response.Content.Headers.ContentLanguage);
-        Assert.Contains("<html lang=\"de\">", landingPage);
-        Assert.Contains("<title>ChronicleOfHeros | Dein Charakterbogen am Spieltisch</title>", landingPage);
-        Assert.Contains("aria-label=\"Hauptnavigation\"", landingPage);
-        Assert.Contains("Ein präziser Charakterbogen, bereit für den Spieltisch.", decodedLandingPage);
-        Assert.Contains(">Rüstungsklasse<", decodedLandingPage);
-        Assert.Contains(">30 ft.<", decodedLandingPage);
-        Assert.DoesNotContain("An accurate character sheet, ready at the table.", decodedLandingPage);
+        Assert.Contains("<html lang=\"de\">", landingPage, StringComparison.Ordinal);
+        Assert.Contains("<title>ChronicleOfHeros | Dein Charakterbogen am Spieltisch</title>", landingPage, StringComparison.Ordinal);
+        Assert.Contains("aria-label=\"Hauptnavigation\"", landingPage, StringComparison.Ordinal);
+        Assert.Contains("Ein präziser Charakterbogen, bereit für den Spieltisch.", decodedLandingPage, StringComparison.Ordinal);
+        Assert.Contains(">Rüstungsklasse<", decodedLandingPage, StringComparison.Ordinal);
+        Assert.Contains(">30 ft.<", decodedLandingPage, StringComparison.Ordinal);
+        Assert.DoesNotContain("An accurate character sheet, ready at the table.", decodedLandingPage, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -81,26 +79,26 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     [Fact]
     public async Task Public_root_uses_English_for_English_and_unsupported_browser_preferences()
     {
-        using var webClient = _fixture.CreateHttpClient();
+        using HttpClient webClient = _fixture.CreateHttpClient();
 
-        foreach (var browserLanguage in new string?[] { null, "en", "en-US", "en-GB", "fr-FR" })
+        foreach (string? browserLanguage in new string?[] { null, "en", "en-US", "en-GB", "fr-FR" })
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, "/");
+            using HttpRequestMessage request = new(HttpMethod.Get, "/");
             if (browserLanguage is not null)
             {
                 request.Headers.AcceptLanguage.ParseAdd(browserLanguage);
             }
 
-            using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
-            var landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            using HttpResponseMessage response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+            string landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-            Assert.Equal(["en-US"], response.Content.Headers.ContentLanguage);
-            Assert.Contains("<html lang=\"en\">", landingPage);
-            Assert.Contains("<title>ChronicleOfHeros | Your character sheet at the table</title>", landingPage);
-            Assert.Contains("aria-label=\"Primary navigation\"", landingPage);
-            Assert.Contains("An accurate character sheet, ready at the table.", landingPage);
-            Assert.Contains(">Armor<", landingPage);
-            Assert.DoesNotContain("Ein präziser Charakterbogen, bereit für den Spieltisch.", landingPage);
+            Assert.Equal(["en-US"], response.Content.Headers.ContentLanguage, StringComparer.Ordinal);
+            Assert.Contains("<html lang=\"en\">", landingPage, StringComparison.Ordinal);
+            Assert.Contains("<title>ChronicleOfHeros | Your character sheet at the table</title>", landingPage, StringComparison.Ordinal);
+            Assert.Contains("aria-label=\"Primary navigation\"", landingPage, StringComparison.Ordinal);
+            Assert.Contains("An accurate character sheet, ready at the table.", landingPage, StringComparison.Ordinal);
+            Assert.Contains(">Armor<", landingPage, StringComparison.Ordinal);
+            Assert.DoesNotContain("Ein präziser Charakterbogen, bereit für den Spieltisch.", landingPage, StringComparison.Ordinal);
         }
     }
 
@@ -119,10 +117,10 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     {
         await WithPublicPageAsync(async (page, baseAddress) =>
         {
-            await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
+            _ = await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle).ConfigureAwait(false);
 
-            await page.EvaluateAsync(
+            _ = await page.EvaluateAsync(
                 """
                 () => {
                     const reconnectModal = document.getElementById("components-reconnect-modal");
@@ -131,7 +129,7 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
                 }
                 """).ConfigureAwait(false);
 
-            var reconnectDialog = page.Locator("#components-reconnect-modal");
+            ILocator reconnectDialog = page.Locator("#components-reconnect-modal");
             await Assertions.Expect(reconnectDialog).ToHaveAttributeAsync("open", string.Empty).ConfigureAwait(false);
             await Assertions.Expect(reconnectDialog.GetByText(expectedRejoining, new() { Exact = true })).ToBeVisibleAsync().ConfigureAwait(false);
         }, locale: browserLanguage);
@@ -158,19 +156,19 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         string expectedRecoveryAction,
         string expectedDisplayLanguageLabel)
     {
-        using var webClient = _fixture.CreateHttpClient();
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/error");
+        using HttpClient webClient = _fixture.CreateHttpClient();
+        using HttpRequestMessage request = new(HttpMethod.Get, "/error");
         request.Headers.AcceptLanguage.ParseAdd(browserLanguage);
 
-        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
-        var errorPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        var decodedErrorPage = WebUtility.HtmlDecode(errorPage);
+        using HttpResponseMessage response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+        string errorPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        string decodedErrorPage = WebUtility.HtmlDecode(errorPage);
 
         Assert.Equal([expectedCulture], response.Content.Headers.ContentLanguage);
-        Assert.Contains($"<title>{expectedTitle}</title>", errorPage);
-        Assert.Contains(expectedFeedback, decodedErrorPage);
-        Assert.Contains($">{expectedRecoveryAction}<", decodedErrorPage);
-        Assert.Contains($"aria-label=\"{expectedDisplayLanguageLabel}\"", errorPage);
+        Assert.Contains($"<title>{expectedTitle}</title>", errorPage, StringComparison.Ordinal);
+        Assert.Contains(expectedFeedback, decodedErrorPage, StringComparison.Ordinal);
+        Assert.Contains($">{expectedRecoveryAction}<", decodedErrorPage, StringComparison.Ordinal);
+        Assert.Contains($"aria-label=\"{expectedDisplayLanguageLabel}\"", errorPage, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -196,21 +194,21 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         string expectedReturnAction,
         string expectedDisplayLanguageLabel)
     {
-        using var webClient = _fixture.CreateHttpClient();
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/a-page-that-does-not-exist");
+        using HttpClient webClient = _fixture.CreateHttpClient();
+        using HttpRequestMessage request = new(HttpMethod.Get, "/a-page-that-does-not-exist");
         request.Headers.AcceptLanguage.ParseAdd(browserLanguage);
 
-        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
-        var notFoundPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        var decodedNotFoundPage = WebUtility.HtmlDecode(notFoundPage);
+        using HttpResponseMessage response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+        string notFoundPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        string decodedNotFoundPage = WebUtility.HtmlDecode(notFoundPage);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Equal([expectedCulture], response.Content.Headers.ContentLanguage);
-        Assert.Contains($"<html lang=\"{expectedDocumentLanguage}\">", notFoundPage);
-        Assert.Contains($"<title>{expectedTitle}</title>", notFoundPage);
-        Assert.Contains(expectedHeading, decodedNotFoundPage);
-        Assert.Contains($"aria-label=\"{expectedDisplayLanguageLabel}\"", decodedNotFoundPage);
-        Assert.Contains($">{expectedReturnAction}<", decodedNotFoundPage);
+        Assert.Contains($"<html lang=\"{expectedDocumentLanguage}\">", notFoundPage, StringComparison.Ordinal);
+        Assert.Contains($"<title>{expectedTitle}</title>", notFoundPage, StringComparison.Ordinal);
+        Assert.Contains(expectedHeading, decodedNotFoundPage, StringComparison.Ordinal);
+        Assert.Contains($"aria-label=\"{expectedDisplayLanguageLabel}\"", decodedNotFoundPage, StringComparison.Ordinal);
+        Assert.Contains($">{expectedReturnAction}<", decodedNotFoundPage, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -220,17 +218,17 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     [Fact]
     public async Task Public_root_explicit_display_language_cookie_overrides_browser_preference()
     {
-        using var webClient = _fixture.CreateHttpClient();
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/");
+        using HttpClient webClient = _fixture.CreateHttpClient();
+        using HttpRequestMessage request = new(HttpMethod.Get, "/");
         request.Headers.AcceptLanguage.ParseAdd("en-US");
         request.Headers.Add("Cookie", "ChronicleOfHeros.DisplayLanguage=de-DE");
 
-        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
-        var landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using HttpResponseMessage response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+        string landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(["de-DE"], response.Content.Headers.ContentLanguage);
-        Assert.Contains("<html lang=\"de\">", landingPage);
-        Assert.Contains("<title>ChronicleOfHeros | Dein Charakterbogen am Spieltisch</title>", landingPage);
+        Assert.Contains("<html lang=\"de\">", landingPage, StringComparison.Ordinal);
+        Assert.Contains("<title>ChronicleOfHeros | Dein Charakterbogen am Spieltisch</title>", landingPage, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -240,17 +238,17 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     [Fact]
     public async Task Public_root_ignores_a_non_concrete_display_language_cookie()
     {
-        using var webClient = _fixture.CreateHttpClient();
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/");
+        using HttpClient webClient = _fixture.CreateHttpClient();
+        using HttpRequestMessage request = new(HttpMethod.Get, "/");
         request.Headers.AcceptLanguage.ParseAdd("en-US");
         request.Headers.Add("Cookie", "ChronicleOfHeros.DisplayLanguage=de");
 
-        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
-        var landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using HttpResponseMessage response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+        string landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(["en-US"], response.Content.Headers.ContentLanguage);
-        Assert.Contains("<html lang=\"en\">", landingPage);
-        Assert.Contains("<title>ChronicleOfHeros | Your character sheet at the table</title>", landingPage);
+        Assert.Contains("<html lang=\"en\">", landingPage, StringComparison.Ordinal);
+        Assert.Contains("<title>ChronicleOfHeros | Your character sheet at the table</title>", landingPage, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -263,9 +261,9 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     [InlineData("de-DE")]
     public async Task Supported_display_language_choice_persists_a_secure_preference_and_returns_to_the_local_path(string selectedLanguage)
     {
-        using var webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
-        var antiforgery = await GetAntiforgeryTokenAsync(webClient);
-        using var request = new HttpRequestMessage(HttpMethod.Post, "/display-language")
+        using HttpClient webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
+        (string Token, string Cookie) antiforgery = await GetAntiforgeryTokenAsync(webClient);
+        using HttpRequestMessage request = new(HttpMethod.Post, "/display-language")
         {
             Content = new FormUrlEncodedContent(
             [
@@ -276,11 +274,11 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         };
         request.Headers.Add("Cookie", $"{antiforgery.Cookie}; ChronicleOfHeros.DisplayLanguage=en-US");
 
-        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using HttpResponseMessage response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Found, response.StatusCode);
         Assert.Equal("/?character-sheet", response.Headers.Location?.OriginalString);
 
-        var preferenceCookie = response.Headers.GetValues("Set-Cookie")
+        string preferenceCookie = response.Headers.GetValues("Set-Cookie")
             .Single(value => value.StartsWith("ChronicleOfHeros.DisplayLanguage=", StringComparison.Ordinal));
 
         Assert.StartsWith($"ChronicleOfHeros.DisplayLanguage={selectedLanguage};", preferenceCookie, StringComparison.Ordinal);
@@ -298,8 +296,8 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     [Fact]
     public async Task Display_language_choice_without_an_antiforgery_token_is_rejected()
     {
-        using var webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
-        using var request = new HttpRequestMessage(HttpMethod.Post, "/display-language")
+        using HttpClient webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
+        using HttpRequestMessage request = new(HttpMethod.Post, "/display-language")
         {
             Content = new FormUrlEncodedContent(
             [
@@ -308,7 +306,7 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             ]),
         };
 
-        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using HttpResponseMessage response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.False(response.Headers.TryGetValues("Set-Cookie", out _));
@@ -325,9 +323,9 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     [InlineData("invalid-locale")]
     public async Task Unsupported_display_language_choice_does_not_change_the_preference(string selectedLanguage)
     {
-        using var webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
-        var antiforgery = await GetAntiforgeryTokenAsync(webClient);
-        using var request = new HttpRequestMessage(HttpMethod.Post, "/display-language")
+        using HttpClient webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
+        (string Token, string Cookie) antiforgery = await GetAntiforgeryTokenAsync(webClient);
+        using HttpRequestMessage request = new(HttpMethod.Post, "/display-language")
         {
             Content = new FormUrlEncodedContent(
             [
@@ -338,11 +336,11 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         };
         request.Headers.Add("Cookie", $"{antiforgery.Cookie}; ChronicleOfHeros.DisplayLanguage=en-US");
 
-        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using HttpResponseMessage response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Found, response.StatusCode);
         Assert.Equal("/", response.Headers.Location?.OriginalString);
-        Assert.False(response.Headers.TryGetValues("Set-Cookie", out var cookies)
+        Assert.False(response.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? cookies)
             && cookies.Any(cookie => cookie.StartsWith("ChronicleOfHeros.DisplayLanguage=", StringComparison.Ordinal)));
     }
 
@@ -361,27 +359,29 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     [InlineData("/%2F%2Fexample.com")]
     [InlineData("/%5Cexample.com")]
     [InlineData("/%252F%252Fexample.com")]
+#pragma warning disable CA1054 // URI-like parameters should not be strings
     public async Task Display_language_choice_with_an_unsafe_return_path_redirects_to_root(string? returnUrl)
+#pragma warning restore CA1054 // URI-like parameters should not be strings
     {
-        using var webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
-        var antiforgery = await GetAntiforgeryTokenAsync(webClient);
-        var formValues = new List<KeyValuePair<string, string>>
-        {
+        using HttpClient webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
+        (string Token, string Cookie) antiforgery = await GetAntiforgeryTokenAsync(webClient);
+        List<KeyValuePair<string, string>> formValues =
+        [
             new("locale", "de-DE"),
             new("__RequestVerificationToken", antiforgery.Token),
-        };
+        ];
         if (returnUrl is not null)
         {
             formValues.Add(new("returnUrl", returnUrl));
         }
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, "/display-language")
+        using HttpRequestMessage request = new(HttpMethod.Post, "/display-language")
         {
             Content = new FormUrlEncodedContent(formValues),
         };
         request.Headers.Add("Cookie", antiforgery.Cookie);
 
-        using var response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using HttpResponseMessage response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Found, response.StatusCode);
         Assert.Equal("/", response.Headers.Location?.OriginalString);
@@ -396,7 +396,7 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     {
         await WithPublicPageAsync(async (page, baseAddress) =>
         {
-            await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
+            _ = await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
 
             await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros | Dein Charakterbogen am Spieltisch").ConfigureAwait(false);
             await Assertions.Expect(page.Locator("html")).ToHaveAttributeAsync("lang", "de").ConfigureAwait(false);
@@ -422,10 +422,10 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     {
         await WithPublicPageAsync(async (page, baseAddress) =>
         {
-            await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
+            _ = await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle).ConfigureAwait(false);
 
-            await page.ReloadAsync().ConfigureAwait(false);
+            _ = await page.ReloadAsync().ConfigureAwait(false);
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle).ConfigureAwait(false);
 
             await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros | Dein Charakterbogen am Spieltisch").ConfigureAwait(false);
@@ -444,19 +444,19 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     {
         await WithPublicPageAsync(async (page, baseAddress) =>
         {
-            await page.GotoAsync(new Uri(baseAddress, "/?character-sheet").AbsoluteUri).ConfigureAwait(false);
+            _ = await page.GotoAsync(new Uri(baseAddress, "/?character-sheet").AbsoluteUri).ConfigureAwait(false);
 
-            var selector = page.GetByLabel("Display language");
+            ILocator selector = page.GetByLabel("Display language");
 
             await Assertions.Expect(selector).ToBeVisibleAsync().ConfigureAwait(false);
             Assert.Equal(["English", "Deutsch"], await selector.Locator("option").AllTextContentsAsync().ConfigureAwait(false));
-            await selector.SelectOptionAsync("de-DE").ConfigureAwait(false);
+            _ = await selector.SelectOptionAsync("de-DE").ConfigureAwait(false);
 
             await Assertions.Expect(page).ToHaveURLAsync(new Regex("\\?character-sheet$")).ConfigureAwait(false);
             await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros | Dein Charakterbogen am Spieltisch").ConfigureAwait(false);
             await Assertions.Expect(page.GetByLabel("Anzeigesprache")).ToHaveValueAsync("de-DE").ConfigureAwait(false);
 
-            await page.ReloadAsync().ConfigureAwait(false);
+            _ = await page.ReloadAsync().ConfigureAwait(false);
 
             await Assertions.Expect(page).ToHaveTitleAsync("ChronicleOfHeros | Dein Charakterbogen am Spieltisch").ConfigureAwait(false);
             await Assertions.Expect(page.GetByLabel("Anzeigesprache")).ToHaveValueAsync("de-DE").ConfigureAwait(false);
@@ -473,16 +473,16 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         await WithPublicPageAsync(async (page, baseAddress) =>
         {
             const string unknownRoute = "/missing-character?record=unknown";
-            await page.GotoAsync(new Uri(baseAddress, unknownRoute).AbsoluteUri).ConfigureAwait(false);
+            _ = await page.GotoAsync(new Uri(baseAddress, unknownRoute).AbsoluteUri).ConfigureAwait(false);
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle).ConfigureAwait(false);
 
-            var selector = page.GetByLabel("Display language");
+            ILocator selector = page.GetByLabel("Display language");
             await Assertions.Expect(selector).ToBeVisibleAsync().ConfigureAwait(false);
             await Assertions.Expect(page.Locator("input[name='__RequestVerificationToken']")).ToHaveValueAsync(new Regex(".+")).ConfigureAwait(false);
-            await selector.SelectOptionAsync("de-DE").ConfigureAwait(false);
+            _ = await selector.SelectOptionAsync("de-DE").ConfigureAwait(false);
 
             await Assertions.Expect(page).ToHaveURLAsync(new Uri(baseAddress, unknownRoute).AbsoluteUri).ConfigureAwait(false);
-            var notFoundResponse = await page.ReloadAsync().ConfigureAwait(false);
+            IResponse? notFoundResponse = await page.ReloadAsync().ConfigureAwait(false);
 
             Assert.NotNull(notFoundResponse);
             Assert.Equal((int)HttpStatusCode.NotFound, notFoundResponse.Status);
@@ -501,9 +501,9 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     {
         await WithPublicPageAsync(async (page, baseAddress) =>
         {
-            await page.GotoAsync(new Uri(baseAddress, "/missing-character").AbsoluteUri).ConfigureAwait(false);
+            _ = await page.GotoAsync(new Uri(baseAddress, "/missing-character").AbsoluteUri).ConfigureAwait(false);
 
-            var selector = page.GetByLabel("Display language");
+            ILocator selector = page.GetByLabel("Display language");
             await Assertions.Expect(selector).ToBeVisibleAsync().ConfigureAwait(false);
             await selector.FocusAsync().ConfigureAwait(false);
             await Assertions.Expect(selector).ToBeFocusedAsync().ConfigureAwait(false);
@@ -519,7 +519,7 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     {
         await WithPublicPageAsync(async (page, baseAddress) =>
         {
-            await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
+            _ = await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
 
             await Assertions.Expect(page.Locator("link[rel='stylesheet'][href*='bootstrap']")).ToHaveCountAsync(0).ConfigureAwait(false);
             await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Counter", Exact = true })).ToHaveCountAsync(0).ConfigureAwait(false);
@@ -538,7 +538,7 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     {
         await WithPublicPageAsync(async (page, baseAddress) =>
         {
-            await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
+            _ = await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
 
             await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Character Sheets" })).ToHaveAttributeAsync("href", "#character-sheet").ConfigureAwait(false);
             await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "How It Works" })).ToHaveAttributeAsync("href", "#how-it-works").ConfigureAwait(false);
@@ -560,10 +560,10 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         await WithPublicPageAsync(async (page, baseAddress) =>
         {
             await page.SetViewportSizeAsync(320, 800).ConfigureAwait(false);
-            await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
+            _ = await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
 
-            var navigation = page.GetByRole(AriaRole.Navigation, new() { Name = "Primary navigation" });
-            var menuButton = page.GetByLabel("Navigation menu");
+            ILocator navigation = page.GetByRole(AriaRole.Navigation, new() { Name = "Primary navigation" });
+            ILocator menuButton = page.GetByLabel("Navigation menu");
 
             await Assertions.Expect(navigation).ToBeHiddenAsync().ConfigureAwait(false);
 
@@ -579,7 +579,7 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await page.Keyboard.PressAsync("Enter").ConfigureAwait(false);
             await page.Keyboard.PressAsync("Tab").ConfigureAwait(false);
 
-            var homeNavigationLink = page.GetByRole(AriaRole.Navigation, new() { Name = "Primary navigation" })
+            ILocator homeNavigationLink = page.GetByRole(AriaRole.Navigation, new() { Name = "Primary navigation" })
                 .GetByRole(AriaRole.Link, new() { Name = "Home", Exact = true });
             await Assertions.Expect(homeNavigationLink).ToBeFocusedAsync().ConfigureAwait(false);
 
@@ -600,9 +600,9 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         await WithPublicPageAsync(async (page, baseAddress) =>
         {
             await page.SetViewportSizeAsync(320, 800).ConfigureAwait(false);
-            await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
+            _ = await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
 
-            var menuButton = page.GetByLabel("Navigation menu");
+            ILocator menuButton = page.GetByLabel("Navigation menu");
 
             await menuButton.FocusAsync().ConfigureAwait(false);
             await Assertions.Expect(menuButton).ToBeFocusedAsync().ConfigureAwait(false);
@@ -611,7 +611,7 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
             await page.Keyboard.PressAsync("Enter").ConfigureAwait(false);
             await page.Keyboard.PressAsync("Tab").ConfigureAwait(false);
 
-            var homeNavigationLink = page.GetByRole(AriaRole.Navigation, new() { Name = "Primary navigation" })
+            ILocator homeNavigationLink = page.GetByRole(AriaRole.Navigation, new() { Name = "Primary navigation" })
                 .GetByRole(AriaRole.Link, new() { Name = "Home", Exact = true });
             await Assertions.Expect(homeNavigationLink).ToBeFocusedAsync().ConfigureAwait(false);
             Assert.True(await HasVisibleFocusAsync(homeNavigationLink).ConfigureAwait(false));
@@ -627,16 +627,16 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     {
         await WithPublicPageAsync(async (page, baseAddress) =>
         {
-            await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
+            _ = await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
 
-            var navigationLink = page.GetByRole(AriaRole.Link, new() { Name = "Character Sheets" });
+            ILocator navigationLink = page.GetByRole(AriaRole.Link, new() { Name = "Character Sheets" });
 
             await page.EmulateMediaAsync(new() { ReducedMotion = ReducedMotion.Reduce }).ConfigureAwait(false);
 
-            var reducedMotionRequested = await page.EvaluateAsync<bool>(
+            bool reducedMotionRequested = await page.EvaluateAsync<bool>(
                 "() => matchMedia('(prefers-reduced-motion: reduce)').matches").ConfigureAwait(false);
-            var reducedTransitionMilliseconds = await TransitionDurationMillisecondsAsync(navigationLink).ConfigureAwait(false);
-            var reducedMotionDiagnostics = await navigationLink.EvaluateAsync<string>(
+            double reducedTransitionMilliseconds = await TransitionDurationMillisecondsAsync(navigationLink).ConfigureAwait(false);
+            string reducedMotionDiagnostics = await navigationLink.EvaluateAsync<string>(
                 "element => { const style = getComputedStyle(element); return JSON.stringify({ transitionProperty: style.transitionProperty, transitionDuration: style.transitionDuration, scopeAttributes: [...element.attributes].map(attribute => attribute.name).filter(name => name.startsWith('b-')) }); }").ConfigureAwait(false);
             Assert.True(reducedMotionRequested);
             Assert.True(reducedTransitionMilliseconds <= 1, reducedMotionDiagnostics);
@@ -653,9 +653,9 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         await WithPublicPageAsync(async (page, baseAddress) =>
         {
             await page.SetViewportSizeAsync(320, 800).ConfigureAwait(false);
-            await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
+            _ = await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
 
-            var contrastRatios = await page.EvaluateAsync<double[]>(
+            double[] contrastRatios = await page.EvaluateAsync<double[]>(
                 """
                 () => {
                     const parseColor = value => value.match(/\d+(?:\.\d+)?/g).slice(0, 3).map(Number);
@@ -694,26 +694,26 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
         await WithPublicPageAsync(async (page, baseAddress) =>
         {
             await page.SetViewportSizeAsync(viewportWidth, 1000).ConfigureAwait(false);
-            await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
+            _ = await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
 
-            var hasHorizontalOverflow = await page.EvaluateAsync<bool>(
+            bool hasHorizontalOverflow = await page.EvaluateAsync<bool>(
                 "() => document.documentElement.scrollWidth > document.documentElement.clientWidth").ConfigureAwait(false);
-            var clippedElementCount = await page.Locator(".landing-page *:visible").EvaluateAllAsync<int>(
+            int clippedElementCount = await page.Locator(".landing-page *:visible").EvaluateAllAsync<int>(
                 "(elements, width) => elements.filter(element => { const bounds = element.getBoundingClientRect(); return bounds.left < 0 || bounds.right > width; }).length",
                 viewportWidth).ConfigureAwait(false);
-            var recordValues = page.Locator("#character-sheet dl > div");
+            ILocator recordValues = page.Locator("#character-sheet dl > div");
 
             Assert.False(hasHorizontalOverflow);
             Assert.Equal(0, clippedElementCount);
             await Assertions.Expect(recordValues).ToHaveCountAsync(3).ConfigureAwait(false);
 
-            var valuePositions = await recordValues.EvaluateAllAsync<float[]>(
+            float[] valuePositions = await recordValues.EvaluateAllAsync<float[]>(
                 "elements => elements.map(element => element.getBoundingClientRect().top)").ConfigureAwait(false);
             Assert.All(valuePositions, position => Assert.Equal(valuePositions[0], position));
 
             if (viewportWidth == 320)
             {
-                var contentPositions = await page.Locator("#landing-title, #character-sheet, #how-it-works, #about")
+                float[] contentPositions = await page.Locator("#landing-title, #character-sheet, #how-it-works, #about")
                     .EvaluateAllAsync<float[]>("elements => elements.map(element => element.getBoundingClientRect().top)").ConfigureAwait(false);
                 Assert.Equal(contentPositions.Order(), contentPositions);
             }
@@ -729,7 +729,7 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     {
         await WithPublicPageAsync(async (page, baseAddress) =>
         {
-            await page.GotoAsync(new Uri(baseAddress, "/a-page-that-does-not-exist").AbsoluteUri).ConfigureAwait(false);
+            _ = await page.GotoAsync(new Uri(baseAddress, "/a-page-that-does-not-exist").AbsoluteUri).ConfigureAwait(false);
 
             await Assertions.Expect(page).ToHaveTitleAsync("Page not found | ChronicleOfHeros").ConfigureAwait(false);
             await Assertions.Expect(page.GetByRole(AriaRole.Navigation, new() { Name = "Primary navigation" })).ToBeVisibleAsync().ConfigureAwait(false);
@@ -754,12 +754,14 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
     {
         await WithPublicPageAsync(async (page, baseAddress) =>
         {
-            await page.GotoAsync(new Uri(baseAddress, route).AbsoluteUri).ConfigureAwait(false);
+            _ = await page.GotoAsync(new Uri(baseAddress, route).AbsoluteUri).ConfigureAwait(false);
 
             await Assertions.Expect(page).ToHaveTitleAsync("Page not found | ChronicleOfHeros").ConfigureAwait(false);
             await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "This page is missing from the record." })).ToBeVisibleAsync().ConfigureAwait(false);
         });
     }
+
+#pragma warning restore CA1707 // Identifiers should not contain underscores
 
     private Task WithPublicPageAsync(
         Func<IPage, Uri, Task> exercisePage,
@@ -777,13 +779,14 @@ public class LandingPageBrowserTests : IClassFixture<LandingPageFixture>
 
     private static async Task<(string Token, string Cookie)> GetAntiforgeryTokenAsync(HttpClient webClient)
     {
-        using var response = await webClient.GetAsync("/", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var tokenMatch = Regex.Match(
+        Uri landingPageUri = new("/", UriKind.Relative);
+        using HttpResponseMessage response = await webClient.GetAsync(landingPageUri, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        string landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        Match tokenMatch = Regex.Match(
             landingPage,
             "<input[^>]*name=\"__RequestVerificationToken\"[^>]*value=\"(?<token>[^\"]+)\"",
             RegexOptions.CultureInvariant);
-        var antiforgeryCookie = response.Headers.GetValues("Set-Cookie")
+        string antiforgeryCookie = response.Headers.GetValues("Set-Cookie")
             .Select(value => value.Split(';', 2)[0])
             .Single(value => value.StartsWith(".AspNetCore.Antiforgery.", StringComparison.Ordinal));
 
