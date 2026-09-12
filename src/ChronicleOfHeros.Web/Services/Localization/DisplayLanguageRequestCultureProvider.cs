@@ -1,34 +1,34 @@
 using System.Globalization;
+
 using Microsoft.AspNetCore.Localization;
+using Microsoft.Net.Http.Headers;
 
 namespace ChronicleOfHeros.Web.Services.Localization;
 
-public sealed class DisplayLanguageRequestCultureProvider(IEnumerable<string> supportedCultureNames)
+internal sealed class DisplayLanguageRequestCultureProvider(IEnumerable<string> supportedCultureNames)
     : RequestCultureProvider
 {
     public const string PreferenceCookieName = "ChronicleOfHeros.DisplayLanguage";
 
-    private readonly CultureInfo[] _supportedCultures = supportedCultureNames
-        .Select(CultureInfo.GetCultureInfo)
-        .ToArray();
+    private readonly CultureInfo[] _supportedCultures = [.. supportedCultureNames.Select(CultureInfo.GetCultureInfo)];
 
     public override Task<ProviderCultureResult?> DetermineProviderCultureResult(HttpContext httpContext)
     {
         ArgumentNullException.ThrowIfNull(httpContext);
 
-        var preferredCulture = FindSupportedConcreteCulture(httpContext.Request.Cookies[PreferenceCookieName]);
+        CultureInfo? preferredCulture = FindSupportedConcreteCulture(httpContext.Request.Cookies[PreferenceCookieName]);
         if (preferredCulture is not null)
         {
             return Task.FromResult<ProviderCultureResult?>(new(preferredCulture.Name));
         }
 
-        var browserLanguages = httpContext.Request.GetTypedHeaders().AcceptLanguage;
+        IList<StringWithQualityHeaderValue>? browserLanguages = httpContext.Request.GetTypedHeaders().AcceptLanguage;
         if (browserLanguages is null)
         {
             return Task.FromResult<ProviderCultureResult?>(null);
         }
 
-        foreach (var browserLanguage in browserLanguages.OrderByDescending(language => language.Quality ?? 1))
+        foreach (StringWithQualityHeaderValue browserLanguage in browserLanguages.OrderByDescending(language => language.Quality ?? 1))
         {
             if (browserLanguage.Quality == 0 || browserLanguage.Value == "*")
             {
@@ -45,7 +45,7 @@ public sealed class DisplayLanguageRequestCultureProvider(IEnumerable<string> su
                 continue;
             }
 
-            var supportedCulture = FindSupportedCulture(requestedCulture);
+            CultureInfo? supportedCulture = FindSupportedCulture(requestedCulture);
 
             if (supportedCulture is not null)
             {
@@ -64,7 +64,7 @@ public sealed class DisplayLanguageRequestCultureProvider(IEnumerable<string> su
 
     private CultureInfo? FindSupportedCulture(CultureInfo requestedCulture)
     {
-        var exactCulture = _supportedCultures.FirstOrDefault(culture =>
+        CultureInfo? exactCulture = _supportedCultures.FirstOrDefault(culture =>
             string.Equals(culture.Name, requestedCulture.Name, StringComparison.OrdinalIgnoreCase));
 
         return exactCulture ?? _supportedCultures.FirstOrDefault(culture =>

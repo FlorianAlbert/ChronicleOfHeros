@@ -1,14 +1,9 @@
-using ChronicleOfHeros.Api.Data;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+using ChronicleOfHeros.Identity.AspNetCore;
+
 using Microsoft.Extensions.Hosting;
 
-var builder = Host.CreateApplicationBuilder(args);
+HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 
-builder.AddNpgsqlDbContext<ChronicleOfHerosDbContext>("chronicleofheros");
+builder.AddAspNetCoreIdentity(options => options.EnableMigrations());
 
-using var host = builder.Build();
-await using var scope = host.Services.CreateAsyncScope();
-var dbContext = scope.ServiceProvider.GetRequiredService<ChronicleOfHerosDbContext>();
-
-await dbContext.Database.MigrateAsync();
+await builder.Build().RunAsync().ConfigureAwait(false);

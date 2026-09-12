@@ -1,69 +1,57 @@
-using Aspire.Hosting.ApplicationModel;
-using Aspire.Hosting.Testing;
-using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 
 namespace ChronicleOfHeros.AppHost.Tests;
 
+/// <summary>
+/// This test class is intended to be a smoke test for the ChronicleOfHeros.AppHost application.
+/// </summary>
 [Collection("AppHost integration")]
-public class AppHostSmokeTests
+public class AppHostSmokeTests(LandingPageFixture fixture) : IClassFixture<LandingPageFixture>
 {
-    private static readonly TimeSpan HealthRequestTimeout = TimeSpan.FromSeconds(90);
+    private readonly LandingPageFixture _fixture = fixture;
 
+#pragma warning disable CA1707 // Identifiers should not contain underscores
+
+    /// <summary>
+    /// This test verifies that the public root of the application presents the field notes landing core.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Public_root_presents_the_field_notes_landing_core()
     {
-        var appHost = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.ChronicleOfHeros_AppHost>(
-                BootstrapOperatorTestParameters.CreateAppHostArguments(),
-                TestContext.Current.CancellationToken);
+        using HttpClient webClient = _fixture.CreateHttpClient();
 
-        await using var app = await appHost.BuildAsync(TestContext.Current.CancellationToken);
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        Uri landingPageUri = new("/", UriKind.Relative);
+        string landingPage = await webClient.GetStringAsync(landingPageUri, TestContext.Current.CancellationToken);
 
-        var resourceNotifications = app.Services.GetRequiredService<ResourceNotificationService>();
-
-        await resourceNotifications.WaitForResourceHealthyAsync("web", TestContext.Current.CancellationToken);
-
-        using var webClient = app.CreateHttpClient("web");
-        webClient.Timeout = HealthRequestTimeout;
-
-        var landingPage = await webClient.GetStringAsync("/", TestContext.Current.CancellationToken);
-
-        Assert.Contains("<title>ChronicleOfHeros | Your character sheet at the table</title>", landingPage);
-        Assert.Contains("An accurate character sheet, ready at the table.", landingPage);
-        Assert.Contains(">Armor<", landingPage);
-        Assert.Contains(">Initiative<", landingPage);
-        Assert.Contains(">Speed<", landingPage);
+        Assert.Contains("<title>ChronicleOfHeros | Your character sheet at the table</title>", landingPage, StringComparison.Ordinal);
+        Assert.Contains("An accurate character sheet, ready at the table.", landingPage, StringComparison.Ordinal);
+        Assert.Contains(">Armor<", landingPage, StringComparison.Ordinal);
+        Assert.Contains(">Initiative<", landingPage, StringComparison.Ordinal);
+        Assert.Contains(">Speed<", landingPage, StringComparison.Ordinal);
         Assert.Matches("<button[^>]*disabled[^>]*>Coming soon</button>", landingPage);
-        Assert.DoesNotContain("prototype-switcher", landingPage);
-        Assert.DoesNotContain("Visual Prototype", landingPage);
+        Assert.DoesNotContain("prototype-switcher", landingPage, StringComparison.Ordinal);
+        Assert.DoesNotContain("Visual Prototype", landingPage, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// This test verifies that the health endpoints of the application are available and return a successful response.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
     public async Task Health_endpoints_are_available_through_the_web_host()
     {
-        var appHost = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.ChronicleOfHeros_AppHost>(
-                BootstrapOperatorTestParameters.CreateAppHostArguments(),
-                TestContext.Current.CancellationToken);
+        using HttpClient webClient = _fixture.CreateHttpClient();
 
-        await using var app = await appHost.BuildAsync(TestContext.Current.CancellationToken);
-        await app.StartAsync(TestContext.Current.CancellationToken);
-
-        var resourceNotifications = app.Services.GetRequiredService<ResourceNotificationService>();
-
-        await resourceNotifications.WaitForResourceHealthyAsync("postgres", TestContext.Current.CancellationToken);
-        await resourceNotifications.WaitForResourceHealthyAsync("api", TestContext.Current.CancellationToken);
-        await resourceNotifications.WaitForResourceHealthyAsync("web", TestContext.Current.CancellationToken);
-
-        using var webClient = app.CreateHttpClient("web");
-        webClient.Timeout = HealthRequestTimeout;
-
-        var webHealthResponse = await webClient.GetAsync("/health", TestContext.Current.CancellationToken);
-        var apiHealthResponse = await webClient.GetAsync("/api/health", TestContext.Current.CancellationToken);
+        Uri webHealthUri = new("/health", UriKind.Relative);
+        using HttpResponseMessage webHealthResponse = await webClient.GetAsync(webHealthUri, TestContext.Current.CancellationToken);
+        Uri apiHealthUri = new("/api/health", UriKind.Relative);
+        using HttpResponseMessage apiHealthResponse = await webClient.GetAsync(apiHealthUri, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, webHealthResponse.StatusCode);
         Assert.Equal(HttpStatusCode.OK, apiHealthResponse.StatusCode);
     }
+
+#pragma warning restore CA1707 // Identifiers should not contain underscores
+
 }

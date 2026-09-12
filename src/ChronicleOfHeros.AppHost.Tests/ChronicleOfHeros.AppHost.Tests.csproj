@@ -1,8 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
@@ -22,7 +19,6 @@
 
   <ItemGroup>
     <ProjectReference Include="../ChronicleOfHeros.AppHost/ChronicleOfHeros.AppHost.csproj" />
-    <ProjectReference Include="../ChronicleOfHeros.Api/ChronicleOfHeros.Api.csproj" />
     <ProjectReference Include="../ChronicleOfHeros.Web/ChronicleOfHeros.Web.csproj" />
   </ItemGroup>
 </Project>

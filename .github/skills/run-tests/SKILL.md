@@ -32,6 +32,12 @@ dotnet test --project <test-project>.csproj --filter-class <fully-qualified-test
 Use the narrowest relevant class filter for the first validation after a code
 change. Run the entire test project before reporting a broad change complete.
 
+## Execution Lifecycle
+
+Use the `terminal-await` skill for every test invocation, including long-running
+test projects. When a test run defers, return control to the harness and resume
+only from its completion notification.
+
 ## Coverage
 
 When the test project references `Microsoft.Testing.Extensions.CodeCoverage`,

@@ -12,7 +12,7 @@ interactive layout, with token-based antiforgery protection after an
 
 ## Conclusion
 
-Yes. .NET 10 provides a native solution when the not-found page is rendered in
+Yes. .NET 10+ provides a native solution when the not-found page is rendered in
 the original Razor component request: keep `<AntiforgeryToken />` in the form
 and let its `AntiforgeryStateProvider` supply the persisted request token. No
 custom token endpoint, JavaScript fetch, or manually persisted token is
@@ -25,7 +25,7 @@ persists it for `InteractiveAuto`. The WebAssembly host also registers its
 the required hidden form field. This is exactly the selector's normal POST
 pattern.
 
-Status-code re-execution is an important exception. The .NET 10
+Status-code re-execution is an important exception. The .NET 10+
 `RazorComponentEndpointInvoker` deliberately skips
 `PrerenderPersistedStateAsync` for re-executed responses. A token can therefore
 appear in the server-rendered form but disappear when `InteractiveAuto`
@@ -56,10 +56,10 @@ hidden-field transport.
 - [Blazor security: antiforgery support](https://learn.microsoft.com/en-us/aspnet/core/blazor/security/?view=aspnetcore-10.0#antiforgery-support) states that request tokens are stored in component state so they remain available to interactive components without an HTTP request.
 - [Blazor forms: antiforgery support](https://learn.microsoft.com/en-us/aspnet/core/blazor/forms/?view=aspnetcore-10.0#antiforgery-support) documents `<AntiforgeryToken />` for normal HTML forms and the `UseAntiforgery` middleware requirement.
 - [Call a web API: antiforgery support](https://learn.microsoft.com/en-us/aspnet/core/blazor/call-web-api?view=aspnetcore-10.0#antiforgery-support) documents `AntiforgeryStateProvider` for programmatic HTTP requests.
-- [.NET 10 server registration](https://github.com/dotnet/aspnetcore/blob/v10.0.0/src/Components/Endpoints/src/DependencyInjection/RazorComponentsServiceCollectionExtensions.cs) registers `EndpointAntiforgeryStateProvider` and makes it persistent for `RenderMode.InteractiveAuto`.
-- [.NET 10 WebAssembly registration](https://github.com/dotnet/aspnetcore/blob/v10.0.0/src/Components/WebAssembly/WebAssembly/src/Hosting/WebAssemblyHostBuilder.cs) registers `DefaultAntiforgeryStateProvider` and restores it for interactive WebAssembly.
-- [.NET 10 `AntiforgeryToken` source](https://github.com/dotnet/aspnetcore/blob/v10.0.0/src/Components/Web/src/Forms/AntiforgeryToken.cs) shows the component querying `AntiforgeryStateProvider` and rendering a hidden input from the returned field name and value.
-- [.NET 10 `RazorComponentEndpointInvoker` source](https://github.com/dotnet/aspnetcore/blob/v10.0.0/src/Components/Endpoints/src/RazorComponentEndpointInvoker.cs) excludes error-handler and re-executed responses when emitting persisted component state.
+- [.NET 10+ server registration](https://github.com/dotnet/aspnetcore/blob/v10.0.0/src/Components/Endpoints/src/DependencyInjection/RazorComponentsServiceCollectionExtensions.cs) registers `EndpointAntiforgeryStateProvider` and makes it persistent for `RenderMode.InteractiveAuto`.
+- [.NET 10+ WebAssembly registration](https://github.com/dotnet/aspnetcore/blob/v10.0.0/src/Components/WebAssembly/WebAssembly/src/Hosting/WebAssemblyHostBuilder.cs) registers `DefaultAntiforgeryStateProvider` and restores it for interactive WebAssembly.
+- [.NET 10+ `AntiforgeryToken` source](https://github.com/dotnet/aspnetcore/blob/v10.0.0/src/Components/Web/src/Forms/AntiforgeryToken.cs) shows the component querying `AntiforgeryStateProvider` and rendering a hidden input from the returned field name and value.
+- [.NET 10+ `RazorComponentEndpointInvoker` source](https://github.com/dotnet/aspnetcore/blob/v10.0.0/src/Components/Endpoints/src/RazorComponentEndpointInvoker.cs) excludes error-handler and re-executed responses when emitting persisted component state.
 
 ## Caveat
 
