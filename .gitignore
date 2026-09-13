@@ -483,3 +483,5 @@ $RECYCLE.BIN/
 
 # Playwright
 /.playwright-cli/
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
