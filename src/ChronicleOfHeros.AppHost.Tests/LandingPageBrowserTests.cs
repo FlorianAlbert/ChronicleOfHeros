@@ -36,7 +36,7 @@ public class LandingPageBrowserTests(LandingPageFixture fixture) : IClassFixture
             await Assertions.Expect(page.GetByText("Armor", new() { Exact = true })).ToBeVisibleAsync().ConfigureAwait(false);
             await Assertions.Expect(page.GetByText("Initiative", new() { Exact = true })).ToBeVisibleAsync().ConfigureAwait(false);
             await Assertions.Expect(page.GetByText("Speed", new() { Exact = true })).ToBeVisibleAsync().ConfigureAwait(false);
-            await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Coming soon" })).ToBeDisabledAsync().ConfigureAwait(false);
+            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Sign in" })).ToHaveAttributeAsync("href", "/sign-in").ConfigureAwait(false);
             await Assertions.Expect(page.GetByLabel("Prototype variant selector")).ToHaveCountAsync(0).ConfigureAwait(false);
         });
     }
@@ -403,7 +403,7 @@ public class LandingPageBrowserTests(LandingPageFixture fixture) : IClassFixture
             await Assertions.Expect(page.GetByRole(AriaRole.Navigation, new() { Name = "Hauptnavigation" }).First).ToBeVisibleAsync().ConfigureAwait(false);
             await Assertions.Expect(page.GetByLabel("Navigationsmenü")).ToBeAttachedAsync().ConfigureAwait(false);
             await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Ein präziser Charakterbogen, bereit für den Spieltisch." })).ToBeVisibleAsync().ConfigureAwait(false);
-            await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Demnächst" })).ToBeDisabledAsync().ConfigureAwait(false);
+            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Anmelden" })).ToHaveAttributeAsync("href", "/sign-in").ConfigureAwait(false);
             await Assertions.Expect(page.GetByText("Rüstungsklasse", new() { Exact = true })).ToBeVisibleAsync().ConfigureAwait(false);
             await Assertions.Expect(page.GetByText("Bewegungsrate", new() { Exact = true })).ToBeVisibleAsync().ConfigureAwait(false);
             await Assertions.Expect(page.GetByText("30 ft.", new() { Exact = true })).ToBeVisibleAsync().ConfigureAwait(false);

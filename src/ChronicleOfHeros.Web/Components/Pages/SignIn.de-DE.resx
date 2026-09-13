@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Continue" xml:space="preserve">
+    <value>Weiter</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Melde dich an, um deinen Charakter weiterzuverwalten.</value>
+  </data>
+  <data name="Eyebrow" xml:space="preserve">
+    <value>Spielercharakter</value>
+  </data>
+  <data name="InvalidCredentials" xml:space="preserve">
+    <value>Dein Benutzername oder Passwort ist nicht korrekt.</value>
+  </data>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Anmelden | ChronicleOfHeros</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Passwort</value>
+  </data>
+  <data name="SignIn" xml:space="preserve">
+    <value>Anmelden</value>
+  </data>
+  <data name="Username" xml:space="preserve">
+    <value>Benutzername</value>
+  </data>
+</root>

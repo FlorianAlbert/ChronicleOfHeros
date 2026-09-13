@@ -45,12 +45,13 @@ public sealed class AspNetCoreIdentityRegistrationTests
     [Fact]
     public void Registration_exposes_the_identity_contracts_without_host_assembled_dependencies()
     {
-        using RSA signingKey = RSA.Create(2048);
+        using ECDsa signingKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         HostApplicationBuilder builder = Host.CreateApplicationBuilder();
         _ = builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["ConnectionStrings:chronicleofheros"] = "Host=localhost;Database=identity-tests;Username=postgres;Password=postgres",
             ["Jwt:SigningPrivateKey"] = Convert.ToBase64String(signingKey.ExportPkcs8PrivateKey()),
+            ["Jwt:SigningPublicKey"] = Convert.ToBase64String(signingKey.ExportSubjectPublicKeyInfo()),
             ["Jwt:Issuer"] = "https://identity.chronicleofheros.test",
             ["Jwt:Audience"] = "identity-tests",
         });

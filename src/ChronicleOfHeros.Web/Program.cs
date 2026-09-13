@@ -1,23 +1,15 @@
+using ChronicleOfHeros.Web.Authentication;
 using ChronicleOfHeros.Web.Client.Services.Localization;
 using ChronicleOfHeros.Web.Components;
 using ChronicleOfHeros.Web.Extensions;
 using ChronicleOfHeros.Web.Services.Localization;
 
 using Microsoft.AspNetCore.Antiforgery;
-using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Localization;
-
-using Yarp.ReverseProxy.Forwarder;
-using Yarp.ReverseProxy.Transforms;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
-
-builder.Services.AddHttpForwarderWithServiceDiscovery()
-                .Configure<HttpStandardResilienceOptions>(
-                    typeof(IHttpForwarder).FullName,
-                    options => options.DisableRetries());
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -28,6 +20,7 @@ builder.Services.AddLocalization();
 builder.Services.AddSingleton<IStringLocalizerFactory, MissingTranslationDiagnosticStringLocalizerFactory>();
 builder.Services.Configure<RequestLocalizationOptions>(
     options => options.ConfigureDisplayLanguages(supportedCultures));
+builder.AddBrowserSession();
 
 WebApplication app = builder.Build();
 
@@ -46,7 +39,10 @@ app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages:
 app.UseHttpsRedirection();
 app.UseRequestLocalization();
 
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
+app.UseBrowserSessionNavigation();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
@@ -85,49 +81,10 @@ app.MapPost("/display-language", async (HttpContext context, IAntiforgery antifo
             });
     }
 
-    return Results.Redirect(GetSafeLocalReturnPath(form["returnUrl"].ToString()));
+    return Results.Redirect(BrowserReturnPaths.GetSafeLocalReturnPath(form["returnUrl"].ToString()));
 });
 
-app.MapForwarder("/api/{**catch-all}", "https+http://api", transformBuilder =>
-{
-    _ = transformBuilder.AddPathRemovePrefix("/api");
-});
-
+app.MapBrowserSessionEndpoints();
 app.MapDefaultEndpoints();
 
 app.Run();
-
-static string GetSafeLocalReturnPath(string? returnUrl)
-{
-    return IsSafeLocalReturnPath(returnUrl) ? returnUrl! : "/";
-}
-
-static bool IsSafeLocalReturnPath(string? returnUrl)
-{
-    if (string.IsNullOrWhiteSpace(returnUrl)
-        || returnUrl.Contains('\\', StringComparison.Ordinal)
-        || !Uri.TryCreate(returnUrl, UriKind.Relative, out _))
-    {
-        return false;
-    }
-
-    int pathEnd = returnUrl.IndexOfAny(['?', '#']);
-    string encodedPath = pathEnd < 0 ? returnUrl : returnUrl[..pathEnd];
-    string decodedPath = encodedPath;
-
-    while (true)
-    {
-        string nextPath = Uri.UnescapeDataString(decodedPath);
-        if (nextPath == decodedPath)
-        {
-            break;
-        }
-
-        decodedPath = nextPath;
-    }
-
-    return decodedPath[0] == '/'
-           && !decodedPath.StartsWith("//", StringComparison.Ordinal)
-           && !decodedPath.StartsWith("/\\", StringComparison.Ordinal)
-           && !decodedPath.Contains('\\', StringComparison.Ordinal);
-}

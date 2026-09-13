@@ -74,6 +74,13 @@ public sealed class LandingPageFixture : IAsyncLifetime
     }
 
     /// <summary>
+    /// Creates an API client for preparing an end-to-end browser scenario.
+    /// </summary>
+    /// <returns>An API client connected to the shared application.</returns>
+    public HttpClient CreateApiClient() => (_app ?? throw new InvalidOperationException("The application has not been started."))
+        .CreateHttpClient("api");
+
+    /// <summary>
     /// Executes a provided asynchronous function that interacts with a public page of the application using Playwright. This method ensures that only one page interaction occurs at a time by using a semaphore for synchronization. It allows for configuration of JavaScript execution and locale settings for the browser context.
     /// </summary>
     /// <param name="exercisePage">The asynchronous function to execute, which interacts with the public page.</param>

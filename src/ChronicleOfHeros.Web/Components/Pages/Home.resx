@@ -75,6 +75,9 @@
   <data name="SeeHowTheRecordWorks" xml:space="preserve">
     <value>See how the record works</value>
   </data>
+  <data name="SignIn" xml:space="preserve">
+    <value>Sign in</value>
+  </data>
   <data name="Speed" xml:space="preserve">
     <value>Speed</value>
   </data>

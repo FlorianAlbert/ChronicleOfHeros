@@ -75,6 +75,9 @@
   <data name="SeeHowTheRecordWorks" xml:space="preserve">
     <value>Sieh dir an, wie der Charakterbogen funktioniert</value>
   </data>
+  <data name="SignIn" xml:space="preserve">
+    <value>Anmelden</value>
+  </data>
   <data name="Speed" xml:space="preserve">
     <value>Bewegungsrate</value>
   </data>

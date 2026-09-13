@@ -1,0 +1,84 @@
+.sign-in-page {
+    --paper: #f5f6f2;
+    --paper-raised: #ffffff;
+    --ink: #1d2630;
+    --ink-muted: #586169;
+    --rule: #cbd1c9;
+    --signal: #b9412a;
+    background:
+        linear-gradient(rgba(29, 38, 48, 0.025) 1px, transparent 1px) 0 0 / 100% 2rem,
+        var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: clamp(3rem, 10vw, 8rem) 1.5rem;
+}
+
+.sign-in-page section {
+    background: var(--paper-raised);
+    border: 1px solid var(--ink);
+    box-shadow: 12px 12px 0 #d9ded5;
+    margin: 0 auto;
+    max-width: 28rem;
+    padding: clamp(1.5rem, 5vw, 3rem);
+}
+
+.eyebrow {
+    color: var(--signal);
+    font: 700 0.7rem "Courier New", monospace;
+    letter-spacing: 0.08em;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.sign-in-page h1 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    font-weight: 500;
+    margin: 0.75rem 0;
+}
+
+.sign-in-page p:not(.eyebrow) {
+    color: var(--ink-muted);
+    font: 1rem/1.6 "Trebuchet MS", sans-serif;
+    margin: 0;
+}
+
+.sign-in-page .validation-error {
+    color: #a32d1b;
+    font-weight: 700;
+    margin-top: 1rem;
+}
+
+.sign-in-page form {
+    display: grid;
+    gap: 0.65rem;
+    margin-top: 2rem;
+}
+
+.sign-in-page label {
+    font: 700 0.75rem "Courier New", monospace;
+    letter-spacing: 0.04em;
+    margin-top: 0.75rem;
+    text-transform: uppercase;
+}
+
+.sign-in-page input {
+    border: 1px solid var(--rule);
+    font: 1rem "Trebuchet MS", sans-serif;
+    padding: 0.8rem;
+}
+
+.sign-in-page button {
+    background: var(--signal);
+    border: 0;
+    color: #ffffff;
+    cursor: pointer;
+    font: 700 0.8rem "Trebuchet MS", sans-serif;
+    margin-top: 1rem;
+    padding: 0.9rem 1rem;
+}
+
+.sign-in-page :focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 3px;
+}

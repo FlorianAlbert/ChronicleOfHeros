@@ -282,12 +282,13 @@ public sealed class IdentityCapabilityFixture : IAsyncLifetime
 
     private HostApplicationBuilder CreateRuntimeHostBuilder()
     {
-        using RSA signingKey = RSA.Create(2048);
+        using ECDsa signingKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         HostApplicationBuilder builder = Host.CreateApplicationBuilder();
         _ = builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["ConnectionStrings:chronicleofheros"] = database.GetConnectionString(),
             ["Jwt:SigningPrivateKey"] = Convert.ToBase64String(signingKey.ExportPkcs8PrivateKey()),
+            ["Jwt:SigningPublicKey"] = Convert.ToBase64String(signingKey.ExportSubjectPublicKeyInfo()),
             ["Jwt:Issuer"] = "https://identity.chronicleofheros.test",
             ["Jwt:Audience"] = "identity-capability-tests",
             ["BootstrapOperator:Username"] = "FixtureOperator",

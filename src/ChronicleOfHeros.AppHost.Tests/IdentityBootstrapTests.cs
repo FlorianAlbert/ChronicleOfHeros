@@ -16,13 +16,14 @@ internal static class BootstrapOperatorTestParameters
 
     internal static string[] CreateAppHostArguments()
     {
-        using RSA rsa = RSA.Create(2048);
+        using ECDsa signingKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
 
         return
         [
             $"Parameters:bootstrap-operator-username={Username}",
             $"Parameters:bootstrap-operator-temporary-password={TemporaryPassword}",
-            $"Parameters:jwt-signing-private-key={Convert.ToBase64String(rsa.ExportPkcs8PrivateKey())}",
+            $"Parameters:jwt-signing-private-key={Convert.ToBase64String(signingKey.ExportPkcs8PrivateKey())}",
+            $"Parameters:jwt-signing-public-key={Convert.ToBase64String(signingKey.ExportSubjectPublicKeyInfo())}",
             "Parameters:jwt-issuer=https://identity.chronicleofheros.test",
             "Parameters:jwt-audience=chronicleofheros-api-tests",
         ];

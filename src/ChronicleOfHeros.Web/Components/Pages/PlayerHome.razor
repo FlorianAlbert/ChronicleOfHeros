@@ -1,0 +1,16 @@
+@page "/player"
+@attribute [Authorize]
+
+@inject IStringLocalizer<PlayerHome> Localizer
+
+<PageTitle>@Localizer["PageTitle"]</PageTitle>
+
+<div class="player-home">
+    <main>
+        <section aria-labelledby="player-home-title">
+            <p class="eyebrow">@Localizer["Eyebrow"]</p>
+            <h1 id="player-home-title">@Localizer["Heading"]</h1>
+            <p>@Localizer["Description"]</p>
+        </section>
+    </main>
+</div>

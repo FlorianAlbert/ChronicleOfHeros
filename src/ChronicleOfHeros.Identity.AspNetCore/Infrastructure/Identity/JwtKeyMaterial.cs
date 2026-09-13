@@ -6,20 +6,20 @@ namespace ChronicleOfHeros.Identity.AspNetCore.Infrastructure.Identity;
 
 internal sealed class JwtKeyMaterial : IDisposable
 {
-    private readonly RSA signingRsa;
-    private readonly RSA validationRsa;
+    private readonly ECDsa signingKey;
+    private readonly ECDsa validationKey;
 
-    private JwtKeyMaterial(RSA signingRsa, RSA validationRsa)
+    private JwtKeyMaterial(ECDsa signingKey, ECDsa validationKey)
     {
-        this.signingRsa = signingRsa;
-        this.validationRsa = validationRsa;
+        this.signingKey = signingKey;
+        this.validationKey = validationKey;
         SigningCredentials = new SigningCredentials(
-            new RsaSecurityKey(signingRsa)
+            new ECDsaSecurityKey(signingKey)
             {
                 CryptoProviderFactory = new CryptoProviderFactory { CacheSignatureProviders = false },
             },
-            SecurityAlgorithms.RsaSha256);
-        ValidationKey = new RsaSecurityKey(validationRsa)
+            SecurityAlgorithms.EcdsaSha256);
+        ValidationKey = new ECDsaSecurityKey(validationKey)
         {
             CryptoProviderFactory = new CryptoProviderFactory { CacheSignatureProviders = false },
         };
@@ -31,18 +31,18 @@ internal sealed class JwtKeyMaterial : IDisposable
 
     public static JwtKeyMaterial Create(JwtOptions options)
     {
-        RSA signingRsa = RSA.Create();
-        signingRsa.ImportPkcs8PrivateKey(Convert.FromBase64String(options.SigningPrivateKey!), out _);
+        ECDsa signingKey = ECDsa.Create();
+        signingKey.ImportPkcs8PrivateKey(Convert.FromBase64String(options.SigningPrivateKey!), out _);
 
-        RSA validationRsa = RSA.Create();
-        validationRsa.ImportSubjectPublicKeyInfo(signingRsa.ExportSubjectPublicKeyInfo(), out _);
+        ECDsa validationKey = ECDsa.Create();
+        validationKey.ImportSubjectPublicKeyInfo(Convert.FromBase64String(options.SigningPublicKey!), out _);
 
-        return new JwtKeyMaterial(signingRsa, validationRsa);
+        return new JwtKeyMaterial(signingKey, validationKey);
     }
 
     public void Dispose()
     {
-        signingRsa.Dispose();
-        validationRsa.Dispose();
+        signingKey.Dispose();
+        validationKey.Dispose();
     }
 }

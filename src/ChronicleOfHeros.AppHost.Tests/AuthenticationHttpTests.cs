@@ -533,7 +533,7 @@ public sealed class AuthenticationHttpTests(AuthenticationAppFixture fixture) : 
             System.Buffers.Text.Base64Url.DecodeFromChars(headerSegment));
         using JsonDocument header = JsonDocument.Parse(headerJson);
 
-        Assert.Equal("RS256", header.RootElement.GetProperty("alg").GetString());
+        Assert.Equal("ES256", header.RootElement.GetProperty("alg").GetString());
     }
 
     private static string ReadJwtSubject(string accessToken)

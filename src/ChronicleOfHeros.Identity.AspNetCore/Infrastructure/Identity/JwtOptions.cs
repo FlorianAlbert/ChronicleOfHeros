@@ -11,6 +11,8 @@ internal sealed class JwtOptions
 
     public string? SigningPrivateKey { get; private set; }
 
+    public string? SigningPublicKey { get; private set; }
+
     public string? Issuer { get; private set; }
 
     public string? Audience { get; private set; }
@@ -19,12 +21,14 @@ internal sealed class JwtOptions
     {
         IConfigurationSection section = configuration.GetSection(ConfigurationSectionName);
         SigningPrivateKey = section["SigningPrivateKey"];
+        SigningPublicKey = section["SigningPublicKey"];
         Issuer = section["Issuer"];
         Audience = section["Audience"];
     }
 
     internal bool HasRequiredValues() =>
         !string.IsNullOrWhiteSpace(SigningPrivateKey)
+        && !string.IsNullOrWhiteSpace(SigningPublicKey)
         && !string.IsNullOrWhiteSpace(Issuer)
         && !string.IsNullOrWhiteSpace(Audience);
 }

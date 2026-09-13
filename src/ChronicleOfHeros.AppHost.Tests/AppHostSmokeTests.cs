@@ -29,13 +29,13 @@ public class AppHostSmokeTests(LandingPageFixture fixture) : IClassFixture<Landi
         Assert.Contains(">Armor<", landingPage, StringComparison.Ordinal);
         Assert.Contains(">Initiative<", landingPage, StringComparison.Ordinal);
         Assert.Contains(">Speed<", landingPage, StringComparison.Ordinal);
-        Assert.Matches("<button[^>]*disabled[^>]*>Coming soon</button>", landingPage);
+        Assert.Matches("""<a(?=[^>]*\bhref="/sign-in")[^>]*>Sign in</a>""", landingPage);
         Assert.DoesNotContain("prototype-switcher", landingPage, StringComparison.Ordinal);
         Assert.DoesNotContain("Visual Prototype", landingPage, StringComparison.Ordinal);
     }
 
     /// <summary>
-    /// This test verifies that the health endpoints of the application are available and return a successful response.
+    /// This test verifies that the Web health endpoint is available while generic browser API forwarding is absent.
     /// </summary>
     /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
@@ -45,11 +45,13 @@ public class AppHostSmokeTests(LandingPageFixture fixture) : IClassFixture<Landi
 
         Uri webHealthUri = new("/health", UriKind.Relative);
         using HttpResponseMessage webHealthResponse = await webClient.GetAsync(webHealthUri, TestContext.Current.CancellationToken);
-        Uri apiHealthUri = new("/api/health", UriKind.Relative);
-        using HttpResponseMessage apiHealthResponse = await webClient.GetAsync(apiHealthUri, TestContext.Current.CancellationToken);
+        Uri genericApiHealthUri = new("/api/health", UriKind.Relative);
+        using HttpResponseMessage genericApiHealthResponse = await webClient.GetAsync(
+            genericApiHealthUri,
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, webHealthResponse.StatusCode);
-        Assert.Equal(HttpStatusCode.OK, apiHealthResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, genericApiHealthResponse.StatusCode);
     }
 
 #pragma warning restore CA1707 // Identifiers should not contain underscores

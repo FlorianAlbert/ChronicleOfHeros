@@ -1,0 +1,40 @@
+@page "/sign-in"
+
+@inject IStringLocalizer<SignIn> Localizer
+
+<PageTitle>@Localizer["PageTitle"]</PageTitle>
+
+<div class="sign-in-page">
+    <main>
+        <section aria-labelledby="sign-in-title">
+            <p class="eyebrow">@Localizer["Eyebrow"]</p>
+            <h1 id="sign-in-title">@Localizer["SignIn"]</h1>
+            <p>@Localizer["Description"]</p>
+            @if (string.Equals(Error, "invalid-credentials", StringComparison.Ordinal))
+            {
+                <p class="validation-error" role="alert">@Localizer["InvalidCredentials"]</p>
+            }
+
+            <form method="post" action="/sign-in/submit">
+                <AntiforgeryToken />
+                <input name="returnUrl" type="hidden" value="@ReturnUrl" />
+
+                <label for="username">@Localizer["Username"]</label>
+                <input autocomplete="username" id="username" name="username" required type="text" />
+
+                <label for="password">@Localizer["Password"]</label>
+                <input autocomplete="current-password" id="password" name="password" required type="password" />
+
+                <button type="submit">@Localizer["Continue"]</button>
+            </form>
+        </section>
+    </main>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    private string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery(Name = "error")]
+    private string? Error { get; set; }
+}
