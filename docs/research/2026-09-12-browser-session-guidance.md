@@ -35,27 +35,26 @@ uses those contracts on behalf of an authenticated Player or Operator.
 
 ## Recommendation
 
-1. Add a dedicated cookie authentication scheme to `ChronicleOfHeros.Web` and
+1. Add a dedicated browser-session capability to `ChronicleOfHeros.Web` and
    run authentication and authorization before its mapped endpoints. Issue a
-   host-only, `Secure`, `HttpOnly`, `SameSite=Strict` session cookie with
-   `Path=/`; use a session cookie by default and make persistent sign-in an
-   explicit Player choice. Cookie middleware decrypts the ticket and populates
-   `HttpContext.User`; persistent cookies require explicit consent.
+   host-only, `Secure`, `HttpOnly`, `SameSite=Strict`, `__Host-`-prefixed
+   session cookie with `Path=/`. The cookie contains only an opaque session
+   identifier; the backing session is validated in Redis on every request.
 
-2. Put only a random session identifier and minimal display/authorization
-   claims in the Web cookie. Store the current access token, refresh token,
-   expiry, and refresh-family/session linkage in a server-side protected
-   session store. This stricter token-custody recommendation is a design choice
-   for this application: Microsoft samples can save tokens in the encrypted
-   authentication ticket, but their overriding guidance is that tokens and
-   authentication data must never reach the `.Client` project.
+2. Store the current access token, refresh token, expiry, refresh-family
+   linkage, and required server-side identity state in a private Redis session
+   record, protected with ASP.NET Core Data Protection. Microsoft samples can
+   save tokens in an encrypted authentication ticket, but this application
+   deliberately keeps both tokens and identity claims out of browser artifacts.
+   Tokens and authentication data must never reach the `.Client` project.
 
-3. Have Web sign-in, refresh, password-change, and sign-out handlers invoke
-   the existing API authentication contracts internally. On sign-out, revoke
-   the stored refresh-token family through the API before deleting the Web
-   session and cookie. Refresh server-side before forwarding a request whose
-   access token is expired or near expiry; on refresh failure, delete the
-   session and return an unauthenticated result.
+3. Have static-SSR Web sign-in, password-change, and sign-out form handlers
+   invoke the existing API authentication contracts internally and redirect
+   with `303 See Other`. On sign-out, revoke the stored refresh-token family
+   through the API before deleting the Web session and cookie. Refresh
+   server-side before forwarding a request whose access token is expired or
+   near expiry; on refresh failure, delete the session and return an
+   unauthenticated result.
 
 4. Replace broad anonymous pass-through of authenticated browser API traffic
    with explicit BFF endpoints or guarded YARP transforms. They must load the
@@ -66,11 +65,14 @@ uses those contracts on behalf of an authenticated Player or Operator.
    existing proxy route.
 
 5. Require authorization twice for Interactive Auto data: on the rendered
-   component/page and on the same-origin Web endpoint it calls. Serialize only
-   non-sensitive identity display state to WebAssembly. The client-side
-   authentication state is fixed for the lifetime of the loaded application, so
-   sign-in, sign-out, role changes, and invalidated sessions should force a
-   full reload before the UI relies on the new state.
+   component/page and on the same-origin Web endpoint it calls. Web validates
+   its server-held access JWT with the API-provisioned public key before using
+   its claims for the Web session principal; the API independently authorizes
+   the forwarded bearer token. Serialize only non-sensitive identity display
+   state to WebAssembly. The client-side authentication state is fixed for the
+   lifetime of the loaded application, so sign-in, sign-out, role changes, and
+   invalidated sessions should force a full reload before the UI relies on the
+   new state.
 
 6. Keep CSRF defenses on every browser-reachable, cookie-authenticated mutation
    endpoint. .NET 11's automatic Fetch-Metadata protection is useful defense in
@@ -80,11 +82,10 @@ uses those contracts on behalf of an authenticated Player or Operator.
    the configured request-token header; do not call `DisableAntiforgery()` on
    an endpoint authenticated by the Web cookie.
 
-7. Make Web-session revocation explicit. Validate session state when the cookie
-   is used, at a bounded interval where necessary, and reject it when the
-   backing session is revoked, expired, or no longer matches the stored refresh
-   family. The cookie authentication `ValidatePrincipal` hook supports this,
-   but Microsoft cautions that validation on every request can be costly.
+7. Make Web-session revocation explicit. Validate session state on every
+   authenticated request and reject it when the backing session is revoked,
+   expired, or no longer matches the stored refresh family. Redis is a private
+   infrastructure dependency of the BFF, not a browser-accessible datastore.
 
 ## Current Contract And Extension Points
 
@@ -99,9 +100,9 @@ uses those contracts on behalf of an authenticated Player or Operator.
   Web-owned pending-password-change session rather than returning that token to
   the browser. Once the password is changed, replace it with the normal Web
   session using the API's resulting token pair.
-- API bearer validation stays in the API. The Web host does not validate or
-  reinterpret access JWTs for API authorization; it authenticates the browser
-  session, then presents the API's existing bearer token to the API.
+- The API remains the authorization authority for bearer tokens. Web validates
+   its server-held access JWT with the provisioned public key solely to establish
+   the browser-session principal, then presents that bearer token to the API.
 - The existing Web `UseAntiforgery()` and same-origin `/api` forwarder are
   useful foundations, but neither currently authenticates the browser nor
   injects a bearer token. They need a dedicated capability rather than a
