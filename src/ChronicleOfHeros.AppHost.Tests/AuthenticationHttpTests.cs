@@ -273,7 +273,7 @@ public sealed class AuthenticationHttpTests(AuthenticationAppFixture fixture) : 
             .GetDateTimeOffset();
 
         Assert.NotNull(restrictedAccessToken);
-        AssertUsesRs256(restrictedAccessToken);
+        AssertUsesEs256(restrictedAccessToken);
         Assert.InRange(
             restrictedAccessTokenExpiresAt,
             signInStartedAt.AddMinutes(4),
@@ -348,7 +348,7 @@ public sealed class AuthenticationHttpTests(AuthenticationAppFixture fixture) : 
             .GetProperty("accessTokenExpiresAt")
             .GetDateTimeOffset();
         Assert.NotNull(accessToken);
-        AssertUsesRs256(accessToken);
+        AssertUsesEs256(accessToken);
         Assert.InRange(
             accessTokenExpiresAt,
             DateTimeOffset.UtcNow.AddMinutes(14),
@@ -526,7 +526,7 @@ public sealed class AuthenticationHttpTests(AuthenticationAppFixture fixture) : 
         return new TokenPair(accessToken, refreshToken);
     }
 
-    private static void AssertUsesRs256(string accessToken)
+    private static void AssertUsesEs256(string accessToken)
     {
         string headerSegment = accessToken.Split('.')[0];
         string headerJson = Encoding.UTF8.GetString(

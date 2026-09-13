@@ -8,7 +8,10 @@ internal static class BrowserReturnPaths
     internal static string GetSafeSignInReturnPath(string? returnUrl)
     {
         string safeReturnPath = GetSafeLocalReturnPath(returnUrl);
-        return string.Equals(GetDecodedPath(safeReturnPath), "/sign-in", StringComparison.OrdinalIgnoreCase)
+        return string.Equals(
+                GetDecodedPath(safeReturnPath).TrimEnd('/'),
+                "/sign-in",
+                StringComparison.OrdinalIgnoreCase)
             ? "/"
             : safeReturnPath;
     }

@@ -197,6 +197,7 @@ public sealed class BrowserSessionHttpTests(LandingPageFixture fixture) : IClass
     [Theory]
     [InlineData("https://untrusted.example/continuation")]
     [InlineData("/sign-in")]
+    [InlineData("/sign-in/")]
     [InlineData("/%73ign-in")]
     public async Task Browser_sign_in_safely_falls_back_from_unsafe_continuations_and_authenticated_entry_points(
         string continuation)
