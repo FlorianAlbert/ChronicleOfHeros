@@ -12,6 +12,10 @@ A Player with the additional Operator role, authorized to enroll and manage Play
 
 The process by which an Operator creates a Player account and delivers a temporary initial credential directly to the Player outside the application. A Player must replace that credential before using normal application capabilities. Self-registration is outside the current scope.
 
+## Player password reset
+
+The process by which an Operator replaces a Player's credential and delivers the new temporary credential directly to the Player outside the application. The Player must replace that credential after signing in. Players cannot reset their own passwords.
+
 ## Username
 
 The unique, case-insensitive account identifier used by a Player or Operator to sign in. A Username contains 3-32 ASCII letters, digits, underscores, hyphens, or periods, with no whitespace or leading/trailing punctuation. Its entered spelling is retained for display and a canonical form is used for lookup. Email addresses are outside the current scope.
