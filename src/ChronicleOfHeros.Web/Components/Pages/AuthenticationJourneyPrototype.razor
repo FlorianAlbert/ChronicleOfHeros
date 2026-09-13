@@ -1,0 +1,270 @@
+@page "/prototype/authentication-journeys"
+@rendermode InteractiveServer
+
+@* PROTOTYPE: Can Players and Operators clearly distinguish sign-in, restricted-session password replacement, protected navigation, session loss, enrollment credential disclosure, and Operator-controlled password reset before implementation? *@
+
+<PageTitle>Authentication journey prototype</PageTitle>
+
+<main class="authentication-journey-prototype">
+    <header>
+        <p class="eyebrow">Throwaway prototype</p>
+        <h1>Authentication journey explorer</h1>
+        <p>Explore how a Player or Operator moves through sign-in, restricted access, protected destinations, Player enrollment, Operator password reset, and session loss before the real Web experience is built.</p>
+    </header>
+
+    <section class="current-state" aria-labelledby="current-state-title">
+        <div class="section-heading">
+            <p class="eyebrow">Current state</p>
+            <h2 id="current-state-title">@DescribeScreen(state.Screen)</h2>
+        </div>
+        <dl>
+            <div>
+                <dt>Browser session</dt>
+                <dd>@DescribeBrowserSession(state.BrowserSession)</dd>
+            </div>
+            <div>
+                <dt>Signed-in role</dt>
+                <dd>@DescribeRole(state.Role)</dd>
+            </div>
+            <div>
+                <dt>Return after sign-in</dt>
+                <dd>@(state.PendingReturnPath ?? "No protected destination is waiting")</dd>
+            </div>
+            <div>
+                <dt>Credential acknowledgement</dt>
+                <dd>@(state.IsTemporaryCredentialAwaitingAcknowledgement ? "Required before leaving disclosure" : "Not required")</dd>
+            </div>
+        </dl>
+        @if (state.TemporaryCredential is not null)
+        {
+            <div class="temporary-credential">
+                <span>@DescribeCredentialDisclosure(state.CredentialDisclosurePurpose!.Value)</span>
+                <strong>@state.TemporaryCredential</strong>
+                <p>The credential is visible only while the Operator has not acknowledged this disclosure.</p>
+            </div>
+        }
+        <p class="state-change"><b>Latest change:</b> @state.LastChange</p>
+    </section>
+
+    <section class="free-play" aria-labelledby="free-play-title">
+        <div class="section-heading">
+            <p class="eyebrow">Free play</p>
+            <h2 id="free-play-title">Try any transition</h2>
+        </div>
+        <div class="action-grid">
+            @foreach (AuthenticationJourneyAction action in allActions)
+            {
+                <button type="button" @onclick="@(() => Dispatch(action))">@DescribeAction(action)</button>
+            }
+        </div>
+    </section>
+
+    <section class="walkthroughs" aria-labelledby="walkthroughs-title">
+        <div class="section-heading">
+            <p class="eyebrow">Guided walkthroughs</p>
+            <h2 id="walkthroughs-title">Walk a journey from a known state</h2>
+        </div>
+        <div class="scenario-tabs" role="tablist" aria-label="Authentication journey walkthroughs">
+            @foreach (AuthenticationJourneyScenario scenario in scenarios)
+            {
+                <button
+                    type="button"
+                    role="tab"
+                    aria-selected="@(selectedScenario == scenario)"
+                    class="@(selectedScenario == scenario ? "selected" : null)"
+                    @onclick="@(() => SelectScenario(scenario))">
+                    @DescribeScenario(scenario)
+                </button>
+            }
+        </div>
+        <div class="scenario-panel" role="tabpanel">
+            <p>@CurrentScenario.Description</p>
+            <ol>
+                @for (int index = 0; index < CurrentScenario.Steps.Count; index++)
+                {
+                    AuthenticationJourneyWalkthroughStep step = CurrentScenario.Steps[index];
+                    <li class="@(nextWalkthroughStep == index ? "current" : nextWalkthroughStep > index ? "complete" : null)">
+                        <button type="button" disabled="@(nextWalkthroughStep != index)" @onclick="@(() => RunWalkthroughStep(step.Action))">
+                            @step.Label
+                        </button>
+                    </li>
+                }
+            </ol>
+            @if (nextWalkthroughStep == CurrentScenario.Steps.Count)
+            {
+                <p class="walkthrough-complete">This walkthrough is complete. Select its tab to begin again or continue with free play.</p>
+            }
+        </div>
+    </section>
+</main>
+
+@code {
+    private static readonly AuthenticationJourneyAction[] allActions = Enum.GetValues<AuthenticationJourneyAction>();
+
+    private static readonly AuthenticationJourneyScenario[] scenarios =
+    [
+        AuthenticationJourneyScenario.PlayerSignIn,
+        AuthenticationJourneyScenario.RestrictedSession,
+        AuthenticationJourneyScenario.OperatorEnrollment,
+        AuthenticationJourneyScenario.SessionLoss,
+        AuthenticationJourneyScenario.OperatorPasswordReset,
+    ];
+
+    private AuthenticationJourneyState state = AuthenticationJourneyPrototypeLogic.InitialState;
+    private AuthenticationJourneyScenario selectedScenario = AuthenticationJourneyScenario.PlayerSignIn;
+    private int nextWalkthroughStep;
+
+    private AuthenticationJourneyWalkthrough CurrentScenario => selectedScenario switch
+    {
+        AuthenticationJourneyScenario.PlayerSignIn => new(
+            "A Player signs in and opens their character-management area. Watch how an active Player session permits the protected destination.",
+            [
+                new("Sign in as an active Player", AuthenticationJourneyAction.SignInAsPlayer),
+                new("Open character management", AuthenticationJourneyAction.NavigateToPlayerHome),
+            ]),
+        AuthenticationJourneyScenario.RestrictedSession => new(
+            "A Player with a temporary credential asks for protected character management. Watch password replacement happen before the continuation is resumed.",
+            [
+                new("Sign in as a restricted Player", AuthenticationJourneyAction.SignInAsRestrictedPlayer),
+                new("Request character management", AuthenticationJourneyAction.NavigateToPlayerHome),
+                new("Replace the temporary credential", AuthenticationJourneyAction.CompleteMandatoryPasswordReplacement),
+            ]),
+        AuthenticationJourneyScenario.OperatorEnrollment => new(
+            "An Operator signs in, enrolls a Player, delivers the temporary credential directly, and acknowledges the one-time disclosure.",
+            [
+                new("Sign in as an active Operator", AuthenticationJourneyAction.SignInAsOperator),
+                new("Open Player administration", AuthenticationJourneyAction.NavigateToOperatorAdministration),
+                new("Enroll a Player", AuthenticationJourneyAction.EnrollPlayer),
+                new("Acknowledge the credential disclosure", AuthenticationJourneyAction.AcknowledgeTemporaryCredential),
+            ]),
+        AuthenticationJourneyScenario.SessionLoss => new(
+            "A signed-in Player loses their browser session while managing their character. Watch the distinct session-ended state and the safe continuation back to sign-in.",
+            [
+                new("Sign in as an active Player", AuthenticationJourneyAction.SignInAsPlayer),
+                new("Open character management", AuthenticationJourneyAction.NavigateToPlayerHome),
+                new("Expire the browser session", AuthenticationJourneyAction.LoseSession),
+                new("Try character management again", AuthenticationJourneyAction.NavigateToPlayerHome),
+            ]),
+        AuthenticationJourneyScenario.OperatorPasswordReset => new(
+            "An Operator resets a Player's password, delivers the new temporary credential directly, and acknowledges the one-time disclosure. The Player must replace this credential after signing in.",
+            [
+                new("Sign in as an active Operator", AuthenticationJourneyAction.SignInAsOperator),
+                new("Open Player administration", AuthenticationJourneyAction.NavigateToOperatorAdministration),
+                new("Reset a Player's password", AuthenticationJourneyAction.ResetPlayerPassword),
+                new("Acknowledge the credential disclosure", AuthenticationJourneyAction.AcknowledgeTemporaryCredential),
+            ]),
+        _ => throw new ArgumentOutOfRangeException(nameof(selectedScenario), selectedScenario, null),
+    };
+
+    private void Dispatch(AuthenticationJourneyAction action)
+    {
+        state = AuthenticationJourneyPrototypeLogic.Reduce(state, action);
+    }
+
+    private void SelectScenario(AuthenticationJourneyScenario scenario)
+    {
+        selectedScenario = scenario;
+        state = AuthenticationJourneyPrototypeLogic.InitialState;
+        nextWalkthroughStep = 0;
+    }
+
+    private void RunWalkthroughStep(AuthenticationJourneyAction action)
+    {
+        Dispatch(action);
+        nextWalkthroughStep++;
+    }
+
+    private static string DescribeAction(AuthenticationJourneyAction action)
+    {
+        return action switch
+        {
+            AuthenticationJourneyAction.SignInAsRestrictedPlayer => "Sign in as restricted Player",
+            AuthenticationJourneyAction.SignInAsRestrictedOperator => "Sign in as restricted Operator",
+            AuthenticationJourneyAction.SignInAsPlayer => "Sign in as active Player",
+            AuthenticationJourneyAction.SignInAsOperator => "Sign in as active Operator",
+            AuthenticationJourneyAction.NavigateToPlayerHome => "Open character management",
+            AuthenticationJourneyAction.NavigateToOperatorAdministration => "Open Player administration",
+            AuthenticationJourneyAction.CompleteMandatoryPasswordReplacement => "Replace temporary credential",
+            AuthenticationJourneyAction.LoseSession => "Expire browser session",
+            AuthenticationJourneyAction.EnrollPlayer => "Enroll a Player",
+            AuthenticationJourneyAction.ResetPlayerPassword => "Reset a Player's password",
+            AuthenticationJourneyAction.AcknowledgeTemporaryCredential => "Acknowledge credential disclosure",
+            AuthenticationJourneyAction.ReturnToSignIn => "Return to sign-in",
+            _ => throw new ArgumentOutOfRangeException(nameof(action), action, null),
+        };
+    }
+
+    private static string DescribeBrowserSession(BrowserSessionState browserSession)
+    {
+        return browserSession switch
+        {
+            BrowserSessionState.None => "No session",
+            BrowserSessionState.Restricted => "Restricted session",
+            BrowserSessionState.Active => "Active session",
+            BrowserSessionState.Ended => "Session ended",
+            _ => throw new ArgumentOutOfRangeException(nameof(browserSession), browserSession, null),
+        };
+    }
+
+    private static string DescribeRole(JourneyRole role)
+    {
+        return role switch
+        {
+            JourneyRole.None => "None",
+            JourneyRole.Player => "Player",
+            JourneyRole.Operator => "Operator",
+            _ => throw new ArgumentOutOfRangeException(nameof(role), role, null),
+        };
+    }
+
+    private static string DescribeScenario(AuthenticationJourneyScenario scenario)
+    {
+        return scenario switch
+        {
+            AuthenticationJourneyScenario.PlayerSignIn => "Player sign-in",
+            AuthenticationJourneyScenario.RestrictedSession => "Restricted session",
+            AuthenticationJourneyScenario.OperatorEnrollment => "Player enrollment",
+            AuthenticationJourneyScenario.SessionLoss => "Session loss",
+            AuthenticationJourneyScenario.OperatorPasswordReset => "Operator password reset",
+            _ => throw new ArgumentOutOfRangeException(nameof(scenario), scenario, null),
+        };
+    }
+
+    private static string DescribeScreen(JourneyScreen screen)
+    {
+        return screen switch
+        {
+            JourneyScreen.SignIn => "Sign-in route",
+            JourneyScreen.MandatoryPasswordReplacement => "Mandatory password replacement",
+            JourneyScreen.PlayerHome => "Character management",
+            JourneyScreen.OperatorAdministration => "Player administration",
+            JourneyScreen.TemporaryCredentialDisclosure => "Temporary credential disclosure",
+            JourneyScreen.SessionEnded => "Session ended",
+            JourneyScreen.AccessDenied => "Access denied",
+            _ => throw new ArgumentOutOfRangeException(nameof(screen), screen, null),
+        };
+    }
+
+    private sealed record AuthenticationJourneyWalkthrough(string Description, IReadOnlyList<AuthenticationJourneyWalkthroughStep> Steps);
+
+    private sealed record AuthenticationJourneyWalkthroughStep(string Label, AuthenticationJourneyAction Action);
+
+    private static string DescribeCredentialDisclosure(CredentialDisclosurePurpose purpose)
+    {
+        return purpose switch
+        {
+            CredentialDisclosurePurpose.PlayerEnrollment => "Temporary credential for Player enrollment",
+            CredentialDisclosurePurpose.PasswordReset => "New temporary credential after Player password reset",
+            _ => throw new ArgumentOutOfRangeException(nameof(purpose), purpose, null),
+        };
+    }
+
+    private enum AuthenticationJourneyScenario
+    {
+        PlayerSignIn,
+        RestrictedSession,
+        OperatorEnrollment,
+        SessionLoss,
+        OperatorPasswordReset,
+    }
+}

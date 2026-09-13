@@ -1,0 +1,259 @@
+.authentication-journey-prototype {
+    --paper: #f7f7f3;
+    --ink: #18252c;
+    --muted-ink: #566269;
+    --rule: #c8d0cd;
+    --signal: #a63d2c;
+    --signal-soft: #f6e7e2;
+    background:
+        linear-gradient(rgba(24, 37, 44, 0.03) 1px, transparent 1px) 0 0 / 100% 2rem,
+        var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: clamp(2rem, 6vw, 5rem) 1.25rem;
+}
+
+.authentication-journey-prototype > * {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 68rem;
+}
+
+.authentication-journey-prototype header {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: clamp(2rem, 5vw, 3.5rem);
+}
+
+.eyebrow {
+    color: var(--signal);
+    font: 700 0.72rem "Courier New", monospace;
+    letter-spacing: 0.08em;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.authentication-journey-prototype h1,
+.authentication-journey-prototype h2,
+.authentication-journey-prototype strong {
+    font-family: Georgia, "Times New Roman", serif;
+    letter-spacing: 0;
+}
+
+.authentication-journey-prototype h1 {
+    font-size: clamp(2.5rem, 7vw, 4.75rem);
+    font-weight: 500;
+    line-height: 1;
+    margin: 0.8rem 0 1.25rem;
+    max-width: 12ch;
+}
+
+.authentication-journey-prototype h2 {
+    font-size: clamp(1.55rem, 4vw, 2.3rem);
+    font-weight: 500;
+    margin: 0.4rem 0 0;
+}
+
+.authentication-journey-prototype header > p:last-child,
+.scenario-panel > p,
+.temporary-credential p,
+.state-change {
+    color: var(--muted-ink);
+    font: 1rem/1.6 "Trebuchet MS", sans-serif;
+}
+
+.authentication-journey-prototype header > p:last-child {
+    margin: 0;
+    max-width: 44rem;
+}
+
+.current-state,
+.free-play,
+.walkthroughs {
+    border-bottom: 1px solid var(--rule);
+    padding: clamp(2rem, 5vw, 3.5rem) 0;
+}
+
+.section-heading {
+    display: grid;
+    gap: 0.4rem;
+    margin-bottom: 1.5rem;
+}
+
+.current-state dl {
+    border: 1px solid var(--ink);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 0;
+}
+
+.current-state dl > div {
+    min-width: 0;
+    padding: 1rem;
+}
+
+.current-state dl > div:nth-child(odd) {
+    border-right: 1px solid var(--rule);
+}
+
+.current-state dl > div:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--rule);
+}
+
+.current-state dt,
+.temporary-credential span {
+    color: var(--muted-ink);
+    font: 700 0.72rem "Courier New", monospace;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.current-state dd {
+    font: 1rem/1.35 "Trebuchet MS", sans-serif;
+    margin: 0.45rem 0 0;
+    overflow-wrap: anywhere;
+}
+
+.temporary-credential {
+    background: var(--signal-soft);
+    border: 1px solid var(--signal);
+    margin-top: 1rem;
+    padding: 1rem;
+}
+
+.temporary-credential strong {
+    display: block;
+    font-size: 1.75rem;
+    font-weight: 500;
+    margin-top: 0.45rem;
+    overflow-wrap: anywhere;
+}
+
+.temporary-credential p,
+.state-change {
+    margin-bottom: 0;
+}
+
+.state-change b {
+    color: var(--ink);
+}
+
+.action-grid {
+    display: grid;
+    gap: 0.7rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+button {
+    background: #ffffff;
+    border: 1px solid var(--ink);
+    border-radius: 0;
+    color: var(--ink);
+    cursor: pointer;
+    font: 700 0.82rem/1.25 "Trebuchet MS", sans-serif;
+    letter-spacing: 0;
+    min-height: 3.2rem;
+    padding: 0.65rem 0.8rem;
+    text-align: left;
+}
+
+button:hover:not(:disabled),
+button:focus-visible {
+    background: var(--ink);
+    color: #ffffff;
+}
+
+button:focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 3px;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.46;
+}
+
+.scenario-tabs {
+    border-bottom: 1px solid var(--ink);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.scenario-tabs button {
+    border-bottom: 0;
+    min-height: 2.8rem;
+}
+
+.scenario-tabs button.selected {
+    background: var(--signal);
+    border-color: var(--signal);
+    color: #ffffff;
+}
+
+.scenario-panel {
+    border: 1px solid var(--ink);
+    border-top: 0;
+    padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.scenario-panel > p:first-child {
+    margin-top: 0;
+    max-width: 50rem;
+}
+
+.scenario-panel ol {
+    display: grid;
+    gap: 0.65rem;
+    margin: 1.5rem 0 0;
+    padding-left: 1.75rem;
+}
+
+.scenario-panel li {
+    padding-left: 0.3rem;
+}
+
+.scenario-panel li.complete {
+    color: var(--muted-ink);
+}
+
+.scenario-panel li.current::marker {
+    color: var(--signal);
+    font-weight: 700;
+}
+
+.scenario-panel li button {
+    width: min(100%, 28rem);
+}
+
+.walkthrough-complete {
+    color: var(--signal) !important;
+    font-weight: 700 !important;
+    margin-bottom: 0;
+}
+
+@media (max-width: 700px) {
+    .current-state dl {
+        grid-template-columns: 1fr;
+    }
+
+    .current-state dl > div:nth-child(odd) {
+        border-right: 0;
+    }
+
+    .current-state dl > div:not(:last-child) {
+        border-bottom: 1px solid var(--rule);
+    }
+
+    .action-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .scenario-tabs {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .scenario-tabs button {
+        border-bottom: 1px solid var(--ink);
+    }
+}
