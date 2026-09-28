@@ -1,3 +1,5 @@
+using Aspire.Hosting.Dotnet;
+
 IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(args);
 
 IResourceBuilder<PostgresDatabaseResource> database = builder.AddPostgres("postgres")
@@ -9,11 +11,11 @@ IResourceBuilder<ParameterResource> jwtSigningPrivateKey = builder.AddParameter(
 IResourceBuilder<ParameterResource> jwtIssuer = builder.AddParameter("jwt-issuer");
 IResourceBuilder<ParameterResource> jwtAudience = builder.AddParameter("jwt-audience");
 
-IResourceBuilder<ProjectResource> migrations = builder.AddProject<Projects.ChronicleOfHeros_Migrations>("migrations")
+IResourceBuilder<DotnetProjectResource> migrations = builder.AddDotnetProject("migrations", "../ChronicleOfHeros.Migrations/ChronicleOfHeros.Migrations.csproj")
     .WithReference(database)
     .WaitFor(database);
 
-IResourceBuilder<ProjectResource> api = builder.AddProject<Projects.ChronicleOfHeros_Api>("api")
+IResourceBuilder<DotnetProjectResource> api = builder.AddDotnetProject("api", "../ChronicleOfHeros.Api/ChronicleOfHeros.Api.csproj")
     .WithReference(database)
     .WithEnvironment("BootstrapOperator__Username", bootstrapOperatorUsername)
     .WithEnvironment("BootstrapOperator__TemporaryPassword", bootstrapOperatorTemporaryPassword)
@@ -23,7 +25,7 @@ IResourceBuilder<ProjectResource> api = builder.AddProject<Projects.ChronicleOfH
     .WaitForCompletion(migrations)
     .WithHttpHealthCheck("/health");
 
-builder.AddProject<Projects.ChronicleOfHeros_Web>("web")
+builder.AddDotnetProject("web", "../ChronicleOfHeros.Web/ChronicleOfHeros.Web.csproj")
     .WithReference(api)
     .WaitFor(api);
 
