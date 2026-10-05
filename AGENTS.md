@@ -4,6 +4,10 @@
 
 Issues and PRDs are tracked as GitHub issues. See `docs/agents/issue-tracker.md`.
 
+### Triage labels
+
+This repo uses the default triage labels. See `docs/agents/triage-labels.md`.
+
 ### Domain docs
 
 The repository uses a single-context domain-documentation layout. See `docs/agents/domain.md`.
