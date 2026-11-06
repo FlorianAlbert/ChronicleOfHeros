@@ -5,6 +5,113 @@ not a guarantee that every existing implementation already conforms. Before
 designing or changing code, read every relevant section and ADR. Surface
 conflicts with an ADR rather than silently overriding it.
 
+## Architecture governance
+
+Key words follow RFC 2119. This section defines the rules authors and reviewers
+apply; the
+[`architecture-planning` skill](.agents/skills/architecture-planning/SKILL.md)
+holds the planning procedure.
+
+### Architecture documentation
+
+- `ARCHITECTURE.md` and its slices under `docs/architecture/` are normative and
+  MUST describe the code at every commit. Load `ARCHITECTURE.md`, then only the
+  slices its reading guide selects.
+- [`docs/architecture/conventions.md`](docs/architecture/conventions.md) defines
+  diagram scope and level of detail, slice structure, and verified-view syntax.
+  Every slice MUST follow it.
+- Code that knowingly departs from an ADR or these standards MUST be listed in
+  the affected slice's `## Known deviations` section, naming the ADR or standard
+  and linking the tracking issue.
+
+### Architectural changes
+
+A change is architectural when it would make a statement or diagram in
+`ARCHITECTURE.md`, a slice, these standards, or an ADR inaccurate, or when it
+adds something `docs/architecture/conventions.md` requires those documents to
+show. This explicitly includes changes to:
+
+- projects and project references;
+- production NuGet packages (test and analyzer packages are excluded);
+- contract interfaces and their operations;
+- HTTP endpoints;
+- Aspire resources and parameters;
+- `DbContext` types, entities, relationships, and migrations;
+- cross-layer or cross-capability collaborations;
+- state machines;
+- key classes documented in a slice.
+
+Any other change takes the fast path: the author states
+`Architecture impact: none (checked slices: …)` and proceeds without approval.
+If impact appears mid-task, work MUST stop and return to planning.
+
+### Approval and pending deltas
+
+- An architectural change MUST NOT be implemented before the user answers "yes"
+  to an explicit yes/no question approving its documented delta. Nothing else
+  counts as approval. The approval is recorded as
+  `Approved by @<user> on <YYYY-MM-DD>`. If implementation forces a departure
+  from the approved delta, work MUST stop for re-planning and renewed approval.
+- Docs equal the code at every commit. An approved change that is not yet built
+  lives in its spec or ticket issue's `## Architecture delta` section
+  (before/after Mermaid), not in the slices. Each affected slice carries
+  `> Pending approved changes: #N` near its top. The implementing change moves
+  the delta into the slices and removes the pointer in the same commit as the
+  code.
+- Non-interactive agents MUST implement only work without architecture impact
+  or with an approved `## Architecture delta` in its issue. Otherwise they post
+  the proposed delta as an issue or PR comment, apply the
+  `needs-architecture-approval` label, and stop.
+- Draft highlight classes (`added`, `removed`, `changed`) are planning aids and
+  MUST NOT be committed.
+
+### ADRs
+
+- Every ADR has a status line directly under its H1, in one of these forms:
+  - `Status: Accepted`: the decision is in force and built.
+  - `Status: Accepted, implementation pending (#N)`: the decision is approved
+    but not fully built; `#N` is the issue whose `## Architecture delta` holds
+    the unbuilt part. Separate several issues with commas: `(#N, #M)`.
+  - `Status: Superseded by ADR-NNNN`.
+- ADRs are concise living decision records, edited in place. Every ADR change
+  goes through the approval gate; the change that completes a pending
+  implementation sets its status to `Accepted`.
+- Write a new ADR only for a hard-to-reverse or surprising trade-off. Slice
+  updates are required for every architectural change, with or without an ADR.
+
+### Verification
+
+- Verified views MUST match the code. The doc-conformance tests in
+  `tests/ChronicleOfHeros.Architecture.Tests` check them; those and the other
+  architecture tests MUST pass.
+- An architecture test that encodes a documented rule changes in the same
+  commit as the slice or standard documenting that rule.
+
+### Review checklist
+
+Reviewers MUST apply every item to the reviewed change. Authors MUST apply it to
+their own change before completing it.
+
+1. **Code and slices**: every architectural change in the diff appears in the
+   affected slices; no slice statement or diagram became inaccurate.
+2. **Approval evidence**: every architectural change traces to an
+   `Approved by @<user> on <YYYY-MM-DD>` line, either in its issue's
+   `## Architecture delta` or in the commit message or PR description, covering
+   exactly the implemented delta. An unapproved architectural change is a
+   blocking finding.
+3. **Pending pointers**: implementing an issue's delta removes its
+   `> Pending approved changes: #N` pointers; every remaining pointer names an
+   open issue with an approved delta.
+4. **Known deviations**: new departures from an ADR or these standards are
+   listed under `## Known deviations` with a tracking issue; resolved ones are
+   removed.
+5. **ADRs**: status lines match the code; ADR edits are approved; a new
+   hard-to-reverse or surprising trade-off has an ADR.
+6. **Verified views and tests**: verified views match the code; the build and
+   architecture tests pass.
+7. **Draft residue**: no `added`, `removed`, or `changed` highlight classes
+   remain.
+
 ## Capability architecture
 
 ### Contracts and ownership
@@ -60,8 +167,8 @@ conflicts with an ADR rather than silently overriding it.
 - A dedicated migrations host enables migrations through capability registration
   options. Normal application and distributed-application startup do not run
   migrations.
-- Treat project-reference changes as architectural changes. Update architecture
-  tests and record any long-lived boundary decision in these standards or an ADR.
+- Project-reference changes are [architectural changes](#architectural-changes);
+  the architecture tests' reference rules change with them.
 
 ### Persistence
 
@@ -152,9 +259,16 @@ architecture decision.
 - Architecture tests are build-breaking and cover reference direction, internal
   layers, public surfaces, composition roots, and endpoint rules; review is
   still responsible for cohesion and single-responsibility judgment.
-- Before completing architecture work, inspect every changed capability boundary,
+- Before completing any code change, inspect every changed capability boundary,
   composition path, persistence model, database test, and C# extension
-  declaration against the applicable standards.
+  declaration against the applicable standards; the
+  [review checklist](#review-checklist) covers the architecture documents.
 - Validate changed .NET projects with a build and the smallest relevant test
-  selection; expand validation when the change or results require it. Use the
-  [`run-tests` skill](.agents/skills/run-tests/SKILL.md) for test execution.
+  selection; expand validation when the change or results require it. Tests
+  run on Microsoft.Testing.Platform (see `global.json`), so select a test
+  project with `--project`, for example
+  `dotnet test --project tests/ChronicleOfHeros.Architecture.Tests/ChronicleOfHeros.Architecture.Tests.csproj`.
+  The AppHost and Identity test projects need Docker. When a running app locks
+  build outputs, add `--artifacts-path artifacts` (git-ignored; it must stay
+  inside the repository because the architecture tests locate the repository
+  root from their output directory).

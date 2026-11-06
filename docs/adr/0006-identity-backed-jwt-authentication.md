@@ -1,5 +1,7 @@
 # ASP.NET Core Identity with JWT bearer authentication and Web BFF custody
 
+Status: Accepted, implementation pending (#75)
+
 ChronicleOfHeros will own username-and-password accounts through ASP.NET Core Identity. Every account has the Player role; Operators have the additional Operator role for Player-account administration and may access only their own character data. Operators enroll Players, and the API generates a temporary credential for direct out-of-application delivery; the Player must replace it before normal access. The initial Operator is bootstrapped from Aspire parameters only when no Operator exists, and later startups never mutate existing accounts.
 
 The API exposes custom JSON authentication endpoints rather than acting as an

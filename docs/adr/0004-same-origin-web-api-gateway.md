@@ -1,5 +1,7 @@
 # Same-origin Web backend for frontend gateway
 
+Status: Accepted, implementation pending (#75)
+
 The browser cannot use Aspire service discovery to call `Api`, and exposing
 `Api` directly would require a public endpoint, CORS policy, and a
 browser-facing bearer-token contract. `ChronicleOfHeros.Web` is the sole

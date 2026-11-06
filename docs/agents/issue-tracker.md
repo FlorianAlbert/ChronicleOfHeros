@@ -33,6 +33,13 @@ Create a GitHub issue.
 
 Run `gh issue view <number> --comments`.
 
+## Architecture delta
+
+- A spec or ticket issue with architecture impact (as defined in `CODING_STANDARDS.md#architecture-governance`) carries a `## Architecture delta` section in its body: before/after Mermaid diagrams of the affected slices, approved by the user. Start from `.agents/skills/architecture-planning/DELTA-TEMPLATE.md`.
+- Affected slices point at the issue with `> Pending approved changes: #N` until the implementing change moves the delta into them.
+- A non-interactive agent (no user present) that finds architecture impact without an approved delta posts the proposed delta as an issue or PR comment (`gh issue comment <number> --body-file <file>`), applies the label (`gh issue edit <number> --add-label needs-architecture-approval`), and stops without implementing.
+- After the user approves, the delta moves into the issue body's `## Architecture delta` section with its `Approved by @<user> on <YYYY-MM-DD>` line, and the label is removed (`--remove-label needs-architecture-approval`).
+
 ## Wayfinding operations
 
 Used by `/wayfinder`. The **map** is a single issue with **child** issues as tickets.
