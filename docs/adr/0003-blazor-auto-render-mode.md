@@ -1,5 +1,5 @@
-# Blazor Web App with per-component render modes
+# Blazor Web App with server rendering
 
-The frontend renders statically by default. Components opt into `@rendermode InteractiveServer`, `InteractiveWebAssembly`, or `InteractiveAuto` only when they need Blazor interactivity. This avoids creating a SignalR circuit or downloading a WebAssembly payload for pages that only need server-side rendering and native browser behavior. `ChronicleOfHeros.Web` hosts the SSR application and interactive renderers; `ChronicleOfHeros.Web.Client` remains the browser-executed component library for components that explicitly select a WebAssembly-capable render mode.
+The frontend renders statically by default. Components opt into `@rendermode InteractiveServer` only when they need Blazor interactivity. This avoids creating a SignalR circuit for pages that only need server-side rendering and native browser behavior. `ChronicleOfHeros.Web` contains the frontend, its resources, and the interactive server renderer.
 
-Consequence: an interactive component must declare its render mode deliberately and account for its execution environment. In particular, WebAssembly-rendered components cannot use .NET service discovery directly, so the mechanism for `Web` to call `Api` (for example, a YARP proxy acting as a BFF) is deferred until a feature needs it. This ADR fixes the render-mode shape, not the call path.
+The separate WebAssembly client and its interactive render modes are not needed at the current stage. They can be reconsidered if a feature requires browser-executed .NET. The Web-to-API call path is a separate decision documented in ADR 0004.

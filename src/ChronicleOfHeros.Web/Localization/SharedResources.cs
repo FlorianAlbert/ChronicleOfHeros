@@ -1,10 +1,10 @@
-namespace ChronicleOfHeros.Web.Client.Localization;
+namespace ChronicleOfHeros.Web.Localization;
 
-// This class gets used by the server project as well
+// The translation resource tests use this marker.
 #pragma warning disable CA1515 // Consider making public types internal
 
 /// <summary>
-/// Represents the shared resources for localization in the Chronicle of Heroes web client.
+/// Represents the shared resources for localization in the Chronicle of Heroes web application.
 /// </summary>
 public sealed class SharedResources;
 

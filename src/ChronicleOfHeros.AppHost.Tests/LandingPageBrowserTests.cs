@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Text.RegularExpressions;
 
@@ -38,6 +39,30 @@ public class LandingPageBrowserTests(LandingPageFixture fixture) : IClassFixture
             await Assertions.Expect(page.GetByText("Speed", new() { Exact = true })).ToBeVisibleAsync().ConfigureAwait(false);
             await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Coming soon" })).ToBeDisabledAsync().ConfigureAwait(false);
             await Assertions.Expect(page.GetByLabel("Prototype variant selector")).ToHaveCountAsync(0).ConfigureAwait(false);
+        });
+    }
+
+    /// <summary>
+    /// Verifies that the static landing page starts Blazor without downloading a WebAssembly runtime.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    [Fact]
+    public async Task Public_root_does_not_download_a_WebAssembly_runtime()
+    {
+        await WithPublicPageAsync(async (page, baseAddress) =>
+        {
+            ConcurrentQueue<string> requestedPaths = new();
+            page.Request += (_, request) => requestedPaths.Enqueue(new Uri(request.Url).AbsolutePath);
+
+            _ = await page.GotoAsync(baseAddress.AbsoluteUri).ConfigureAwait(false);
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle).ConfigureAwait(false);
+
+            Assert.Contains(requestedPaths, path => path.StartsWith("/_framework/blazor.web", StringComparison.Ordinal));
+            Assert.DoesNotContain(requestedPaths, path =>
+                path.EndsWith(".wasm", StringComparison.OrdinalIgnoreCase)
+                || path.StartsWith("/_framework/dotnet.", StringComparison.Ordinal)
+                || path.Contains("blazor.boot", StringComparison.Ordinal)
+                || path.Contains("blazor.webassembly", StringComparison.Ordinal));
         });
     }
 

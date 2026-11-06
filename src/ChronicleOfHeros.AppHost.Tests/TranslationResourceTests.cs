@@ -1,7 +1,8 @@
 using System.Globalization;
 using System.Xml.Linq;
 
-using ChronicleOfHeros.Web.Client.Services.Localization;
+using ChronicleOfHeros.Web.Localization;
+using ChronicleOfHeros.Web.Services.Localization;
 
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
@@ -59,18 +60,36 @@ public sealed class TranslationResourceTests
     }
 
     /// <summary>
+    /// Verifies that shared display-language names remain available from the web assembly in each supported culture.
+    /// </summary>
+    /// <param name="culture">The active display culture.</param>
+    [Theory]
+    [InlineData("en-US")]
+    [InlineData("de-DE")]
+    public void Shared_display_language_names_are_available_in_each_supported_culture(string culture)
+    {
+        using CultureScope cultureScope = new(culture);
+        using ILoggerFactory loggerFactory = LoggerFactory.Create(_ => { });
+        MissingTranslationDiagnosticStringLocalizerFactory localizerFactory = new(
+            Options.Create(new LocalizationOptions()),
+            loggerFactory);
+        IStringLocalizer localizer = localizerFactory.Create(typeof(SharedResources));
+
+        Assert.Equal("English", localizer["English"].Value);
+        Assert.False(localizer["English"].ResourceNotFound);
+        Assert.Equal("Deutsch", localizer["German"].Value);
+        Assert.False(localizer["German"].ResourceNotFound);
+    }
+
+    /// <summary>
     /// Verifies that all production translation resources for supported display languages match their corresponding canonical English keys. This test iterates through the canonical English resource files and checks that each supported display language has a corresponding resource file with the same set of keys. If any discrepancies are found, the test fails, indicating that the translation resources are not in sync with the canonical English keys.
     /// </summary>
     [Fact]
     public void Production_translation_resources_match_their_canonical_English_keys()
     {
         string repositoryRoot = FindRepositoryRoot();
-        IOrderedEnumerable<string> canonicalResources = new[]
-            {
-                Path.Combine(repositoryRoot, "src", "ChronicleOfHeros.Web"),
-                Path.Combine(repositoryRoot, "src", "ChronicleOfHeros.Web.Client"),
-            }
-            .SelectMany(projectDirectory => Directory.EnumerateFiles(projectDirectory, "*.resx", SearchOption.AllDirectories))
+        IOrderedEnumerable<string> canonicalResources = Directory
+            .EnumerateFiles(Path.Combine(repositoryRoot, "src", "ChronicleOfHeros.Web"), "*.resx", SearchOption.AllDirectories)
             .Where(path => !Path.GetFileNameWithoutExtension(path).EndsWith(".de-DE", StringComparison.Ordinal))
             .OrderBy(path => path, StringComparer.Ordinal);
 

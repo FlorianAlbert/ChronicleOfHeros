@@ -1,6 +1,6 @@
 # Localization
 
-ChronicleOfHeros localizes all application-owned visible text, page titles, and accessibility labels in the Web and Web.Client projects. English is the canonical translation resource and German is the other supported display language.
+ChronicleOfHeros localizes all application-owned visible text, page titles, and accessibility labels in the Web project. English is the canonical translation resource and German is the other supported display language.
 
 ## Resource ownership and names
 
@@ -11,7 +11,7 @@ Each page or reusable component owns its resources beside its implementation:
 
 The neutral `.resx` file is the canonical English resource for the `en-US` display language. Locale files use the concrete supported locale suffix, such as `.de-DE.resx`. Keep keys descriptive of the component's text, such as `ReturnToCharacterSheet`, rather than reusing generic names with unrelated meanings.
 
-`Web.Client/Localization/SharedResources` is intentionally small. It contains only genuinely cross-cutting vocabulary, currently the display-language self-names. Do not move page or component copy into it merely to avoid adding a local resource.
+`Web/Localization/SharedResources` is intentionally small. It contains only genuinely cross-cutting vocabulary, currently the display-language self-names. Do not move page or component copy into it merely to avoid adding a local resource.
 
 ## Adding or changing text
 
@@ -24,7 +24,7 @@ The neutral `.resx` file is the canonical English resource for the `en-US` displ
 dotnet test --project src/ChronicleOfHeros.AppHost.Tests/ChronicleOfHeros.AppHost.Tests.csproj --filter-class ChronicleOfHeros.AppHost.Tests.TranslationResourceTests
 ```
 
-The test discovers every production `.resx` file in `Web` and `Web.Client`, requires a resource for each supported display language, and compares its key set with the canonical English resource. Do not make production resources intentionally incomplete to test fallback behavior; focused tests use test-only resources for that contract.
+The test discovers every production `.resx` file in `Web`, requires a resource for each supported display language, and compares its key set with the canonical English resource. Do not make production resources intentionally incomplete to test fallback behavior; focused tests use test-only resources for that contract.
 
 ## Adding a display language
 
@@ -53,6 +53,6 @@ The reachable application-owned text has been audited against its owning resourc
 - `ReconnectModal` owns reconnect status, recovery actions, and accessibility text.
 - `NotFound` and `Error` own their titles, status copy, recovery actions, and request identifier label.
 
-The production parity test protects every resource in these Web and Web.Client surfaces. The public-host tests exercise English and German titles, navigation labels, status and recovery messages, and not-found accessibility labels. Browser, framework, Aspire dashboard, and third-party-package text remain outside this scope.
+The production parity test protects every resource in these Web surfaces. The public-host tests exercise English and German titles, navigation labels, status and recovery messages, and not-found accessibility labels. Browser, framework, Aspire dashboard, and third-party-package text remain outside this scope.
 
 The product name `ChronicleOfHeros`, the example character name `Elian Thorn`, ordinal markers, and Dungeons & Dragons rule units such as `30 ft.` are intentionally invariant rather than translated. Display culture never changes Dungeons & Dragons rules units or calculations.
