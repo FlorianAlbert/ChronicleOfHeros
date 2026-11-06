@@ -35,6 +35,26 @@ public class AppHostSmokeTests(LandingPageFixture fixture) : IClassFixture<Landi
     }
 
     /// <summary>
+    /// Verifies that the web host still exposes the interactive server circuit endpoint.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    [Fact]
+    public async Task Interactive_server_circuit_can_negotiate()
+    {
+        using HttpClient webClient = _fixture.CreateHttpClient();
+        using StringContent content = new(string.Empty);
+        Uri negotiationUri = new("/_blazor/negotiate?negotiateVersion=1", UriKind.Relative);
+        using HttpResponseMessage response = await webClient.PostAsync(
+            negotiationUri,
+            content,
+            TestContext.Current.CancellationToken);
+        string negotiation = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("\"connectionId\"", negotiation, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// This test verifies that the health endpoints of the application are available and return a successful response.
     /// </summary>
     /// <returns>A task representing the asynchronous operation.</returns>

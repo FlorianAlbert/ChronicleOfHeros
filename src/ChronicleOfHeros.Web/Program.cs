@@ -1,4 +1,3 @@
-using ChronicleOfHeros.Web.Client.Services.Localization;
 using ChronicleOfHeros.Web.Components;
 using ChronicleOfHeros.Web.Extensions;
 using ChronicleOfHeros.Web.Services.Localization;
@@ -21,8 +20,7 @@ builder.Services.AddHttpForwarderWithServiceDiscovery()
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents()
-    .AddInteractiveWebAssemblyComponents();
+    .AddInteractiveServerComponents();
 string[] supportedCultures = ["en-US", "de-DE"];
 builder.Services.AddLocalization();
 builder.Services.AddSingleton<IStringLocalizerFactory, MissingTranslationDiagnosticStringLocalizerFactory>();
@@ -32,11 +30,7 @@ builder.Services.Configure<RequestLocalizationOptions>(
 WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseWebAssemblyDebugging();
-}
-else
+if (!app.Environment.IsDevelopment())
 {
     _ = app.UseExceptionHandler("/error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
@@ -50,9 +44,7 @@ app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode()
-    .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(ChronicleOfHeros.Web.Client._Imports).Assembly);
+    .AddInteractiveServerRenderMode();
 
 app.MapPost("/display-language", async (HttpContext context, IAntiforgery antiforgery) =>
 {

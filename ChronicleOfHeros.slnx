@@ -13,5 +13,4 @@
   <Project Path="src/ChronicleOfHeros.Migrations/ChronicleOfHeros.Migrations.csproj" />
   <Project Path="src/ChronicleOfHeros.ServiceDefaults/ChronicleOfHeros.ServiceDefaults.csproj" />
   <Project Path="src/ChronicleOfHeros.Web/ChronicleOfHeros.Web.csproj" />
-  <Project Path="src/ChronicleOfHeros.Web.Client/ChronicleOfHeros.Web.Client.csproj" />
 </Solution>

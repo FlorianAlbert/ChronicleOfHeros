@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 
-namespace ChronicleOfHeros.Web.Client.Services.Localization;
+namespace ChronicleOfHeros.Web.Services.Localization;
 
-// This class gets used by the server project as well
+// The translation diagnostics tests exercise this factory directly.
 #pragma warning disable CA1515 // Consider making public types internal
 
 /// <summary>

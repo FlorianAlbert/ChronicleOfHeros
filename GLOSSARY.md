@@ -26,7 +26,7 @@ The display-language behavior for a missing localized string: use the English st
 
 ## Localizable application text
 
-Every user-visible string, accessibility label, and page title controlled by the Web or Web.Client projects. Browser, framework, Aspire dashboard, and third-party-package text are outside this boundary. Unreachable scaffolded UI is removed rather than retained for translation.
+Every user-visible string, accessibility label, and page title controlled by the application. Browser, framework, Aspire dashboard, and third-party-package text are outside this boundary. Unreachable scaffolded UI is removed rather than retained for translation.
 
 ## Display culture
 

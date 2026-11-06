@@ -24,6 +24,5 @@
     <ProjectReference Include="../../src/ChronicleOfHeros.Migrations/ChronicleOfHeros.Migrations.csproj" />
     <ProjectReference Include="../../src/ChronicleOfHeros.ServiceDefaults/ChronicleOfHeros.ServiceDefaults.csproj" />
     <ProjectReference Include="../../src/ChronicleOfHeros.Web/ChronicleOfHeros.Web.csproj" />
-    <ProjectReference Include="../../src/ChronicleOfHeros.Web.Client/ChronicleOfHeros.Web.Client.csproj" />
   </ItemGroup>
 </Project>

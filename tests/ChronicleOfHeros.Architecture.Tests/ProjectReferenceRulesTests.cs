@@ -12,6 +12,29 @@ public sealed class ProjectReferenceRulesTests
 #pragma warning disable CA1707 // Identifiers should not contain underscores
 
     /// <summary>
+    /// Verifies that the web frontend is a single server project without a WebAssembly host.
+    /// </summary>
+    [Fact]
+    public void Web_frontend_is_a_single_server_project()
+    {
+        string webProject = ArchitectureTestPaths.FromRoot("src", "ChronicleOfHeros.Web", "ChronicleOfHeros.Web.csproj");
+        string clientProject = ArchitectureTestPaths.FromRoot("src", "ChronicleOfHeros.Web.Client", "ChronicleOfHeros.Web.Client.csproj");
+        XDocument project = XDocument.Load(webProject);
+        XDocument solution = XDocument.Load(ArchitectureTestPaths.FromRoot("ChronicleOfHeros.slnx"));
+
+        Assert.False(File.Exists(clientProject));
+        Assert.Equal(
+            [Path.Combine("src", "ChronicleOfHeros.ServiceDefaults", "ChronicleOfHeros.ServiceDefaults.csproj")],
+            GetProjectReferences(webProject));
+        Assert.DoesNotContain(
+            project.Descendants("PackageReference"),
+            reference => reference.Attribute("Include")?.Value.Contains("WebAssembly", StringComparison.Ordinal) == true);
+        Assert.DoesNotContain(
+            solution.Descendants("Project"),
+            reference => reference.Attribute("Path")?.Value.Contains("ChronicleOfHeros.Web.Client", StringComparison.Ordinal) == true);
+    }
+
+    /// <summary>
     /// Verifies that only executable hosts and Identity test projects reference the Identity implementation.
     /// </summary>
     [Fact]

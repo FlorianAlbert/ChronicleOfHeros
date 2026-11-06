@@ -2,7 +2,7 @@
 
 ## Current applicability
 
-The application now renders statically by default. This research applies only when a component explicitly opts into `InteractiveAuto`; the display-language selector remains a static, antiforgery-protected HTML form.
+The application renders statically by default and no longer enables `InteractiveAuto` or a WebAssembly host. This research is historical and would apply only if those render modes were reintroduced; the display-language selector remains a static, antiforgery-protected HTML form.
 
 ## Question
 
