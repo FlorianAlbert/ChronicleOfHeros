@@ -49,12 +49,8 @@ flowchart LR
 | `ChronicleOfHeros.Identity.AspNetCore` | Identity capability's implementation | `Aspire.Npgsql.EntityFrameworkCore.PostgreSQL`, `Microsoft.AspNetCore.Authentication.JwtBearer`, `Microsoft.AspNetCore.Identity.EntityFrameworkCore` |
 | `ChronicleOfHeros.AppHost.Tests` | Distributed-application and Playwright browser tests | test only |
 | `ChronicleOfHeros.Identity.AspNetCore.Tests` | Identity behavior tests against PostgreSQL Testcontainers | test only |
-| `ChronicleOfHeros.Architecture.Tests` | ArchUnitNET and project-file rules | test only |
+| `ChronicleOfHeros.Architecture.Tests` | ArchUnitNET, project-file, and doc-conformance rules | test only |
 
 - Package versions are central in `Directory.Packages.props`.
 - There is no shared or "common" project and no `ChronicleOfHeros.Web.Client` project.
-- `tests/ChronicleOfHeros.Architecture.Tests` enforces the reference rules: Identity contracts reference no project and no implementation framework; only hosts and tests reference the Identity implementation; it grants no `InternalsVisibleTo`; Web is a single server project.
-
-## Known deviations
-
-- `ProjectReferenceRulesTests.Identity_implementation_references_are_limited_to_hosts_and_tests` fails on Windows: it compares `/`-separated literals with `Path.GetRelativePath` output that uses `\`. Deviates from [CODING_STANDARDS.md § Verification](../../../CODING_STANDARDS.md#verification): architecture tests pass. Tracking: not yet filed.
+- `tests/ChronicleOfHeros.Architecture.Tests` enforces the reference rules: Identity contracts reference no project and no implementation framework; only hosts and tests reference the Identity implementation; it grants no `InternalsVisibleTo`; Web is a single server project. It also checks every verified view in the architecture docs against the code, in both directions ([conventions.md § Verified views](../conventions.md#verified-views)).

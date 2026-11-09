@@ -183,6 +183,7 @@ Columns: `Method | Route | Adapter | Authorization`. Extracted from the syntax o
 - Adapter: the class that declares the member containing the call (`Program` for top-level statements).
 - Authorization, from calls chained on the endpoint or its groups: `Anonymous` for `AllowAnonymous()`, `Policy:<name>` per string argument of `RequireAuthorization(…)`, `Authenticated` for `RequireAuthorization()` without arguments, `None` when there is none of these.
 - Shared `MapDefaultEndpoints` routes live in `ChronicleOfHeros.ServiceDefaults` and are out of scope.
+- A `Map*` call or `RequireAuthorization` argument that is not a string literal makes the check fail ("code not extractable"); it is never silently ignored.
 
 #### `dbcontext-entities:<DbContext>`
 
