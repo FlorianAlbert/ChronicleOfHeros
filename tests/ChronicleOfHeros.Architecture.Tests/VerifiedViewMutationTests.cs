@@ -167,6 +167,31 @@ public sealed class VerifiedViewMutationTests
     }
 
     /// <summary>
+    /// Verifies that a parameter passed to <c>WithEnvironment</c> in an unspecified form is reported instead of being dropped.
+    /// </summary>
+    /// <param name="call">The <c>WithEnvironment</c> call appended to the consuming chain.</param>
+    [Theory]
+    [InlineData("api.WithEnvironment(\"Key\", $\"prefix-{key}\")")]
+    [InlineData("api.WithEnvironment(\"Key\", key.Resource)")]
+    [InlineData("api.WithEnvironment(\"Key\", ReferenceExpression.Create($\"{key}\"))")]
+    [InlineData("api.WithEnvironment(variableName, key)")]
+    [InlineData("builder.WithEnvironment(\"Key\", key)")]
+    public void Unspecified_parameter_environment_form_is_reported(string call)
+    {
+        string source = $$"""
+            var builder = DistributedApplication.CreateBuilder(args);
+            var key = builder.AddParameter("key", secret: true);
+            var api = builder.AddDotnetProject("api", "../Api/Api.csproj");
+            {{call}};
+            """;
+
+        AppHostModel model = AppHostModel.Parse(source);
+
+        Assert.Empty(model.Parameters.Single().ConsumedAs);
+        Assert.Single(model.Errors, error => error.Contains("a parameter is passed to WithEnvironment", StringComparison.Ordinal));
+    }
+
+    /// <summary>
     /// Verifies that endpoint extraction resolves groups, adapters, and authorization.
     /// </summary>
     [Fact]

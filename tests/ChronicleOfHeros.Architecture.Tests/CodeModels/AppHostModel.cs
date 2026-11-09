@@ -125,7 +125,8 @@ internal sealed class AppHostModel
     {
         IReadOnlyList<CallArgument> arguments = member.Arguments!;
         string location = $"{SourcePath}:{member.Line}";
-        CheckParameterUsage(member, location);
+        AspireParameter? environmentParameter = SpecifiedEnvironmentParameter(current, member);
+        CheckParameterUsage(member, environmentParameter, location);
         if (member.Name.StartsWith("Add", StringComparison.Ordinal))
         {
             if (current is not BuilderMarker and not AspireResource)
@@ -167,9 +168,8 @@ internal sealed class AppHostModel
                     ?? arguments.FirstOrDefault(argument => argument.Name is null);
                 resource.HealthChecks.Add($"http {(path is null ? "/" : path.StringValue ?? NonLiteral(location, member.Name))}");
                 break;
-            case "WithEnvironment" when arguments is [{ StringValue: string variable }, { IdentifierValue: string parameterName }]
-                && symbols.GetValueOrDefault(parameterName) is AspireParameter parameter:
-                parameter.ConsumedAs.Add($"{resource.Name}:{variable}");
+            case "WithEnvironment" when environmentParameter is not null:
+                environmentParameter.ConsumedAs.Add($"{resource.Name}:{arguments[0].StringValue}");
                 break;
             default:
                 break;
@@ -216,10 +216,18 @@ internal sealed class AppHostModel
         }
     }
 
-    private void CheckParameterUsage(ChainMember member, string location)
+    private AspireParameter? SpecifiedEnvironmentParameter(object? current, ChainMember member) =>
+        current is AspireResource
+            && member.Name == "WithEnvironment"
+            && member.Arguments is [{ StringValue: not null }, { IdentifierValue: string parameterName }]
+            && symbols.GetValueOrDefault(parameterName) is AspireParameter parameter
+                ? parameter
+                : null;
+
+    private void CheckParameterUsage(ChainMember member, AspireParameter? environmentParameter, string location)
     {
         IEnumerable<CallArgument> parameterArguments = member.Arguments!
-            .Where((argument, index) => !(member.Name == "WithEnvironment" && index == 1))
+            .Where((argument, index) => !(environmentParameter is not null && index == 1))
             .Where(argument => argument.Identifiers.Any(identifier => symbols.GetValueOrDefault(identifier) is AspireParameter));
         if (parameterArguments.Any())
         {
