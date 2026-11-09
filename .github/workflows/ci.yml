@@ -45,9 +45,13 @@ jobs:
         id: build
         run: dotnet build ChronicleOfHeros.slnx --configuration "$CONFIGURATION"
 
-      # Aspire hosts talk HTTPS to each other; OpenSSL only trusts the dev cert via SSL_CERT_DIR.
+      # Aspire hosts talk HTTPS to each other and Chromium loads the Web host over HTTPS:
+      # OpenSSL trusts the dev cert via SSL_CERT_DIR, Chromium via the NSS database.
       - name: Trust HTTPS development certificate
         run: |
+          sudo apt-get install -y --no-install-recommends libnss3-tools
+          mkdir -p "$HOME/.pki/nssdb"
+          certutil -d "sql:$HOME/.pki/nssdb" -N --empty-password
           dotnet dev-certs https --trust
           echo "SSL_CERT_DIR=$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs" >> "$GITHUB_ENV"
 
