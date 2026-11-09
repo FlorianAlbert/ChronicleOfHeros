@@ -12,7 +12,7 @@ Every code-changing task runs steps 1–2. Steps 3–7 run only when step 2 find
 ## 1. Load the relevant slices
 
 1. You MUST read `ARCHITECTURE.md` and follow its reading guide for this task (fall back to the slice index's `Load when:` lines). Load only the slices it routes to; add `docs/architecture/conventions.md` when you will draft diagrams.
-2. Read the ADRs in `docs/adr/` that touch the area and the `GLOSSARY.md` terms you will use.
+2. Read the ADRs in `docs/adr/` that touch the area and the `GLOSSARY.md` terms you will use. An ADR with `Status: Accepted, under revision (#N)` still governs the current code, but you MUST NOT build its unbuilt parts or resolve its known deviations outside #N.
 3. If the task has an issue, read it (`gh issue view <n> --comments`) and look for an `## Architecture delta` section and its status line.
 4. Note any `> Pending approved changes: #N` pointer or `## Known deviations` section in a loaded slice: that slice is not the whole story yet.
 
@@ -35,7 +35,7 @@ Done when you have printed the fast-path line, named the approved delta you will
 
 ## 3. Draft the delta in the slices
 
-1. Edit each affected slice in the working tree so it shows the target state. Mark elements with the `added`, `removed`, and `changed` classDefs from `docs/architecture/conventions.md`; `removed` elements stay drawn until implementation. Verified views (`%% verify:` / `<!-- verify: -->`) MUST stay within the parseability rules of conventions.md.
+1. Edit each affected slice in the working tree so it shows the target state. Mark elements with the `added`, `removed`, and `changed` draft highlighting from `docs/architecture/conventions.md` § Draft highlighting (classDefs in diagrams, `%% draft:` `rect` wrappers in sequence diagrams, `(added) ` / `(removed) ` / `(changed) ` table-row prefixes); `removed` elements stay drawn until implementation. Verified views (`%% verify:` / `<!-- verify: -->`) MUST stay within the parseability rules of conventions.md.
 2. Draft the wording changes the delta forces in ADRs and `CODING_STANDARDS.md`. Propose a new ADR only for a hard-to-reverse trade-off, judged by the `domain-modeling` ADR criteria.
 3. In chat, summarise the delta, its rationale, and at least one alternative considered with why it lost; list every changed file; point the user at the rendered slices (Markdown preview) and `git --no-pager diff -- ARCHITECTURE.md docs CODING_STANDARDS.md`.
 
@@ -60,7 +60,7 @@ Done when you hold an approval line for exactly the delta in the working tree.
 ### 6a. Implement now (same session)
 
 1. Implement exactly the approved delta. When the code needs to deviate from it, stop and return to step 3 with the deviation drafted.
-2. Strip the highlight styling (the `classDef added|removed|changed` lines and their `class`/`cssClass`/`:::` assignments) and delete `removed` elements, so the slices describe the resulting code.
+2. Strip all draft highlighting so the slices describe the resulting code: the `classDef added|removed|changed` lines and their `class`/`cssClass`/`:::` assignments; the sequence-diagram `rect` wrappers that start with `%% draft:` (keep the wrapped messages); and the `(added) ` / `(changed) ` table-row prefixes. Delete `removed` elements, messages, and rows.
 3. Commit docs and code together in one commit, with the approval line in the commit message or PR body.
 
 ### 6b. Spec or ticket flow (implemented later)
@@ -73,7 +73,7 @@ Done when you hold an approval line for exactly the delta in the working tree.
 
 Done when every box holds:
 
-- [ ] Every affected slice matches the code, and no draft styling remains (`git grep -nE "classDef (added|removed|changed)" -- ARCHITECTURE.md docs` finds nothing).
+- [ ] Every affected slice matches the code, and no draft highlighting remains (the check command in `docs/architecture/conventions.md` § Draft highlighting prints nothing).
 - [ ] `> Pending approved changes: #N` pointers are added (6b) or removed (when implementing #N); `## Known deviations` reflects reality.
 - [ ] Each touched ADR has an accurate status line under its H1 (e.g. `Status: Accepted, implementation pending (#N)`) and consistent content; any new ADR follows `domain-modeling` conventions.
 - [ ] `CODING_STANDARDS.md` is updated wherever a rule changed, and its architecture-governance review checklist passes for this change.
