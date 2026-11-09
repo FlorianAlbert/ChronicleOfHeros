@@ -45,6 +45,12 @@ jobs:
         id: build
         run: dotnet build ChronicleOfHeros.slnx --configuration "$CONFIGURATION"
 
+      # Aspire hosts talk HTTPS to each other; OpenSSL only trusts the dev cert via SSL_CERT_DIR.
+      - name: Trust HTTPS development certificate
+        run: |
+          dotnet dev-certs https --trust
+          echo "SSL_CERT_DIR=$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs" >> "$GITHUB_ENV"
+
       - name: Install Playwright Chromium
         run: pwsh "src/ChronicleOfHeros.AppHost.Tests/bin/$CONFIGURATION/net11.0/playwright.ps1" install --with-deps chromium
 
@@ -64,8 +70,10 @@ jobs:
           --report-xunit-trx --results-directory "$RESULTS_DIR"
           --coverage --coverage-output-format cobertura --coverage-output identity.cobertura.xml
 
+      # A step timeout fails instead of cancelling, so results still upload after a hang.
       - name: Test AppHost
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 20
         run: >
           dotnet test --project src/ChronicleOfHeros.AppHost.Tests/ChronicleOfHeros.AppHost.Tests.csproj
           --configuration "$CONFIGURATION" --no-build
