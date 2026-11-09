@@ -49,11 +49,12 @@ jobs:
       # OpenSSL trusts the dev cert via SSL_CERT_DIR, Chromium via the NSS database.
       - name: Trust HTTPS development certificate
         run: |
-          sudo apt-get install -y --no-install-recommends libnss3-tools
+          export SSL_CERT_DIR="$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs"
+          echo "SSL_CERT_DIR=$SSL_CERT_DIR" >> "$GITHUB_ENV"
           mkdir -p "$HOME/.pki/nssdb"
           certutil -d "sql:$HOME/.pki/nssdb" -N --empty-password
           dotnet dev-certs https --trust
-          echo "SSL_CERT_DIR=$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs" >> "$GITHUB_ENV"
+          dotnet dev-certs https --check --trust
 
       - name: Install Playwright Chromium
         run: pwsh "src/ChronicleOfHeros.AppHost.Tests/bin/$CONFIGURATION/net11.0/playwright.ps1" install --with-deps chromium
