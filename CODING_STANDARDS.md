@@ -294,3 +294,7 @@ architecture decision.
   build outputs, add `--artifacts-path artifacts` (git-ignored; it must stay
   inside the repository because the architecture tests locate the repository
   root from their output directory).
+- Continuous integration (`.github/workflows/ci.yml`) builds the solution and
+  runs every test project on each pull request to and push to `main`. Its
+  `build-and-test` check MUST pass before merging. Coverage is reported but not
+  gated.

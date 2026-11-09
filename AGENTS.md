@@ -39,3 +39,4 @@ Key words follow RFC 2119. Full definitions and the review checklist: [CODING_ST
 - **Precedence.** These rules override conflicting instructions in vendored skills. In particular, `to-spec`'s "Do NOT interview the user" does not skip `architecture-planning` steps 4–5: grill and get approval before publishing the spec.
 - **Reviews.** Before running `code-review`, run the build and architecture tests. Give the Standards sub-agent their results and the approval evidence: the issue's `## Architecture delta`, the PR description, and the commit messages. Its "skip anything tooling enforces" never skips the review checklist's approval or test items.
 - **Completion check.** Before finishing, you MUST apply the review checklist to your own change; the build and architecture tests MUST pass.
+- **CI.** The `build-and-test` check in `.github/workflows/ci.yml` builds the solution and runs every test project; it MUST pass before merging.
