@@ -59,6 +59,12 @@ If impact appears mid-task, work MUST stop and return to planning.
   `> Pending approved changes: #N` near its top. The implementing change moves
   the delta into the slices and removes the pointer in the same commit as the
   code.
+- When work is split into separately merged tickets, every ticket that changes
+  architecture MUST hold its own `## Architecture delta` covering exactly what
+  it builds; the spec links to them instead of holding one. Tickets touching
+  the same slice MUST be chained by their blocking relationship so that each
+  ticket's Before equals its predecessor's After. One explicit approval may
+  cover all ticket deltas of a breakdown.
 - Non-interactive agents MUST implement only work without architecture impact
   or with an approved `## Architecture delta` in its issue. Otherwise they post
   the proposed delta as an issue or PR comment, apply the
@@ -116,6 +122,9 @@ their own change before completing it.
    architecture tests pass.
 7. **Draft residue**: no `added`, `removed`, or `changed` highlight classes
    remain.
+8. **Commit consistency**: in every commit of the change, not only in the
+   final diff, the code and the docs describe the same state. A later commit
+   that repairs an earlier inconsistent one does not pass.
 
 ## Capability architecture
 

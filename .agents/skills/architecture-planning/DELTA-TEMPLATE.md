@@ -5,11 +5,11 @@ The `## Architecture delta` section of a spec or ticket issue, and the body of a
 ## Filling rules
 
 - **Status.** A proposal carries `Status: Proposed — awaiting approval`. Only after the user explicitly approved this exact delta (SKILL.md step 5) does it become `Status: Approved` followed by `Approved by @<user> on <YYYY-MM-DD>`. Any later edit returns it to `Proposed`.
-- **Placement.** In a spec issue, put the section after `## Implementation Decisions`; in a ticket, after `## Acceptance criteria`. Slice pointers `> Pending approved changes: #N` name the issue holding the approved section.
+- **Placement.** In a spec issue, put the section after `## Implementation Decisions`; in a ticket, after `## Acceptance criteria`. When `to-tickets` splits the work, each ticket that changes architecture holds its own section covering exactly what it builds, its Before equal to its predecessor's After, and the spec links to them. Slice pointers `> Pending approved changes: #N` name the issue holding the approved section.
 - **Links.** Issue bodies do not resolve relative paths: link slices as `https://github.com/FlorianAlbert/ChronicleOfHeros/blob/main/docs/architecture/<path>.md`.
 - **Before** is the slice's current block, copied verbatim (including any `%% verify:` line), so the implementer can match it against the slice.
 - **After** is the drafted block, marked with the `added`, `removed` (still drawn), and `changed` classDefs copied from `docs/architecture/conventions.md`. The implementing PR strips them when it moves After into the slice.
-- **Inventory tables** (endpoints, Aspire resources and parameters, DbContext entity sets) use one diff table: a leading `Change` column (`added` / `removed` / `changed`) plus the view's own columns, affected rows only, `old → new` in each changed cell.
+- **Inventory tables** (endpoints, Aspire resources and parameters, DbContext entity sets) use one diff table: a leading `Change` column (`added` / `removed` / `changed`) plus the view's own columns, affected rows only, `old → new` in each changed cell. Cell values use the view's own vocabulary exactly as conventions.md specifies (for example `Policy:Player`, not prose), so they copy verbatim into the verified view.
 - **One `####` block per affected view**, ordered by slice path. Diagrams follow the verified-view parseability rules: one relationship per line, no chaining or `&`, simple node ids with the full name in `["label"]`.
 
 ## Template
@@ -122,7 +122,7 @@ classDiagram
 
 | Change | Method | Route | Adapter | Authorization |
 | --- | --- | --- | --- | --- |
-| added | POST | `/authentication/sign-out-everywhere` | `AuthenticationEndpoints` | Signed-in player |
+| added | POST | /authentication/sign-out-everywhere | AuthenticationEndpoints | Policy:Player |
 
 ### Decisions and alternatives considered
 

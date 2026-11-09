@@ -22,7 +22,7 @@ Parent: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - A slice whose code departs from an ADR or `CODING_STANDARDS.md` ends with `## Known deviations`, one bullet per departure:
 
   ```text
-  - <What the code does>. Deviates from [<ADR or standard>](<link>): <what it requires>. Tracking: <#N or "not yet filed">.
+  - <What the code does>. Deviates from [<ADR or standard>](<link>): <what it requires>. Tracking: #N.
   ```
 
 ## Pending approved changes
@@ -71,10 +71,10 @@ Used only while drafting a delta (see `.agents/skills/architecture-planning/SKIL
 - `flowchart`, `classDiagram`, `stateDiagram-v2`, `erDiagram`: declare each class used, at the end of the block, as `classDef <class> <style>`. Mark elements with `<id>:::<class>` or `class <id>,<id> <class>` (class diagrams also accept `cssClass "<id>" <class>`).
 - `sequenceDiagram`: wrap affected messages in `rect rgb(218,251,225)` (added), `rect rgb(255,235,233)` (removed), or `rect rgb(255,248,197)` (changed); the first line inside the `rect` is `%% draft: <class>`.
 - Tables: prefix the first cell of an affected row with `(added) `, `(removed) `, or `(changed) `.
-- Before committing, this command MUST print nothing:
+- Before committing, this command MUST print nothing. It finds every marker form above, including in new files not yet added to git:
 
   ```text
-  git grep -nE "classDef (added|removed|changed)|%% draft:|^\| \((added|removed|changed)\) " -- ARCHITECTURE.md docs/architecture ":!docs/architecture/conventions.md"
+  git grep -nE --untracked "classDef (added|removed|changed)|:::(added|removed|changed)|^[[:space:]]*(class [A-Za-z0-9_,]+|cssClass [^[:space:]]+) (added|removed|changed)([[:space:];]|$)|%% draft:|rect rgb\((218, ?251, ?225|255, ?235, ?233|255, ?248, ?197)\)|^\| \((added|removed|changed)\) " -- ARCHITECTURE.md docs/architecture ":!docs/architecture/conventions.md"
   ```
 
 ## Verified views
