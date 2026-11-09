@@ -30,7 +30,7 @@ Parent: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 An approved but unbuilt change lives in its issue's `## Architecture delta`. Each slice the delta changes carries one pointer line directly after the header block, before any other content. It names every issue whose `## Architecture delta` holds part of the change, comma-separated:
 
 ```text
-> Pending approved changes: #76, #77
+> Pending approved changes: #N, #M
 ```
 
 The implementing change moves the delta into the slice and removes its issue number; it removes the line once no number is left.

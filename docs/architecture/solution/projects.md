@@ -4,8 +4,6 @@ Scope: the projects in `ChronicleOfHeros.slnx`, their project references, and th
 Load when: adding, removing, or renaming a project; changing a `<ProjectReference>`; adding a production NuGet package.
 Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [capabilities.md](capabilities.md), [../capabilities/identity/components.md](../capabilities/identity/components.md)
 
-> Pending approved changes: #75
-
 `A --> B` means project A has a `<ProjectReference>` to project B.
 
 ```mermaid

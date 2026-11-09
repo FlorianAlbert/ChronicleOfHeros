@@ -26,6 +26,7 @@ IResourceBuilder<DotnetProjectResource> api = builder.AddDotnetProject("api", ".
     .WithHttpHealthCheck("/health");
 
 builder.AddDotnetProject("web", "../ChronicleOfHeros.Web/ChronicleOfHeros.Web.csproj")
+    .WithReference(api)
     .WaitFor(api);
 
 builder.Build().Run();

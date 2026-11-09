@@ -43,4 +43,4 @@ flowchart TB
 
 ## Known deviations
 
-- The contract services and their workflows live in Infrastructure, not Application, and Application owns no ports. Deviates from [CODING_STANDARDS.md § Implementation layers](../../../../CODING_STANDARDS.md#implementation-layers) and [ADR 0007](../../../adr/0007-contract-first-capability-architecture.md): Application holds behavior and depends only on Domain, contracts, and its private ports, which Infrastructure implements. Tracking: not yet filed.
+- The contract services and their workflows live in Infrastructure, not Application, and Application owns no ports. Deviates from [CODING_STANDARDS.md § Implementation layers](../../../../CODING_STANDARDS.md#implementation-layers) and [ADR 0007](../../../adr/0007-contract-first-capability-architecture.md): Application holds behavior and depends only on Domain, contracts, and its private ports, which Infrastructure implements. Tracking: #84.

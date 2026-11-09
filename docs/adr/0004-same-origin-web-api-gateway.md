@@ -1,6 +1,6 @@
 # Same-origin Web backend for frontend gateway
 
-Status: Accepted, implementation pending (#75)
+Status: Accepted, under revision (#84)
 
 The browser cannot use Aspire service discovery to call `Api`, and exposing
 `Api` directly would require a public endpoint, CORS policy, and a
@@ -9,12 +9,15 @@ browser-facing origin and acts as a backend for frontend (BFF). `Api` remains
 an internal JWT-bearer API.
 
 The browser holds only an opaque, host-only, `Secure`, `HttpOnly`,
-`SameSite=Strict`, `__Host-`-prefixed session cookie. Its value is an opaque
-session identifier, not an access token, refresh token, or authentication
-claims. Web stores the session record in private Redis. The record contains the
-API access and refresh tokens, expiry metadata, refresh-family linkage, and
-the minimum server-side identity state required for Web authorization. Token
-values are protected with ASP.NET Core Data Protection before storage.
+`SameSite=Lax`, `__Host-`-prefixed session cookie. `Lax` keeps the session on
+top-level cross-site navigations, such as links to a character sheet, while
+every unsafe browser request still requires antiforgery validation. Its value
+is an opaque session identifier, not an access token, refresh token, or
+authentication claims. Web stores the session record in private Redis. The
+record contains the API access and refresh tokens, expiry metadata,
+refresh-family linkage, and the minimum server-side identity state required for
+Web authorization. Token values are protected with ASP.NET Core Data Protection
+before storage.
 
 Web validates the Redis session on every authenticated request. A revoked,
 expired, or missing session is rejected immediately. Web validates its

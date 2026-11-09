@@ -1,5 +1,9 @@
 # ASP.NET Core And Blazor Auto Browser Sessions
 
+## Current applicability
+
+This research is historical. The application no longer enables Interactive Auto ([ADR-0003](../adr/0003-blazor-static-rendering-with-interactive-server.md)), and the Web host's `/api` forwarder has been removed. The BFF plan this research informed (#75) was closed as not planned; the authentication direction is being revisited in #84.
+
 ## Applicability
 
 This report informs a future browser-authentication capability for Chronicle of
@@ -9,7 +13,7 @@ authentication.
 The application targets `net11.0`, has a static-SSR-by-default Blazor Web App
 with per-component Interactive Auto, and already exposes the API only through
 the Web origin's YARP `/api` forwarder. See
-[ADR-0003](../adr/0003-blazor-auto-render-mode.md),
+[ADR-0003](../adr/0003-blazor-static-rendering-with-interactive-server.md),
 [ADR-0004](../adr/0004-same-origin-web-api-gateway.md), and
 [ADR-0006](../adr/0006-identity-backed-jwt-authentication.md).
 

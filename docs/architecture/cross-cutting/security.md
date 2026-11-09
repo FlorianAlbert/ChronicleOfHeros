@@ -4,8 +4,6 @@ Scope: authentication, authorization, token, cookie, antiforgery, and transport-
 Load when: changing JWT issuing or validation, signing keys, authorization policies, password rules, cookies, antiforgery, or HTTPS settings.
 Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [localization.md](localization.md), [observability.md](observability.md), [../flows/authentication.md](../flows/authentication.md), [../capabilities/identity/classes.md](../capabilities/identity/classes.md)
 
-> Pending approved changes: #75
-
 ## Per host
 
 | Host | Authentication | Authorization | Browser protections |
@@ -55,10 +53,9 @@ The bootstrap temporary password and the JWT signing private key are Aspire secr
 
 - The API and Web launch profiles declare only `https` URLs (`https://localhost:7043`, `https://localhost:7098`); neither host has a plain-HTTP endpoint or `http` profile. The AppHost therefore gives each project resource a single `https` endpoint ([../system/deployment.md](../system/deployment.md)).
 - Web additionally calls `UseHttpsRedirection()` and, outside Development, `UseHsts()`. The API has neither.
-- No host uses a service-discovery URI; Web makes no calls to the API.
+- Web receives an `https` service-discovery entry for `api` ([../system/deployment.md](../system/deployment.md)) but makes no calls to the API. No host uses a service-discovery URI.
 - The PostgreSQL connection's transport security is not configured by the application.
 
 ## Known deviations
 
-- Access tokens are RS256 signed with a configured RSA private key. Deviates from [ADR 0006](../../adr/0006-identity-backed-jwt-authentication.md): ES256 P-256 keys derived with HKDF-SHA-256 from `Jwt:SigningSeed`, public key also supplied to Web. Tracking: #76.
-- The browser can obtain and present API tokens itself; Web has no session cookie, Redis session store, Data Protection key ring, or Web-side JWT validation. Deviates from [ADR 0004](../../adr/0004-same-origin-web-api-gateway.md), [ADR 0006](../../adr/0006-identity-backed-jwt-authentication.md), and [CODING_STANDARDS.md § Web and security boundaries](../../../CODING_STANDARDS.md#web-and-security-boundaries): tokens stay server-side behind an opaque `__Host-` session cookie. Tracking: #76, #77, #78.
+- The browser can obtain and present API tokens itself; Web has no session cookie, Redis session store, Data Protection key ring, or Web-side JWT validation. Deviates from [ADR 0004](../../adr/0004-same-origin-web-api-gateway.md) and [CODING_STANDARDS.md § Web and security boundaries](../../../CODING_STANDARDS.md#web-and-security-boundaries): tokens stay server-side behind an opaque `__Host-` session cookie. Tracking: #84.

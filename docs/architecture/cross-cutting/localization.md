@@ -36,7 +36,3 @@ flowchart TD
 - `Localization/SharedResources` (`.resx`, `.de-DE.resx`) holds shared vocabulary; today only the language names English and German.
 - `MissingTranslationDiagnosticStringLocalizerFactory` replaces `IStringLocalizerFactory`. It wraps the ResourceManager factory: a missing localized value falls back to the English resource; a key missing from English renders the key and logs the warning "Translation key {TranslationKey} is missing from its canonical English resource."
 - `SharedResources` and the factory are public only for `TranslationResourceTests` in `ChronicleOfHeros.AppHost.Tests`, which check key parity with English, English fallback, and the missing-key warning.
-
-## Known deviations
-
-- English (`en-US`) text comes from the neutral `.resx` resources; no resource has an `en-US` suffix. Deviates from [CODING_STANDARDS.md § Localization](../../../CODING_STANDARDS.md#localization) and [GLOSSARY.md § Supported display language](../../../GLOSSARY.md#supported-display-language): every supported display language has a resource with a concrete locale suffix. Tracking: not yet filed.

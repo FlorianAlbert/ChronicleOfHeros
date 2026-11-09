@@ -4,8 +4,6 @@ Scope: the lifecycles the Identity code implements: an account's password-change
 Load when: changing sign-in, password change, password reset, refresh rotation, sign-out, or revocation rules.
 Parent: [index.md](index.md) · Neighbours: [domain.md](domain.md), [persistence.md](persistence.md), [../../flows/authentication.md](../../flows/authentication.md)
 
-> Pending approved changes: #75
-
 ## Account password state
 
 ```mermaid

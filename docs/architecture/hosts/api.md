@@ -4,8 +4,6 @@ Scope: the `ChronicleOfHeros.Api` host: composition, request pipeline, HTTP endp
 Load when: adding or changing an API endpoint, its route, authorization, or HTTP result, or the API host's composition.
 Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [web.md](web.md), [migrations.md](migrations.md), [../flows/authentication.md](../flows/authentication.md), [../flows/player-administration.md](../flows/player-administration.md)
 
-> Pending approved changes: #75
-
 ## Composition and pipeline
 
 `Program.cs` (top-level statements), in order:

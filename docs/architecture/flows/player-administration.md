@@ -4,8 +4,6 @@ Scope: Player enrollment, Operator password reset, and current-Player lookup, as
 Load when: changing `/players` endpoints, enrollment, password reset, temporary credentials, or the current-Player lookup.
 Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [authentication.md](authentication.md), [startup.md](startup.md), [../capabilities/identity/domain.md](../capabilities/identity/domain.md)
 
-> Pending approved changes: #75
-
 "Client" is any HTTP client of the API holding a valid access token ([authentication.md](authentication.md)). `UserManager` persists through its EF stores.
 
 ## Player enrollment

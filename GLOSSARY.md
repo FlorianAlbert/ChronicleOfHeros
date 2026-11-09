@@ -34,7 +34,7 @@ The formatting culture paired with the display language: `de-DE` for German and 
 
 ## Supported display language
 
-A display language represented by one concrete locale resource and one formatting culture. Browser variants match a supported display language through their parent language. Initial supported display languages are English (`en-US`) and German (`de-DE`).
+A display language represented by one concrete locale and one formatting culture. English (`en-US`) uses the neutral resource, which is the canonical key set; every other supported display language has a concrete-locale resource with the same keys. Browser variants match a supported display language through their parent language. Initial supported display languages are English (`en-US`) and German (`de-DE`).
 
 ## Document language
 
@@ -42,7 +42,7 @@ The base language declared on every rendered HTML document for assistive technol
 
 ## Canonical translation resource
 
-The English resource that defines every key for localizable application text. Every supported display language has the same key set before a change is complete. Documentation and automated checks preserve this parity.
+The neutral English resource that defines every key for localizable application text. Every supported display language has the same key set before a change is complete. Documentation and automated checks preserve this parity.
 
 ## Translation resource ownership
 

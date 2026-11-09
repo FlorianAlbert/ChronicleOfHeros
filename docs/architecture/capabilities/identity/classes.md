@@ -4,8 +4,6 @@ Scope: the Identity types that collaborate at runtime: contract interfaces, serv
 Load when: changing an Identity contract operation, service, token or refresh-session handling, registration, or hosted service.
 Parent: [index.md](index.md) · Neighbours: [components.md](components.md), [domain.md](domain.md), [persistence.md](persistence.md), [state.md](state.md)
 
-> Pending approved changes: #75
-
 ## Contract services
 
 ```mermaid
@@ -141,7 +139,6 @@ Behavior: [../../flows/authentication.md](../../flows/authentication.md), [../..
 
 ## Known deviations
 
-- `BootstrapOperatorInitializer` is a runtime workflow declared as an `IServiceProvider` extension container without the `Extensions` suffix. Deviates from [CODING_STANDARDS.md § C# style](../../../../CODING_STANDARDS.md#c-style): extension containers represent adapter behavior and use the `Extensions` suffix. Tracking: not yet filed.
-- The public registration extension container `AspNetCoreIdentityRegistration` has no `Extensions` suffix. Deviates from [CODING_STANDARDS.md § C# style](../../../../CODING_STANDARDS.md#c-style): extension containers use the `Extensions` suffix. Tracking: not yet filed.
-- `JwtOptions` validation checks only that values are present; a malformed signing key fails when `JwtKeyMaterial` is first resolved, not at startup. Deviates from [CODING_STANDARDS.md § Registration and composition](../../../../CODING_STANDARDS.md#registration-and-composition): required invalid configuration fails at startup. Tracking: not yet filed.
-- RS256 keys from an RSA private-key parameter instead of ES256 keys derived from `Jwt:SigningSeed`. Deviates from [ADR 0006](../../../adr/0006-identity-backed-jwt-authentication.md). Tracking: #76.
+- `BootstrapOperatorInitializer` is a runtime workflow declared as an `IServiceProvider` extension container without the `Extensions` suffix. Deviates from [CODING_STANDARDS.md § C# style](../../../../CODING_STANDARDS.md#c-style): extension containers represent adapter behavior and use the `Extensions` suffix. Tracking: #84.
+- The public registration extension container `AspNetCoreIdentityRegistration` has no `Extensions` suffix. Deviates from [CODING_STANDARDS.md § C# style](../../../../CODING_STANDARDS.md#c-style): extension containers use the `Extensions` suffix. Tracking: #84.
+- `JwtOptions` validation checks only that values are present; a malformed signing key fails when `JwtKeyMaterial` is first resolved, not at startup. Deviates from [CODING_STANDARDS.md § Registration and composition](../../../../CODING_STANDARDS.md#registration-and-composition): required invalid configuration fails at startup. Tracking: #84.

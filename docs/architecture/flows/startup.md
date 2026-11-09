@@ -4,8 +4,6 @@ Scope: the distributed-application start sequence: database, migrations, API wit
 Load when: changing start order, wait conditions, health checks, schema migration at startup, startup validation, or the bootstrap Operator.
 Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [authentication.md](authentication.md), [player-administration.md](player-administration.md), [../system/deployment.md](../system/deployment.md)
 
-> Pending approved changes: #75
-
 ```mermaid
 sequenceDiagram
     autonumber
@@ -30,7 +28,7 @@ sequenceDiagram
     end
     AppHost->>Api: poll GET /health
     Api-->>AppHost: healthy
-    AppHost->>Web: start
+    AppHost->>Web: start with service discovery entries for api
 ```
 
 - `WaitFor` waits until a resource is running and healthy; `WaitForCompletion` waits until it exits successfully. A failed migration therefore keeps the API and Web from starting.
@@ -41,5 +39,4 @@ sequenceDiagram
 
 ## Known deviations
 
-- Every distributed-application start applies migrations before starting the API. Deviates from [CODING_STANDARDS.md § Registration and composition](../../../CODING_STANDARDS.md#registration-and-composition): normal application and distributed-application startup do not run migrations. Tracking: not yet filed.
-- A malformed JWT signing key is detected at first use, not at startup. Deviates from [CODING_STANDARDS.md § Registration and composition](../../../CODING_STANDARDS.md#registration-and-composition): required invalid configuration fails at startup. Tracking: not yet filed.
+- A malformed JWT signing key is detected at first use, not at startup. Deviates from [CODING_STANDARDS.md § Registration and composition](../../../CODING_STANDARDS.md#registration-and-composition): required invalid configuration fails at startup. Tracking: #84.

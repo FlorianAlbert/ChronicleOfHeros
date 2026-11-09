@@ -22,7 +22,8 @@ holds the planning procedure.
   Every slice MUST follow it.
 - Code that knowingly departs from an ADR or these standards MUST be listed in
   the affected slice's `## Known deviations` section, naming the ADR or standard
-  and linking the tracking issue.
+  and linking the tracking issue. The tracking issue need not have an approved
+  `## Architecture delta`.
 
 ### Architectural changes
 
@@ -72,6 +73,9 @@ If impact appears mid-task, work MUST stop and return to planning.
   - `Status: Accepted, implementation pending (#N)`: the decision is approved
     but not fully built; `#N` is the issue whose `## Architecture delta` holds
     the unbuilt part. Separate several issues with commas: `(#N, #M)`.
+  - `Status: Accepted, under revision (#N)`: the decision governs the current
+    code, but `#N` plans its replacement. Agents MUST NOT implement its unbuilt
+    parts; the planning in `#N` decides whether it is superseded or amended.
   - `Status: Superseded by ADR-NNNN`.
 - ADRs are concise living decision records, edited in place. Every ADR change
   goes through the approval gate; the change that completes a pending
@@ -103,10 +107,11 @@ their own change before completing it.
    `> Pending approved changes: #N` pointers; every remaining pointer names an
    open issue with an approved delta.
 4. **Known deviations**: new departures from an ADR or these standards are
-   listed under `## Known deviations` with a tracking issue; resolved ones are
-   removed.
-5. **ADRs**: status lines match the code; ADR edits are approved; a new
-   hard-to-reverse or surprising trade-off has an ADR.
+   listed under `## Known deviations` with a tracking issue, which may still
+   lack an approved delta; resolved ones are removed.
+5. **ADRs**: status lines match the code; no change builds an unbuilt part of
+   an ADR under revision; ADR edits are approved; a new hard-to-reverse or
+   surprising trade-off has an ADR.
 6. **Verified views and tests**: verified views match the code; the build and
    architecture tests pass.
 7. **Draft residue**: no `added`, `removed`, or `changed` highlight classes
@@ -165,8 +170,8 @@ their own change before completing it.
   capability contracts. Register and map adapters explicitly through dependency
   injection, without reflection scanning.
 - A dedicated migrations host enables migrations through capability registration
-  options. Normal application and distributed-application startup do not run
-  migrations.
+  options. The API and Web hosts never run migrations; the AppHost runs the
+  migrations host to completion before the API starts.
 - Project-reference changes are [architectural changes](#architectural-changes);
   the architecture tests' reference rules change with them.
 
@@ -201,6 +206,11 @@ See [ADR 0002](docs/adr/0002-postgresql-as-the-datastore.md) and
   defaults for telemetry, resilience, and health configuration.
 - Render Blazor statically by default. A component that needs Blazor
   interactivity opts into `InteractiveServer`.
+- All HTTP traffic, browser-facing and service-to-service, MUST use HTTPS.
+  Hosts MUST NOT expose plain-HTTP endpoints, and service-discovery URIs use
+  `https://` only, never `https+http://`. Transport security for non-HTTP
+  protocols, such as PostgreSQL TLS, belongs to the deferred deployment-topology
+  decision.
 - The Web host is the sole browser-facing origin and acts as a backend for
   frontend (BFF); the API remains an internal JWT-bearer API. Expose explicit,
   capability-owned browser adapters rather than a blanket API forwarder.
@@ -208,10 +218,13 @@ See [ADR 0002](docs/adr/0002-postgresql-as-the-datastore.md) and
   cookie; browser mutations require antiforgery validation. Follow the session,
   token custody, authorization, refresh, and sign-out requirements in
   [ADR 0004](docs/adr/0004-same-origin-web-api-gateway.md) and
-  [ADR 0006](docs/adr/0006-identity-backed-jwt-authentication.md).
+  [ADR 0006](docs/adr/0006-identity-backed-jwt-authentication.md). Both ADRs
+  are under revision (#84): the current code's departures from this rule and
+  the previous one are known deviations, and agents MUST NOT resolve them
+  outside #84.
 
 See also [ADR 0001](docs/adr/0001-aspire-orchestrated-distributed-architecture.md)
-and [ADR 0003](docs/adr/0003-blazor-auto-render-mode.md).
+and [ADR 0003](docs/adr/0003-blazor-static-rendering-with-interactive-server.md).
 
 ## Localization
 
@@ -219,8 +232,8 @@ and [ADR 0003](docs/adr/0003-blazor-auto-render-mode.md).
   labels. Each page or reusable component owns resources beside its
   implementation; reserve shared resources for genuinely cross-cutting
   vocabulary.
-- Use the neutral English resource as the canonical key set. Every supported
-  display language has a resource with a concrete locale suffix and the same
+- The neutral resource is English (`en-US`) and is the canonical key set. Every
+  other supported display language has a concrete-locale resource with the same
   keys; choose descriptive keys for the owning component's meaning. Use
   `IStringLocalizer<TComponent>` for component resources and the shared-resource
   localizer only for shared vocabulary.

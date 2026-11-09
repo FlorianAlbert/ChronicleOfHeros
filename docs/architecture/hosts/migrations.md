@@ -14,7 +14,3 @@ Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [api.md](api.
 - The connection string comes from the AppHost reference to the `chronicleofheros` database ([../system/deployment.md](../system/deployment.md)).
 - The AppHost starts this host on every run and starts the API only after it completes successfully ([../flows/startup.md](../flows/startup.md)).
 - The shared service defaults give the host OpenTelemetry logs, metrics, and traces (exported over OTLP when the AppHost supplies an endpoint), service discovery, and HTTP client defaults. It is not a web host, so it maps no endpoints and does not call `MapDefaultEndpoints()`.
-
-## Known deviations
-
-- The AppHost runs the Migrations host, and therefore applies migrations, on every distributed-application start. Deviates from [CODING_STANDARDS.md § Registration and composition](../../../CODING_STANDARDS.md#registration-and-composition): normal application and distributed-application startup do not run migrations. Tracking: not yet filed.
