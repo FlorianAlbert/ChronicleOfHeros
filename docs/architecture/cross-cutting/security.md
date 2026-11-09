@@ -51,8 +51,14 @@ The only cookie the application sets is the display-language preference ([locali
 
 The bootstrap temporary password and the JWT signing private key are Aspire secret parameters passed to the API as environment variables ([../system/deployment.md](../system/deployment.md)). Tests generate their own RSA keys.
 
+## Transport
+
+- The API and Web launch profiles declare only `https` URLs (`https://localhost:7043`, `https://localhost:7098`); neither host has a plain-HTTP endpoint or `http` profile. The AppHost therefore gives each project resource a single `https` endpoint ([../system/deployment.md](../system/deployment.md)).
+- Web additionally calls `UseHttpsRedirection()` and, outside Development, `UseHsts()`. The API has neither.
+- No host uses a service-discovery URI; Web makes no calls to the API.
+- The PostgreSQL connection's transport security is not configured by the application.
+
 ## Known deviations
 
 - Access tokens are RS256 signed with a configured RSA private key. Deviates from [ADR 0006](../../adr/0006-identity-backed-jwt-authentication.md): ES256 P-256 keys derived with HKDF-SHA-256 from `Jwt:SigningSeed`, public key also supplied to Web. Tracking: #76.
 - The browser can obtain and present API tokens itself; Web has no session cookie, Redis session store, Data Protection key ring, or Web-side JWT validation. Deviates from [ADR 0004](../../adr/0004-same-origin-web-api-gateway.md), [ADR 0006](../../adr/0006-identity-backed-jwt-authentication.md), and [CODING_STANDARDS.md § Web and security boundaries](../../../CODING_STANDARDS.md#web-and-security-boundaries): tokens stay server-side behind an opaque `__Host-` session cookie. Tracking: #76, #77, #78.
-- The API's launch profile also listens on HTTP, the API does not redirect to HTTPS, and the Web forwarder's `https+http://api` falls back to HTTP when no HTTPS endpoint resolves. Deviates from [ADR 0006](../../adr/0006-identity-backed-jwt-authentication.md): credentials are sent only over HTTPS. Tracking: not yet filed.

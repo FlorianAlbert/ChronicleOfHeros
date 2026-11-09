@@ -26,7 +26,7 @@ Load only the slices for your task. Add [conventions.md](docs/architecture/conve
 | Add a capability, project, or project reference | [solution/capabilities](docs/architecture/solution/capabilities.md), [solution/projects](docs/architecture/solution/projects.md), [identity/components](docs/architecture/capabilities/identity/components.md) as the reference example |
 | AppHost resource, parameter, or start order | [system/deployment](docs/architecture/system/deployment.md), [flows/startup](docs/architecture/flows/startup.md) |
 | Web page, component, render mode, or Web endpoint | [hosts/web](docs/architecture/hosts/web.md), [cross-cutting/localization](docs/architecture/cross-cutting/localization.md) |
-| Browser-to-API path, Web session, BFF work | [hosts/web](docs/architecture/hosts/web.md), [flows/web-forwarding](docs/architecture/flows/web-forwarding.md), [flows/authentication](docs/architecture/flows/authentication.md), [cross-cutting/security](docs/architecture/cross-cutting/security.md), [system/deployment](docs/architecture/system/deployment.md) |
+| Browser-to-API path, Web session, BFF work | [hosts/web](docs/architecture/hosts/web.md), [flows/authentication](docs/architecture/flows/authentication.md), [cross-cutting/security](docs/architecture/cross-cutting/security.md), [system/deployment](docs/architecture/system/deployment.md) |
 | Display languages or translations | [cross-cutting/localization](docs/architecture/cross-cutting/localization.md) |
 | Telemetry, health checks, resilience, service discovery | [cross-cutting/observability](docs/architecture/cross-cutting/observability.md) |
 | Draft a delta; write or test architecture docs | [conventions](docs/architecture/conventions.md), then the slices the delta changes |
@@ -55,7 +55,6 @@ Load only the slices for your task. Add [conventions.md](docs/architecture/conve
 | **Flows** | |
 | [flows/authentication](docs/architecture/flows/authentication.md) | Changing sign-in, password change, refresh rotation, or sign-out. |
 | [flows/player-administration](docs/architecture/flows/player-administration.md) | Changing enrollment, password reset, or the current-Player lookup. |
-| [flows/web-forwarding](docs/architecture/flows/web-forwarding.md) | Changing how browser requests reach the API. |
 | [flows/startup](docs/architecture/flows/startup.md) | Changing start order, startup migration, startup validation, or the bootstrap Operator. |
 | **Cross-cutting** | |
 | [cross-cutting/localization](docs/architecture/cross-cutting/localization.md) | Changing display-language selection, the selector, resources, or fallback. |

@@ -20,7 +20,7 @@ flowchart LR
     migrations -->|"reference, waits for"| database
     api -->|"reference"| database
     api -->|"waits for completion"| migrations
-    web -->|"reference, waits for"| api
+    web -->|"waits for"| api
     params -->|"environment variables"| api
 ```
 
@@ -33,10 +33,11 @@ flowchart LR
 | chronicleofheros | AddDatabase | postgres | - | - | - | - |
 | migrations | AddDotnetProject | - | ChronicleOfHeros.Migrations | chronicleofheros | chronicleofheros | - |
 | api | AddDotnetProject | - | ChronicleOfHeros.Api | chronicleofheros | migrations (completion) | http /health |
-| web | AddDotnetProject | - | ChronicleOfHeros.Web | api | api | - |
+| web | AddDotnetProject | - | ChronicleOfHeros.Web | - | api | - |
 
 - `WithReference(database)` gives the host the connection string `ConnectionStrings:chronicleofheros`; Identity registration reads it by that name ([../capabilities/identity/persistence.md](../capabilities/identity/persistence.md)).
-- `WithReference(api)` gives Web the service-discovery entries for `api`, which the forwarder resolves as `https+http://api` ([../hosts/web.md](../hosts/web.md)).
+- Web has no reference to `api` and receives no service-discovery entries for it; it only waits for it ([../hosts/web.md](../hosts/web.md)).
+- The API and Web launch profiles declare only `https` URLs, so each of these project resources has a single `https` endpoint and no plain-HTTP endpoint. The API health check polls `/health` on that endpoint.
 - The API starts only after the migrations resource has exited successfully; Web starts after the API is healthy. The API health check polls `/health`, which exists only in the Development environment ([../cross-cutting/observability.md](../cross-cutting/observability.md)).
 - The PostgreSQL integration adds its own password parameter and health check; they are not declared in `AppHost.cs`.
 - No resource declares external HTTP endpoints, persistent lifetime, or data volumes.

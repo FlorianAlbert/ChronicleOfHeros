@@ -1,8 +1,8 @@
 # Hosts: Web
 
-Scope: the `ChronicleOfHeros.Web` host: composition, request pipeline, render modes, endpoints, the API forwarder, and Razor components.
+Scope: the `ChronicleOfHeros.Web` host: composition, request pipeline, render modes, endpoints and endpoint adapters, and Razor components.
 Load when: changing the Web pipeline, a page or layout component, render modes, a Web endpoint, or how the browser reaches the API.
-Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [api.md](api.md), [migrations.md](migrations.md), [../flows/web-forwarding.md](../flows/web-forwarding.md), [../cross-cutting/localization.md](../cross-cutting/localization.md)
+Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [api.md](api.md), [migrations.md](migrations.md), [../cross-cutting/localization.md](../cross-cutting/localization.md)
 
 > Pending approved changes: #75
 
@@ -13,23 +13,49 @@ Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [api.md](api.
 | Step | Code |
 |---|---|
 | Service defaults | `AddServiceDefaults()` ([../cross-cutting/observability.md](../cross-cutting/observability.md)) |
-| API forwarder | `AddHttpForwarderWithServiceDiscovery()`; the forwarder's named `HttpStandardResilienceOptions` call `DisableRetries()` |
 | Razor components | `AddRazorComponents().AddInteractiveServerComponents()` |
 | Localization | `AddLocalization()`, `MissingTranslationDiagnosticStringLocalizerFactory` as `IStringLocalizerFactory`, `RequestLocalizationOptions.ConfigureDisplayLanguages(["en-US", "de-DE"])` ([../cross-cutting/localization.md](../cross-cutting/localization.md)) |
+| Endpoint adapters | `AddDisplayLanguageEndpoint(["en-US", "de-DE"])` |
 | Error handling | Outside Development only: `UseExceptionHandler("/error")` and `UseHsts()`. Always: `UseStatusCodePagesWithReExecute("/not-found")` |
 | Middleware | `UseHttpsRedirection()`, `UseRequestLocalization()`, `UseAntiforgery()` |
-| Endpoints | `MapStaticAssets()`, `MapRazorComponents<App>().AddInteractiveServerRenderMode()`, `POST /display-language`, `/api/{**catch-all}` forwarder, `MapDefaultEndpoints()` |
+| Endpoints | `MapStaticAssets()`, `MapRazorComponents<App>().AddInteractiveServerRenderMode()`, `MapDisplayLanguageEndpoint()`, `MapDefaultEndpoints()` |
 
-The Web host has no authentication, authorization, session, or Data Protection configuration of its own, and references only `ChronicleOfHeros.ServiceDefaults`. It calls no API operation itself.
+The Web host has no authentication, authorization, session, or Data Protection configuration of its own, and references only `ChronicleOfHeros.ServiceDefaults`. It calls no API operation and exposes no route to the API, so browsers cannot reach the API through it.
 
 ## Endpoints
 
 | Route | Kind | Behavior |
 |---|---|---|
 | `/`, `/error`, `/not-found` | Razor pages | Static server-side rendering |
-| `POST /display-language` | Inline minimal-API lambda in `Program.cs` | Validates antiforgery (400 on failure), stores the chosen culture in a cookie when supported, redirects (302) to a validated local return path ([../cross-cutting/localization.md](../cross-cutting/localization.md)) |
-| `/api/{**catch-all}`, any method | YARP `MapForwarder` | Removes the `/api` prefix and forwards the request to `https+http://api` with headers, including `Authorization`, unchanged ([../flows/web-forwarding.md](../flows/web-forwarding.md)) |
+| `POST /display-language` | `DisplayLanguageEndpoint` adapter | Validates antiforgery (400 on failure), stores the chosen culture in a cookie when supported, redirects (302) to a validated local return path ([../cross-cutting/localization.md](../cross-cutting/localization.md)) |
 | `/health`, `/alive` | `MapDefaultEndpoints` | Development only |
+
+The launch profile `https` listens on `https://localhost:7098` only; there is no plain-HTTP URL or `http` profile.
+
+## Endpoint adapters
+
+```mermaid
+classDiagram
+    direction LR
+    class DisplayLanguageEndpointExtensions {
+        <<registration>>
+        +AddDisplayLanguageEndpoint(WebApplicationBuilder, string[])
+        +MapDisplayLanguageEndpoint(WebApplication)
+    }
+    class DisplayLanguageEndpoint {
+        <<endpoint>>
+    }
+    class IAntiforgery {
+        <<interface>>
+    }
+    class DisplayLanguageRequestCultureProvider
+    DisplayLanguageEndpointExtensions ..> DisplayLanguageEndpoint : register, map
+    DisplayLanguageEndpoint ..> IAntiforgery : validate request
+    DisplayLanguageEndpoint ..> DisplayLanguageRequestCultureProvider : PreferenceCookieName
+```
+
+- Both types are internal, in `ChronicleOfHeros.Web.Endpoints`, each in its own file. `AddDisplayLanguageEndpoint` registers the adapter as scoped, built by an explicit factory from `IAntiforgery` and the supported cultures.
+- The adapter's static `Map(IEndpointRouteBuilder)` maps `POST /display-language` to a lambda that receives the adapter from DI and calls its private `HandleAsync`. The adapter also owns the return-path validation.
 
 ## Render modes
 
@@ -55,5 +81,4 @@ flowchart TD
 
 ## Known deviations
 
-- The Web host forwards every `/api/**` request to the API, passing browser `Authorization` headers through; it has no capability-owned browser adapters and no Web session. Deviates from [ADR 0004](../../adr/0004-same-origin-web-api-gateway.md) and [CODING_STANDARDS.md § Web and security boundaries](../../../CODING_STANDARDS.md#web-and-security-boundaries): explicit browser adapters, an opaque Web session cookie, and server-held tokens instead of a blanket forwarder. Tracking: #76.
-- `POST /display-language` is an inline lambda in `Program.cs`, with its return-path validation as local functions there, not an endpoint adapter registered and mapped through dependency injection. Deviates from [CODING_STANDARDS.md § Registration and composition](../../../CODING_STANDARDS.md#registration-and-composition): each HTTP endpoint adapter is registered and mapped explicitly through dependency injection; hosts compose rather than own workflows. Tracking: not yet filed.
+- The Web host has no capability-owned browser adapters for API operations and no Web session. Deviates from [ADR 0004](../../adr/0004-same-origin-web-api-gateway.md) and [CODING_STANDARDS.md § Web and security boundaries](../../../CODING_STANDARDS.md#web-and-security-boundaries): explicit browser adapters, an opaque Web session cookie, and server-held tokens. Tracking: #76.

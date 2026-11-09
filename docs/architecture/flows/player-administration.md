@@ -2,7 +2,7 @@
 
 Scope: Player enrollment, Operator password reset, and current-Player lookup, as the API implements them today.
 Load when: changing `/players` endpoints, enrollment, password reset, temporary credentials, or the current-Player lookup.
-Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [authentication.md](authentication.md), [web-forwarding.md](web-forwarding.md), [startup.md](startup.md), [../capabilities/identity/domain.md](../capabilities/identity/domain.md)
+Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [authentication.md](authentication.md), [startup.md](startup.md), [../capabilities/identity/domain.md](../capabilities/identity/domain.md)
 
 > Pending approved changes: #75
 

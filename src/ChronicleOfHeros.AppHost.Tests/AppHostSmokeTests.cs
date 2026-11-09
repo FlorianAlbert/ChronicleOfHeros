@@ -55,18 +55,18 @@ public class AppHostSmokeTests(LandingPageFixture fixture) : IClassFixture<Landi
     }
 
     /// <summary>
-    /// This test verifies that the health endpoints of the application are available and return a successful response.
+    /// This test verifies that the health endpoints of the web and API hosts are available and return a successful response.
     /// </summary>
     /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
-    public async Task Health_endpoints_are_available_through_the_web_host()
+    public async Task Health_endpoints_are_available_on_the_web_and_api_hosts()
     {
         using HttpClient webClient = _fixture.CreateHttpClient();
+        using HttpClient apiClient = _fixture.CreateApiHttpClient();
 
-        Uri webHealthUri = new("/health", UriKind.Relative);
-        using HttpResponseMessage webHealthResponse = await webClient.GetAsync(webHealthUri, TestContext.Current.CancellationToken);
-        Uri apiHealthUri = new("/api/health", UriKind.Relative);
-        using HttpResponseMessage apiHealthResponse = await webClient.GetAsync(apiHealthUri, TestContext.Current.CancellationToken);
+        Uri healthUri = new("/health", UriKind.Relative);
+        using HttpResponseMessage webHealthResponse = await webClient.GetAsync(healthUri, TestContext.Current.CancellationToken);
+        using HttpResponseMessage apiHealthResponse = await apiClient.GetAsync(healthUri, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, webHealthResponse.StatusCode);
         Assert.Equal(HttpStatusCode.OK, apiHealthResponse.StatusCode);

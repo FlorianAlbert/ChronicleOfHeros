@@ -2,7 +2,7 @@
 
 Scope: the distributed-application start sequence: database, migrations, API with bootstrap Operator, and Web.
 Load when: changing start order, wait conditions, health checks, schema migration at startup, startup validation, or the bootstrap Operator.
-Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [authentication.md](authentication.md), [player-administration.md](player-administration.md), [web-forwarding.md](web-forwarding.md), [../system/deployment.md](../system/deployment.md)
+Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [authentication.md](authentication.md), [player-administration.md](player-administration.md), [../system/deployment.md](../system/deployment.md)
 
 > Pending approved changes: #75
 
@@ -30,7 +30,7 @@ sequenceDiagram
     end
     AppHost->>Api: poll GET /health
     Api-->>AppHost: healthy
-    AppHost->>Web: start with service discovery entries for api
+    AppHost->>Web: start
 ```
 
 - `WaitFor` waits until a resource is running and healthy; `WaitForCompletion` waits until it exits successfully. A failed migration therefore keeps the API and Web from starting.

@@ -2,11 +2,11 @@
 
 Scope: sign-in, password change, refresh rotation with replay revocation, and sign-out, as the API implements them today.
 Load when: changing any `/authentication/*` endpoint, token issuing, refresh-session rotation or revocation, or the must-change-password rule.
-Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [player-administration.md](player-administration.md), [web-forwarding.md](web-forwarding.md), [startup.md](startup.md), [../capabilities/identity/state.md](../capabilities/identity/state.md)
+Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [player-administration.md](player-administration.md), [startup.md](startup.md), [../capabilities/identity/state.md](../capabilities/identity/state.md)
 
 > Pending approved changes: #75
 
-"Client" is any HTTP client of the API; a browser reaches it through the Web forwarder ([web-forwarding.md](web-forwarding.md)). `UserManager` reads and writes `AspNetUsers` and `AspNetUserRoles` through its EF stores. Token lifetimes and claims: [../cross-cutting/security.md](../cross-cutting/security.md).
+"Client" is any HTTP client of the API, calling it directly over HTTPS; the Web host exposes no route to it ([../hosts/web.md](../hosts/web.md)). `UserManager` reads and writes `AspNetUsers` and `AspNetUserRoles` through its EF stores. Token lifetimes and claims: [../cross-cutting/security.md](../cross-cutting/security.md).
 
 ## Sign-in
 
@@ -136,4 +136,4 @@ Sign-out is anonymous: the refresh token alone authorizes revoking its family.
 
 ## Known deviations
 
-- Browser-reachable clients call the API authentication endpoints through the Web forwarder and receive access and refresh tokens in JSON. Deviates from [ADR 0004](../../adr/0004-same-origin-web-api-gateway.md) and [ADR 0006](../../adr/0006-identity-backed-jwt-authentication.md): the authentication, refresh, and sign-out endpoints are never browser-proxied, Web holds the tokens in a server-side session, and browser sign-in, sign-out, and password change are static SSR form posts. Tracking: #76, #77, #78.
+- Clients call the API authentication endpoints directly and receive access and refresh tokens in JSON; Web offers no sign-in, sign-out, or password change. Deviates from [ADR 0004](../../adr/0004-same-origin-web-api-gateway.md) and [ADR 0006](../../adr/0006-identity-backed-jwt-authentication.md): the authentication, refresh, and sign-out endpoints are never browser-proxied, Web holds the tokens in a server-side session, and browser sign-in, sign-out, and password change are static SSR form posts. Tracking: #76, #77, #78.

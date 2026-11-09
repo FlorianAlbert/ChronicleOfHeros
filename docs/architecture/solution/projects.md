@@ -26,6 +26,7 @@ flowchart LR
     api --> identityContracts
     web --> serviceDefaults
     migrations --> identityAspNetCore
+    migrations --> serviceDefaults
     identityAspNetCore --> identityContracts
     appHostTests --> appHost
     appHostTests --> web
@@ -43,7 +44,7 @@ flowchart LR
 |---|---|---|
 | `ChronicleOfHeros.AppHost` | Aspire orchestrator; adds hosts by path, not by reference | `Aspire.Hosting.Dotnet`, `Aspire.Hosting.PostgreSQL` |
 | `ChronicleOfHeros.Api` | Executable host: internal JWT-bearer Minimal API | none |
-| `ChronicleOfHeros.Web` | Executable host: Blazor Web App and `/api` forwarder | `Microsoft.Extensions.ServiceDiscovery.Yarp` |
+| `ChronicleOfHeros.Web` | Executable host: Blazor Web App | none |
 | `ChronicleOfHeros.Migrations` | Executable host: applies Identity migrations and exits | none |
 | `ChronicleOfHeros.ServiceDefaults` | Shared host defaults: telemetry, health, service discovery, resilience | `Microsoft.Extensions.Http.Resilience`, `Microsoft.Extensions.ServiceDiscovery`, `OpenTelemetry.*` (exporter, hosting, ASP.NET Core, HTTP, runtime) |
 | `ChronicleOfHeros.Identity.Contracts` | Identity capability's public contracts | none |
