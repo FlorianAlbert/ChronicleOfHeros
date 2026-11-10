@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+branch=$(git symbolic-ref --quiet --short HEAD) || {
+    echo "Commit blocked: check out a task branch before committing." >&2
+    exit 1
+}
+
+case "$branch" in
+    main)
+        echo "Commit blocked: create or switch to a task branch; main is protected." >&2
+        exit 1
+        ;;
+esac

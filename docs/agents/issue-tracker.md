@@ -2,6 +2,10 @@
 
 Issues and PRDs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
 
+Read a known issue with `gh issue view <number> --comments` first. Only try PR
+resolution if its type is unknown; fetch a PR diff only after confirming it is
+a PR. This avoids redundant issue/PR requests and irrelevant 404 responses.
+
 ## Conventions
 
 - **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
@@ -32,6 +36,20 @@ Create a GitHub issue.
 ## When a skill says "fetch the relevant ticket"
 
 Run `gh issue view <number> --comments`.
+
+## Triage verification and handoff
+
+Report three separate fields before design grilling or agent readiness:
+
+- **Inspection evidence:** the relevant code path.
+- **Executed reproduction:** the exact command/scenario and observed result,
+  or "not run". Source inspection is not an executed reproduction.
+- **Remaining uncertainty:** what has not been demonstrated.
+
+If reproduction is blocked or deferred, explicitly agree that deferral with
+the maintainer before proceeding, and carry the limitation into the agent
+brief. Missing actionable reproduction details are a strong `needs-info` signal.
+Finish with the [Git workflow handoff](git-workflow.md#handoff).
 
 ## Architecture delta
 

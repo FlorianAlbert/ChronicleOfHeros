@@ -28,6 +28,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Test Git commit guard
+        shell: pwsh
+        run: ./scripts/Test-GitHooks.ps1
+
       - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
