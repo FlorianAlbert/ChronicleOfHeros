@@ -9,6 +9,8 @@ Architecture docs are normative and describe the current code on every commit. A
 
 Every code-changing task runs steps 1–2. Steps 3–7 run only when step 2 finds impact. When no user can answer, the [non-interactive branch](#non-interactive-branch) replaces steps 4–6.
 
+Before repository edits or Git writes, follow [Git workflow](../../../docs/agents/git-workflow.md). Architecture approval is separate from permission to commit, push, or create a PR. Where a step below calls for a commit, obtain that permission first; otherwise leave validated changes uncommitted and report the remaining handoff.
+
 ## 1. Load the relevant slices
 
 1. You MUST read `ARCHITECTURE.md` and follow its reading guide for this task (fall back to the slice index's `Load when:` lines). Load only the slices it routes to; add `docs/architecture/conventions.md` when you will draft diagrams.
@@ -69,6 +71,8 @@ Done when you hold an approval line for exactly the delta in the working tree.
 1. Write the approved Before/After, approval line filled, into the `## Architecture delta` section of the spec issue, using [DELTA-TEMPLATE.md](DELTA-TEMPLATE.md). When `to-tickets` splits the work into separately merged tickets, each ticket that changes architecture instead holds its own delta covering exactly what it builds, and the spec links to them. Chain tickets that touch the same slice through "Blocked by" so that each ticket's Before equals its predecessor's After.
 2. Revert your slice drafts (`git restore <slices>`; safe because step 3.1 found them unchanged), add `> Pending approved changes: #N` near the top of each affected slice naming the issue that holds its delta (placed as conventions.md shows), and commit the pointers as a docs-only change.
 3. The implementing PR later enters at step 2 ("covered by an approved delta"): it moves the After views into the slices without highlights and removes the pointers.
+
+Finish with the branch, issue, commit/push status, validation, and next action as specified in the Git workflow. A triage branch can continue into implementation; do not imply that pending pointers must first be merged to the base branch.
 
 ## 7. Completion check
 
