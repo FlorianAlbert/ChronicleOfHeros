@@ -40,7 +40,7 @@ public sealed class LandingPageFixture : IAsyncLifetime
 
         DistributedApplication app = await appHost.BuildAsync().ConfigureAwait(false);
         _app = app;
-        _createWebClient = () => app.CreateHttpClient("web");
+        _createWebClient = () => app.CreateHttpClient("web", "https");
         IHttpClientFactory httpClientFactory = app.Services.GetRequiredService<IHttpClientFactory>();
         _createNoRedirectWebClient = () =>
         {
@@ -54,7 +54,7 @@ public sealed class LandingPageFixture : IAsyncLifetime
         ResourceNotificationService resourceNotifications = app.Services.GetRequiredService<ResourceNotificationService>();
         _ = await resourceNotifications.WaitForResourceHealthyAsync("web", CancellationToken.None).ConfigureAwait(false);
 
-        using HttpClient webClient = app.CreateHttpClient("web");
+        using HttpClient webClient = app.CreateHttpClient("web", "https");
         BaseAddress = webClient.BaseAddress!;
     }
 
@@ -71,6 +71,19 @@ public sealed class LandingPageFixture : IAsyncLifetime
         webClient.Timeout = TimeSpan.FromSeconds(90);
 
         return webClient;
+    }
+
+    /// <summary>
+    /// Creates an HttpClient for the API's own HTTPS endpoint.
+    /// </summary>
+    /// <returns>An HttpClient connected to the API host.</returns>
+    public HttpClient CreateApiHttpClient()
+    {
+        HttpClient apiClient = (_app ?? throw new InvalidOperationException("The application has not been started."))
+            .CreateHttpClient("api", "https");
+        apiClient.Timeout = TimeSpan.FromSeconds(90);
+
+        return apiClient;
     }
 
     /// <summary>

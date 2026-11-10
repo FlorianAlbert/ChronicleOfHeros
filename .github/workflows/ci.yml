@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  CONFIGURATION: Release
+  RESULTS_DIR: ${{ github.workspace }}/TestResults
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('global.json', 'Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore tools
+        run: dotnet tool restore
+
+      - name: Build
+        id: build
+        run: dotnet build ChronicleOfHeros.slnx --configuration "$CONFIGURATION"
+
+      # Aspire hosts talk HTTPS to each other and Chromium loads the Web host over HTTPS:
+      # OpenSSL trusts the dev cert via SSL_CERT_DIR, Chromium via the NSS database.
+      - name: Trust HTTPS development certificate
+        run: |
+          export SSL_CERT_DIR="$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs"
+          echo "SSL_CERT_DIR=$SSL_CERT_DIR" >> "$GITHUB_ENV"
+          mkdir -p "$HOME/.pki/nssdb"
+          certutil -d "sql:$HOME/.pki/nssdb" -N --empty-password
+          dotnet dev-certs https --trust
+          dotnet dev-certs https --check --trust
+
+      - name: Install Playwright Chromium
+        run: pwsh "src/ChronicleOfHeros.AppHost.Tests/bin/$CONFIGURATION/net11.0/playwright.ps1" install --with-deps chromium
+
+      # The architecture tests carry no coverage extension, so each project runs separately.
+      - name: Test architecture
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: >
+          dotnet test --project tests/ChronicleOfHeros.Architecture.Tests/ChronicleOfHeros.Architecture.Tests.csproj
+          --configuration "$CONFIGURATION" --no-build
+          --report-xunit-trx --results-directory "$RESULTS_DIR"
+
+      - name: Test identity capability
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: >
+          dotnet test --project src/ChronicleOfHeros.Identity.AspNetCore.Tests/ChronicleOfHeros.Identity.AspNetCore.Tests.csproj
+          --configuration "$CONFIGURATION" --no-build
+          --report-xunit-trx --results-directory "$RESULTS_DIR"
+          --coverage --coverage-output-format cobertura --coverage-output identity.cobertura.xml
+
+      # A step timeout fails instead of cancelling, so results still upload after a hang.
+      - name: Test AppHost
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 20
+        run: >
+          dotnet test --project src/ChronicleOfHeros.AppHost.Tests/ChronicleOfHeros.AppHost.Tests.csproj
+          --configuration "$CONFIGURATION" --no-build
+          --report-xunit-trx --results-directory "$RESULTS_DIR"
+          --coverage --coverage-output-format cobertura --coverage-output apphost.cobertura.xml
+
+      - name: Generate coverage report
+        if: ${{ !cancelled() && hashFiles('TestResults/*.cobertura.xml') != '' }}
+        run: |
+          dotnet dotnet-coverage merge "$RESULTS_DIR/*.cobertura.xml" --output coverage/merged.cobertura.xml --output-format cobertura
+          dotnet reportgenerator -reports:coverage/merged.cobertura.xml -targetdir:coverage/report "-reporttypes:Html;MarkdownSummaryGithub"
+          cat coverage/report/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results
+          path: TestResults/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload coverage report
+        if: ${{ !cancelled() && hashFiles('coverage/report/index.html') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: coverage/report/
+          retention-days: 14

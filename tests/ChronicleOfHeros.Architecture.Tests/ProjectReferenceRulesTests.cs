@@ -1,5 +1,7 @@
 using System.Xml.Linq;
 
+using ChronicleOfHeros.Architecture.Tests.CodeModels;
+using ChronicleOfHeros.Architecture.Tests.VerifiedViews;
 using ChronicleOfHeros.Identity.Contracts;
 
 namespace ChronicleOfHeros.Architecture.Tests;
@@ -24,8 +26,8 @@ public sealed class ProjectReferenceRulesTests
 
         Assert.False(File.Exists(clientProject));
         Assert.Equal(
-            [Path.Combine("src", "ChronicleOfHeros.ServiceDefaults", "ChronicleOfHeros.ServiceDefaults.csproj")],
-            GetProjectReferences(webProject));
+            (IEnumerable<string>)DocumentedReferenceTargets(WebProjectName),
+            [.. GetProjectReferences(SolutionProjects.Named(WebProjectName).Path).Select(Path.GetFileNameWithoutExtension).OfType<string>()]);
         Assert.DoesNotContain(
             project.Descendants("PackageReference"),
             reference => reference.Attribute("Include")?.Value.Contains("WebAssembly", StringComparison.Ordinal) == true);
@@ -35,23 +37,24 @@ public sealed class ProjectReferenceRulesTests
     }
 
     /// <summary>
-    /// Verifies that only executable hosts and Identity test projects reference the Identity implementation.
+    /// Verifies that only executable hosts and test projects reference the Identity implementation, and exactly those
+    /// the <c>project-references</c> view documents.
     /// </summary>
     [Fact]
     public void Identity_implementation_references_are_limited_to_hosts_and_tests()
     {
-        string implementationProject = "src/ChronicleOfHeros.Identity.AspNetCore/ChronicleOfHeros.Identity.AspNetCore.csproj";
+        string implementationProject = SolutionProjects.Named(IdentityImplementationProjectName).Path;
 
         string[] referencingProjects = GetProjectsReferencing(implementationProject);
 
-        Assert.Equal(
-            [
-                "src/ChronicleOfHeros.Api/ChronicleOfHeros.Api.csproj",
-                "src/ChronicleOfHeros.Identity.AspNetCore.Tests/ChronicleOfHeros.Identity.AspNetCore.Tests.csproj",
-                "src/ChronicleOfHeros.Migrations/ChronicleOfHeros.Migrations.csproj",
-                "tests/ChronicleOfHeros.Architecture.Tests/ChronicleOfHeros.Architecture.Tests.csproj",
-            ],
-            referencingProjects);
+        Assert.Equal(DocumentedReferenceSources(IdentityImplementationProjectName), referencingProjects.Select(Path.GetFileNameWithoutExtension));
+        Assert.All(referencingProjects, project =>
+        {
+            SolutionProject solutionProject = SolutionProjects.Named(Path.GetFileNameWithoutExtension(project));
+            Assert.True(
+                solutionProject.IsTestProject || solutionProject.IsExecutableHost,
+                $"{project} references the Identity implementation but is neither an executable host nor a test project.");
+        });
     }
 
     /// <summary>
@@ -60,8 +63,8 @@ public sealed class ProjectReferenceRulesTests
     [Fact]
     public void Identity_contracts_project_has_no_project_references()
     {
-        string[] referencedProjects = GetProjectReferences(
-            "src/ChronicleOfHeros.Identity.Contracts/ChronicleOfHeros.Identity.Contracts.csproj");
+        string[] referencedProjects = [.. GetProjectReferences(
+            "src/ChronicleOfHeros.Identity.Contracts/ChronicleOfHeros.Identity.Contracts.csproj")];
 
         Assert.Empty(referencedProjects);
     }
@@ -96,31 +99,37 @@ public sealed class ProjectReferenceRulesTests
         string[] sourceFiles = Directory.GetFiles(identityProjectDirectory, "*.cs", SearchOption.AllDirectories);
         string[] sourceFilesGrantingInternalAccess = [.. sourceFiles
             .Where(file => File.ReadAllText(file).Contains("InternalsVisibleTo", StringComparison.Ordinal))
-            .Select(file => Path.GetRelativePath(ArchitectureTestPaths.RepositoryRoot, file))];
+            .Select(ArchitectureTestPaths.ToRepositoryPath)];
 
         Assert.Empty(sourceFilesGrantingInternalAccess);
     }
 
 #pragma warning restore CA1707 // Identifiers should not contain underscores
 
+    private const string WebProjectName = "ChronicleOfHeros.Web";
+    private const string IdentityImplementationProjectName = "ChronicleOfHeros.Identity.AspNetCore";
+
+    private static FlowchartView DocumentedReferences =>
+        FlowchartView.Parse(ArchitectureDocuments.Repository.Single(VerifiedViewCheckers.ProjectReferences));
+
+    private static string[] DocumentedReferenceTargets(string source) =>
+        [.. DocumentedReferences.Edges
+            .Where(edge => edge.Source == source)
+            .Select(edge => edge.Target)
+            .Order(StringComparer.Ordinal)];
+
+    private static string[] DocumentedReferenceSources(string target) =>
+        [.. DocumentedReferences.Edges
+            .Where(edge => edge.Target == target)
+            .Select(edge => edge.Source)
+            .Order(StringComparer.Ordinal)];
+
     private static string[] GetProjectsReferencing(string referencedProject) =>
         [.. Directory.GetFiles(ArchitectureTestPaths.RepositoryRoot, "*.csproj", SearchOption.AllDirectories)
+            .Select(ArchitectureTestPaths.ToRepositoryPath)
+            .Where(project => !project.Split('/').Any(segment => segment is "artifacts" or "bin" or "obj"))
             .Where(project => GetProjectReferences(project).Contains(referencedProject, StringComparer.Ordinal))
-            .Select(project => Path.GetRelativePath(ArchitectureTestPaths.RepositoryRoot, project))
-            .OrderBy(project => project, StringComparer.Ordinal)];
+            .OrderBy(Path.GetFileNameWithoutExtension, StringComparer.Ordinal)];
 
-    private static string[] GetProjectReferences(string project)
-    {
-        string projectPath = Path.IsPathRooted(project)
-            ? project
-            : ArchitectureTestPaths.FromRoot(project);
-
-        return [.. XDocument.Load(projectPath)
-            .Descendants("ProjectReference")
-            .Select(element => element.Attribute("Include")?.Value)
-            .Where(include => include is not null)
-            .Select(include => Path.GetFullPath(Path.Combine(Path.GetDirectoryName(projectPath)!, include!)))
-            .Select(include => Path.GetRelativePath(ArchitectureTestPaths.RepositoryRoot, include))
-            .OrderBy(include => include, StringComparer.Ordinal)];
-    }
+    private static IReadOnlyList<string> GetProjectReferences(string project) => SolutionProjects.ReferencePaths(project);
 }

@@ -58,7 +58,7 @@ public sealed class IdentityBootstrapTests
             ResourceNotificationService resourceNotifications = distributedApplication.Services.GetRequiredService<ResourceNotificationService>();
             _ = await resourceNotifications.WaitForResourceHealthyAsync("api", TestContext.Current.CancellationToken);
 
-            using HttpClient apiClient = distributedApplication.CreateHttpClient("api");
+            using HttpClient apiClient = distributedApplication.CreateHttpClient("api", "https");
             using HttpResponseMessage signInResponse = await apiClient.PostAsJsonAsync(
                 "/authentication/sign-in",
                 new

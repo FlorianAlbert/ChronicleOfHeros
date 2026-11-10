@@ -1,5 +1,7 @@
 # Contract-first capability architecture
 
+Status: Accepted
+
 ChronicleOfHeros organizes product behavior as independently composable capabilities. Each capability exposes exactly one public contracts project containing only transport-neutral interfaces and responsibility-focused request/response DTOs, plus one implementation project that owns its domain concepts, application behavior, framework integrations, configuration, and persistence. Consumers reference a capability only through its contracts project. An executable composition host, or the implementation's test project, may additionally reference the implementation solely to invoke its public registration API.
 
 An implementation keeps Domain, Application, Infrastructure, and DependencyInjection as internal layers. Domain has no framework or internal-layer dependencies; Application depends only on Domain, the capability contracts, and private ports it owns; Infrastructure implements those private ports and contains framework integrations; DependencyInjection is the sole internal assembly point. Implementation types are internal unless they are the one registration API, a narrowly necessary composition configuration type, an unavoidable framework-convention type, or belong in the contracts project.

@@ -1,3 +1,5 @@
+using ChronicleOfHeros.ServiceDefaults;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
@@ -5,8 +7,6 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 
 using OpenTelemetry;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Trace;
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace Microsoft.Extensions.Hosting;
@@ -17,9 +17,6 @@ namespace Microsoft.Extensions.Hosting;
 /// </summary>
 public static class ServiceDefaultsExtensions
 {
-    private const string HealthEndpointPath = "/health";
-    private const string AlivenessEndpointPath = "/alive";
-
     extension<TBuilder>(TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         /// <summary>
@@ -31,11 +28,7 @@ public static class ServiceDefaultsExtensions
             _ = builder.ConfigureOpenTelemetry();
             _ = builder.AddDefaultHealthChecks();
             _ = builder.Services.AddServiceDiscovery()
-                                .ConfigureHttpClientDefaults(http =>
-                                {
-                                    _ = http.AddStandardResilienceHandler();
-                                    _ = http.AddServiceDiscovery();
-                                });
+                                .ConfigureHttpClientDefaults(http => http.AddResilienceAndServiceDiscovery());
 
             return builder;
         }
@@ -46,23 +39,11 @@ public static class ServiceDefaultsExtensions
         /// <returns>The modified host application builder.</returns>
         public TBuilder ConfigureOpenTelemetry()
         {
-            _ = builder.Logging.AddOpenTelemetry(logging =>
-            {
-                logging.IncludeFormattedMessage = true;
-                logging.IncludeScopes = true;
-            });
+            _ = builder.Logging.AddOpenTelemetry(logging => logging.IncludeFormattedMessagesAndScopes());
 
             _ = builder.Services.AddOpenTelemetry()
-                .WithMetrics(metrics => metrics
-                    .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation()
-                    .AddRuntimeInstrumentation())
-                .WithTracing(tracing => tracing
-                    .AddSource(builder.Environment.ApplicationName)
-                    .AddAspNetCoreInstrumentation(options => options.Filter = context =>
-                        !context.Request.Path.StartsWithSegments(HealthEndpointPath, StringComparison.OrdinalIgnoreCase) &&
-                        !context.Request.Path.StartsWithSegments(AlivenessEndpointPath, StringComparison.OrdinalIgnoreCase))
-                    .AddHttpClientInstrumentation());
+                .WithMetrics(metrics => metrics.AddDefaultMetricsInstrumentation())
+                .WithTracing(tracing => tracing.AddDefaultTracingInstrumentation(builder.Environment.ApplicationName));
 
             _ = AddOpenTelemetryExporters(builder);
 
@@ -93,8 +74,8 @@ public static class ServiceDefaultsExtensions
         {
             if (app.Environment.IsDevelopment())
             {
-                _ = app.MapHealthChecks(HealthEndpointPath);
-                _ = app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions
+                _ = app.MapHealthChecks(ServiceDefaultsOptionsExtensions.HealthEndpointPath);
+                _ = app.MapHealthChecks(ServiceDefaultsOptionsExtensions.AlivenessEndpointPath, new HealthCheckOptions
                 {
                     Predicate = registration => registration.Tags.Contains("live")
                 });

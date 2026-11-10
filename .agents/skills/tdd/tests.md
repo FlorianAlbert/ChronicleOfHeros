@@ -4,22 +4,14 @@
 
 **Integration-style**: Test through real interfaces, not mocks of internal parts.
 
-Examples are illustrative; reuse the existing test fixtures and public contracts for the capability under test.
-
-```csharp
-using Microsoft.Playwright;
-
-// GOOD: Tests browser-visible behavior.
-[Fact]
-public async Task Display_language_selector_changes_the_rendered_language()
-{
-    await page.GotoAsync(baseAddress.AbsoluteUri);
-
-    await page.GetByLabel("Display language").SelectOptionAsync("de-DE");
-
-    await Assertions.Expect(page)
-        .ToHaveTitleAsync("ChronicleOfHeros | Dein Charakterbogen am Spieltisch");
-}
+```typescript
+// GOOD: Tests observable behavior
+test("user can checkout with valid cart", async () => {
+  const cart = createCart();
+  cart.add(product);
+  const result = await checkout(cart, paymentMethod);
+  expect(result.status).toBe("confirmed");
+});
 ```
 
 Characteristics:
@@ -34,17 +26,13 @@ Characteristics:
 
 **Implementation-detail tests**: Coupled to internal structure.
 
-```csharp
-// BAD: Tests an internal collaboration instead of the rendered result.
-[Fact]
-public async Task Display_language_selector_calls_the_language_preference_service()
-{
-    await selector.SetLanguageAsync("de-DE");
-
-    languagePreferenceServiceMock.Verify(
-        service => service.SetAsync("de-DE"),
-        Times.Once);
-}
+```typescript
+// BAD: Tests implementation details
+test("checkout calls paymentService.process", async () => {
+  const mockPayment = jest.mock(paymentService);
+  await checkout(cart, payment);
+  expect(mockPayment.process).toHaveBeenCalledWith(cart.total);
+});
 ```
 
 Red flags:
@@ -56,47 +44,34 @@ Red flags:
 - Test name describes HOW not WHAT
 - Verifying through external means instead of interface
 
-```csharp
-// BAD: Bypasses the public contract to query persistence directly.
-[Fact]
-public async Task Save_character_creates_a_database_row()
-{
-    await characterService.SaveAsync(character, TestContext.Current.CancellationToken);
+```typescript
+// BAD: Bypasses interface to verify
+test("createUser saves to database", async () => {
+  await createUser({ name: "Alice" });
+  const row = await db.query("SELECT * FROM users WHERE name = ?", ["Alice"]);
+  expect(row).toBeDefined();
+});
 
-    Assert.NotNull(await dbContext.Characters.FindAsync(character.Id));
-}
-
-// GOOD: Exercises both the write and read through public contracts.
-[Fact]
-public async Task Saved_character_is_retrievable()
-{
-    await characterService.SaveAsync(character, TestContext.Current.CancellationToken);
-
-    CharacterDto? retrieved = await characterService.GetAsync(
-        character.Id,
-        TestContext.Current.CancellationToken);
-
-    Assert.NotNull(retrieved);
-    Assert.Equal(character.Name, retrieved.Name);
-}
+// GOOD: Verifies through interface
+test("createUser makes user retrievable", async () => {
+  const user = await createUser({ name: "Alice" });
+  const retrieved = await getUser(user.id);
+  expect(retrieved.name).toBe("Alice");
+});
 ```
 
 **Tautological tests**: Expected value restates the implementation, so the test passes by construction.
 
-```csharp
-// BAD: Expected value repeats the implementation's formula.
-[Fact]
-public void Ability_modifier_matches_its_formula()
-{
-    const int score = 14;
+```typescript
+// BAD: Expected value is recomputed the way the code computes it
+test("calculateTotal sums line items", () => {
+  const items = [{ price: 10 }, { price: 5 }];
+  const expected = items.reduce((sum, i) => sum + i.price, 0);
+  expect(calculateTotal(items)).toBe(expected);
+});
 
-    Assert.Equal((int)Math.Floor((score - 10) / 2.0), CalculateAbilityModifier(score));
-}
-
-// GOOD: Expected value is independently known from the official rules.
-[Fact]
-public void Ability_score_of_fourteen_has_a_plus_two_modifier()
-{
-    Assert.Equal(2, CalculateAbilityModifier(14));
-}
+// GOOD: Expected value is an independent, known literal
+test("calculateTotal sums line items", () => {
+  expect(calculateTotal([{ price: 10 }, { price: 5 }])).toBe(15);
+});
 ```

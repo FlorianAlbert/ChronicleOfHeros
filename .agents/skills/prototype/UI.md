@@ -17,7 +17,7 @@ A UI prototype is much easier to judge when it's **butting up against the rest o
 
 ### Sub-shape A: adjustment to an existing page (preferred)
 
-The route already exists. Variants are rendered **on the same route**, gated by a `?variant=` URL search parameter bound with `[SupplyParameterFromQuery(Name = "variant")]`. The existing data fetching, parameters, and authorization all stay. Only the rendering swaps. Preserve the page's render mode. This is the default; pick it unless there's a specific reason not to.
+The route already exists. Variants are rendered **on the same route**, gated by a `?variant=` URL search param. The existing data fetching, params, and auth all stay. Only the rendering swaps. This is the default; pick it unless there's a specific reason not to.
 
 If the prototype is for something that doesn't yet have a page but *would naturally live inside one* (a new section of the dashboard, a new card on the settings screen, a new step in an existing flow), it's still sub-shape A. Mount the variants inside the host page.
 
@@ -25,7 +25,7 @@ If the prototype is for something that doesn't yet have a page but *would natura
 
 Only use this when the thing being prototyped genuinely has no existing page to live inside (e.g. an entirely new top-level surface, or a flow that can't be embedded anywhere sensible).
 
-Create a **throwaway routed Razor component** under `src/ChronicleOfHeros.Web/Components/Pages`, following the existing routing convention. Name it so it's obviously a prototype (for example, `SettingsPrototype.razor` with `@page "/prototype/settings"`). Use the same `?variant=` pattern and `@rendermode InteractiveServer` so the switcher is interactive.
+Create a **throwaway route** following whatever routing convention the project already uses. Don't invent a new top-level structure. Name it so it's obviously a prototype (e.g. include the word `prototype` in the path or filename). Same `?variant=` pattern.
 
 Before committing to sub-shape B, sanity-check: is there really no existing page this could be embedded in? An empty route hides design problems that a populated one would expose.
 
@@ -37,7 +37,7 @@ In both sub-shapes the floating bottom bar is identical.
 
 Default to **3 variants**. More than 5 stops being radically different and starts being noise, so cap there.
 
-Write down the plan in one line, in the prototype's location or an `@* *@` comment at the top of its `.razor` file:
+Write down the plan in one line, in the prototype's location or a top-of-file comment:
 
 > "Three variants of the settings page, switchable via `?variant=`, on the existing `/settings` route."
 
@@ -48,8 +48,8 @@ This works whether the user is here to push back or not.
 Draft each variant. Hold each one to:
 
 - The page's purpose and the data it has access to.
-- The project's Razor component, localization, and CSS-isolation conventions.
-- A clear component name, e.g. `SettingsVariantA.razor`, `SettingsVariantB.razor`, `SettingsVariantC.razor`.
+- The project's component library / styling system (TailwindCSS, shadcn, MUI, plain CSS, whatever).
+- A clear exported component name, e.g. `VariantA`, `VariantB`, `VariantC`.
 
 Variants must be **structurally different**: different layout, different information hierarchy, different primary affordance, not just different colours. Three slightly-tweaked card grids isn't a UI prototype, it's wallpaper. If two drafts come out too similar, redo one with explicit "do not use a card grid" guidance.
 
@@ -57,33 +57,18 @@ Variants must be **structurally different**: different layout, different informa
 
 Create a single switcher component on the route:
 
-```razor
-@* Three variants of the settings page, switchable via ?variant=, on /settings. *@
-@switch (CurrentVariant)
-{
-    case "A":
-        <SettingsVariantA />
-        break;
-    case "B":
-        <SettingsVariantB />
-        break;
-    case "C":
-        <SettingsVariantC />
-        break;
-}
-
-<PrototypeSwitcher Variants="Variants" Current="CurrentVariant" />
-
-@code {
-    [SupplyParameterFromQuery(Name = "variant")]
-    public string? Variant { get; set; }
-
-    private static readonly string[] Variants = ["A", "B", "C"];
-    private string CurrentVariant => Variant is "A" or "B" or "C" ? Variant : "A";
-}
+```tsx
+// pseudo-code, adapt to the project's framework
+const variant = searchParams.get('variant') ?? 'A';
+return (
+  <>
+    {variant === 'A' && <VariantA {...data} />}
+    {variant === 'B' && <VariantB {...data} />}
+    {variant === 'C' && <VariantC {...data} />}
+    <PrototypeSwitcher variants={['A','B','C']} current={variant} />
+  </>
+);
 ```
-
-The example shows only variant rendering. Gate the entire prototype subtree and switcher on development; outside development keep the existing page unchanged, or make a new prototype route unavailable. For server-rendered components use `IHostEnvironment.IsDevelopment()`; for WebAssembly-capable components keep the gate in the server host rather than injecting server-only services.
 
 For sub-shape A (existing page): keep all the existing data fetching above the switcher; only the rendered subtree changes per variant.
 
@@ -91,7 +76,7 @@ For sub-shape B (new page): the throwaway route under `/prototype/<name>` mounts
 
 ### 4. Build the floating switcher
 
-A small fixed-position Razor component at the bottom-centre of the screen with three pieces:
+A small fixed-position bar at the bottom-centre of the screen with three pieces:
 
 - **Left arrow**: cycles to the previous variant (wraps around).
 - **Variant label**: shows the current variant key and, if the variant exports a name, that name too. e.g. `B (Sidebar layout)`.
@@ -99,16 +84,16 @@ A small fixed-position Razor component at the bottom-centre of the screen with t
 
 Behaviour:
 
-- Clicking an arrow updates the URL search parameter with `NavigationManager.GetUriWithQueryParameter("variant", nextVariant)` and `NavigateTo(..., replace: true)` so the variant is shareable and reload-stable.
-- Keyboard: `ArrowLeft` and `ArrowRight` also cycle. Register the listener after interactive render with the existing JS interop pattern, dispose it with the component, and do not intercept keys when an `<input>`, `<textarea>`, or `[contenteditable]` is focused.
+- Clicking an arrow updates the URL search param (use the framework's router, e.g. `router.replace` on Next, `navigate` on React Router, etc) so the variant is shareable and reload-stable.
+- Keyboard: `←` and `→` arrow keys also cycle. Don't intercept arrow keys when an `<input>`, `<textarea>`, or `[contenteditable]` is focused.
 - Visually distinct from the page (e.g. high-contrast pill, subtle shadow) so it's obviously not part of the design being evaluated.
-- Hidden outside development, along with the variants, so a stray prototype merge cannot ship prototype UI to users.
+- Hidden in production builds: gate on `process.env.NODE_ENV !== 'production'` or an equivalent check, so a stray prototype merge can't ship the bar to users.
 
 Put the switcher in a single shared component so both sub-shapes can reuse it. Locate it wherever shared UI lives in the project.
 
 ### 5. Hand it over
 
-Surface the URL (and the `?variant=` keys) and how to start the existing Aspire app through `aspire-orchestration`. The user will flip through whenever they get to it. The interesting feedback is usually **"I want the header from B with the sidebar from C"**, which is the actual design they want.
+Surface the URL (and the `?variant=` keys). The user will flip through whenever they get to it. The interesting feedback is usually **"I want the header from B with the sidebar from C"**, which is the actual design they want.
 
 ### 6. Capture the answer and clean up
 

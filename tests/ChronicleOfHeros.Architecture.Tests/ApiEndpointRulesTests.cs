@@ -5,6 +5,8 @@ using ArchUnitNET.Fluent;
 using ArchUnitNET.Loader;
 using ArchUnitNET.xUnitV3;
 
+using ChronicleOfHeros.Architecture.Tests.CodeModels;
+using ChronicleOfHeros.Architecture.Tests.VerifiedViews;
 using ChronicleOfHeros.Identity.AspNetCore;
 using ChronicleOfHeros.Identity.Contracts;
 
@@ -45,7 +47,7 @@ public sealed class ApiEndpointRulesTests
     }
 
     /// <summary>
-    /// Verifies that each Identity HTTP operation has one explicit endpoint adapter and route mapping.
+    /// Verifies that each documented endpoint adapter is declared once and owns exactly one route mapping.
     /// </summary>
     [Fact]
     public void Identity_endpoint_operations_have_one_adapter_and_one_route_mapping()
@@ -53,9 +55,21 @@ public sealed class ApiEndpointRulesTests
         string endpointDirectory = ArchitectureTestPaths.FromRoot("src", "ChronicleOfHeros.Api", "Authentication");
         string[] endpointSourceFiles = Directory.GetFiles(endpointDirectory, "*Endpoints.cs", SearchOption.TopDirectoryOnly);
         string endpointSource = string.Concat(endpointSourceFiles.Select(File.ReadAllText));
+        string[] documentedAdapters = [.. TableView
+            .Parse(ArchitectureDocuments.Repository.Single(VerifiedViewCheckers.ApiEndpoints), VerifiedViewCheckers.ApiEndpointsSchema)
+            .Select(row => row.Cells["Adapter"])
+            .Order(StringComparer.Ordinal)];
+        string[] declaredAdapters = [.. Regex.Matches(endpointSource, @"internal sealed class (?<name>\w+Endpoint)\(")
+            .Select(match => match.Groups["name"].Value)
+            .Order(StringComparer.Ordinal)];
+        string[] mappingAdapters = [.. ApiEndpointModel.Load().Endpoints
+            .Select(endpoint => endpoint.Adapter)
+            .Order(StringComparer.Ordinal)];
 
-        Assert.Equal(7, Regex.Count(endpointSource, @"internal sealed class \w+Endpoint\("));
-        Assert.Equal(7, Regex.Count(endpointSource, @"\.Map(?:Get|Post)\("));
+        Assert.NotEmpty(documentedAdapters);
+        Assert.Equal(documentedAdapters.Distinct(StringComparer.Ordinal), documentedAdapters);
+        Assert.Equal(documentedAdapters, declaredAdapters);
+        Assert.Equal(documentedAdapters, mappingAdapters);
         Assert.All(endpointSourceFiles, sourceFile =>
         {
             string source = File.ReadAllText(sourceFile);

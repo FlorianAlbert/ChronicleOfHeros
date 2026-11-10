@@ -35,7 +35,7 @@ public sealed class AuthenticationAppFixture : IAsyncLifetime
         ResourceNotificationService resourceNotifications = application.Services.GetRequiredService<ResourceNotificationService>();
         _ = await resourceNotifications.WaitForResourceHealthyAsync("api", CancellationToken.None).ConfigureAwait(false);
 
-        using HttpClient apiClient = application.CreateHttpClient("api");
+        using HttpClient apiClient = application.CreateHttpClient("api", "https");
         string temporaryAccessToken = await SignInAndGetAccessTokenAsync(
             apiClient,
             BootstrapOperatorTestParameters.TemporaryPassword).ConfigureAwait(false);
@@ -51,7 +51,7 @@ public sealed class AuthenticationAppFixture : IAsyncLifetime
     /// </summary>
     /// <returns>An API client connected to the shared application.</returns>
     public HttpClient CreateApiClient() => (_application ?? throw new InvalidOperationException("The application has not been started."))
-        .CreateHttpClient("api");
+        .CreateHttpClient("api", "https");
 
     /// <inheritdoc/>
     public async ValueTask DisposeAsync()

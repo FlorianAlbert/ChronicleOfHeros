@@ -7,11 +7,9 @@ description: Shared vocabulary for designing deep modules. Use when the user wan
 
 Design **deep modules**: a lot of behaviour behind a small interface, placed at a clean seam, testable through that interface. Use this language and these principles wherever code is being designed or restructured. The aim is leverage for callers, locality for maintainers, and testability for everyone.
 
-For capability boundaries, dependency injection, persistence, migrations, database tests, or C# extensions, read `docs/agents/architecture.md` before designing or changing code. The repo's contract-first architecture takes precedence over the generic principles below.
-
 ## Glossary
 
-Use these terms consistently when discussing module design. Preserve the repo's domain and architecture vocabulary, including capability, contracts, service, endpoint adapter, and Razor component, when referring to those concrete concepts.
+Use these terms exactly: don't substitute "component," "service," "API," or "boundary." Consistent language is the whole point.
 
 **Module**: anything with an interface and an implementation. Deliberately scale-agnostic: a function, class, package, or tier-spanning slice. _Avoid_: unit, component, service.
 
@@ -61,10 +59,10 @@ When designing an interface, ask:
 
 ## Principles
 
-- **Depth is a property of the interface, not the implementation.** A deep module can be internally composed of small, swappable parts; they just aren't part of the interface. Internal seams stay private. Capability tests enter through public registration and resolve public contracts, not internal seams or `InternalsVisibleTo`.
+- **Depth is a property of the interface, not the implementation.** A deep module can be internally composed of small, mockable, swappable parts; they just aren't part of the interface. A module can have **internal seams** (private to its implementation, used by its own tests) as well as the **external seam** at its interface.
 - **The deletion test.** Imagine deleting the module. If complexity vanishes, it was a pass-through. If complexity reappears across N callers, it was earning its keep.
 - **The interface is the test surface.** Callers and tests cross the same seam. If you want to test *past* the interface, the module is probably the wrong shape.
-- **One adapter means a hypothetical seam. Two adapters means a real one.** Don't introduce an optional port unless something actually varies across it. A capability's required public contracts and registration API are not optional ports; they remain even with one implementation.
+- **One adapter means a hypothetical seam. Two adapters means a real one.** Don't introduce a seam unless something actually varies across it.
 
 ## Designing for testability
 
@@ -72,35 +70,25 @@ Good interfaces make testing natural:
 
 1. **Accept dependencies, don't create them.**
 
-   ```csharp
+   ```typescript
    // Testable
-   internal sealed class PaymentProcessor(IPaymentGateway paymentGateway)
-   {
-       public Task<PaymentResult> ProcessAsync(Order order, CancellationToken cancellationToken) =>
-           paymentGateway.ChargeAsync(order.Total, cancellationToken);
-   }
+   function processOrder(order, paymentGateway) {}
 
    // Hard to test
-   internal sealed class PaymentProcessor
-   {
-       public Task<PaymentResult> ProcessAsync(Order order, CancellationToken cancellationToken)
-       {
-           StripePaymentGateway gateway = new();
-           return gateway.ChargeAsync(order.Total, cancellationToken);
-       }
+   function processOrder(order) {
+     const gateway = new StripeGateway();
    }
    ```
 
 2. **Return results, don't produce side effects.**
 
-   ```csharp
+   ```typescript
    // Testable
-   public static Discount CalculateDiscount(Cart cart) => new(cart.Total * 0.1m);
+   function calculateDiscount(cart): Discount {}
 
    // Hard to test
-   public static void ApplyDiscount(Cart cart)
-   {
-       cart.Total -= cart.Total * 0.1m;
+   function applyDiscount(cart): void {
+     cart.total -= discount;
    }
    ```
 
@@ -117,7 +105,7 @@ Good interfaces make testing natural:
 ## Rejected framings
 
 - **Depth as ratio of implementation-lines to interface-lines** (Ousterhout): rewards padding the implementation. We use depth-as-leverage instead.
-- **"Interface" as the C# `interface` keyword or a class's public methods**: too narrow: interface here includes every fact a caller must know.
+- **"Interface" as the TypeScript `interface` keyword or a class's public methods**: too narrow: interface here includes every fact a caller must know.
 - **"Boundary"**: overloaded with DDD's bounded context. Say **seam** or **interface**.
 
 ## Going deeper
