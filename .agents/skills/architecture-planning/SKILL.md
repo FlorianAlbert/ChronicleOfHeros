@@ -1,97 +1,157 @@
 ---
 name: architecture-planning
-description: "Mandatory architecture gate for every code change: classify architecture impact, then draft, grill, and get explicit approval for the architecture delta before implementing. Use before any feature, bug fix, or refactor; while running `to-spec` or `to-tickets`; before `implement`, `implement-spec`, `tdd`, `improve-codebase-architecture`, or the fix phase of `diagnosing-bugs`; and whenever the user wants to plan, discuss, or change architecture."
+description: "Stage-aware architecture planning: explore constraints during grilling/wayfinding, synthesize specs, design explicitly between spec and tickets, scope ticket transitions, and check approval before implementation. Use during planning and before any code change, including implement, implement-spec, tdd, refactoring, and bug fixes."
 ---
 
 # Architecture planning
 
-Architecture docs are normative and describe the current code on every commit. An architectural change ships only after the user explicitly approves its **delta**: the before/after edit it causes to `ARCHITECTURE.md`, the slices under `docs/architecture/`, ADRs, or `CODING_STANDARDS.md`. What counts as architectural is defined once, in [`CODING_STANDARDS.md#architecture-governance`](../../../CODING_STANDARDS.md#architecture-governance).
+Current-state docs describe implemented reality. Target architecture lives in
+the spec issue's `## Architecture design`, separate from current-state views.
+[Architecture governance](../../../CODING_STANDARDS.md#architecture-governance)
+defines impact and approval; this repository-owned skill owns the procedure.
+Installed skills stay upstream-owned; integrate them through
+[AGENTS.md](../../../AGENTS.md#workflow-gates) and this procedure.
 
-Every code-changing task runs steps 1–2. Steps 3–7 run only when step 2 finds impact. When no user can answer, the [non-interactive branch](#non-interactive-branch) replaces steps 4–6.
+## 1. Orient and classify
 
-Before repository edits or Git writes, follow [Git workflow](../../../docs/agents/git-workflow.md). Architecture approval is separate from permission to commit, push, or create a PR. Where a step below calls for a commit, obtain that permission first; otherwise leave validated changes uncommitted and report the remaining handoff.
+1. Read `ARCHITECTURE.md` and the slices its reading guide selects, applicable
+   ADRs, standards, and glossary terms. Read the task issue and comments and its
+   parent spec when present. An ADR under revision still governs current code.
+2. Discover related open designs through the
+   [issue tracker guide](../../../docs/agents/issue-tracker.md#architecture-design).
+   Inspect relevant decisions and conflicts, not every unrelated proposal.
+3. Check all expected changes against the architectural-change definition.
+   For no impact, state exactly:
+   `Architecture impact: none (checked slices: <slice paths>)`.
+   Hand back to the calling workflow.
+4. Otherwise name the affected views, ADRs, and standards, then take the
+   matching stage below. Planning is not implementation permission.
 
-## 1. Load the relevant slices
+Done when impact, relevant existing decisions, and the next stage are explicit.
+If impact emerges while coding, stop and enter the design stage.
 
-1. You MUST read `ARCHITECTURE.md` and follow its reading guide for this task (fall back to the slice index's `Load when:` lines). Load only the slices it routes to; add `docs/architecture/conventions.md` when you will draft diagrams.
-2. Read the ADRs in `docs/adr/` that touch the area and the `GLOSSARY.md` terms you will use. An ADR with `Status: Accepted, under revision (#N)` still governs the current code, but you MUST NOT build its unbuilt parts or resolve its known deviations outside #N.
-3. If the task has an issue, read it (`gh issue view <n> --comments`) and look for an `## Architecture delta` section and its status line.
-4. Note any `> Pending approved changes: #N` pointer or `## Known deviations` section in a loaded slice: that slice is not the whole story yet.
+## 2. Take the current planning stage
 
-Done when you can name every slice the reading guide routes this task to and whether an approved delta exists.
+### Explore: grilling and wayfinding
 
-## 2. Classify impact
+Investigate architecture where it affects requirements, feasibility, scope,
+or trade-offs. Use `grilling` for open decisions; research or prototype only
+when evidence is needed. Carry settled decisions and their rationale forward.
+Wayfinding retains its own map and decision-ticket lifecycle.
 
-Check the planned change, including code you expect to touch on the way, against every item of the architectural-change definition. Take exactly one outcome:
+Record candidate decisions, evidence, and unresolved questions in the
+conversation or tracker. Proposed ADR or standard wording belongs with the
+proposal, not in current-state documents. This also applies when
+`domain-modeling` or `grill-with-docs` would otherwise write an ADR inline.
 
-- **None** (the **fast path**). Output exactly `Architecture impact: none (checked slices: <slice paths>)` and hand back to the calling workflow.
-- **Covered by an approved delta.** The issue's `## Architecture delta` carries an `Approved by @<user> on <YYYY-MM-DD>` line and its Before views still match the slices. Implement it faithfully through step 6a without re-approval: apply its After views to the slices and remove the `> Pending approved changes: #N` pointers. A deviation forced by reality, or Before views that no longer match, goes through step 3 as a new delta.
-- **Impact.** Continue with step 3.
+Done when the calling exploration stage's questions are resolved or recorded
+as open. Hand back without demanding a complete architecture or approval.
 
-**Bug fixes** mostly take the fast path. A fix that adds, removes, or reroutes a documented collaboration (a call, dependency, sequence step, or state transition) has impact.
-**Refactors** that change documented structure (moving a type across layers or projects, renaming or splitting a documented interface or class) are architectural even when behaviour is unchanged.
+### Specify: to-spec
 
-**Mid-task trigger.** When impact surfaces after you took the fast path, you MUST stop coding and enter step 3; resume only once the delta is approved.
+Synthesize requirements, scope, acceptance criteria, known constraints, and
+settled decisions. List remaining architecture questions and link their
+evidence. Preserve technical choices already made without inventing answers
+to unresolved ones or restarting their interviews.
 
-Done when you have printed the fast-path line, named the approved delta you will implement, or listed every affected slice, ADR, and standard.
+For architectural work, publish the spec as awaiting architecture design,
+without `ready-for-agent` or `ready-for-human`. Its next stage is the dedicated
+design step, not implementation or automatic ticket creation. If no
+architectural decisions remain because a design is already approved, link it
+and preserve that status.
 
-## 3. Draft the delta in the slices
+Done when the spec states its readiness and the next stage. Hand back; spec
+publication alone does not run or approve the design stage.
 
-1. Before editing, run `git status --porcelain -- ARCHITECTURE.md docs CODING_STANDARDS.md`. If a document you will draft in already has changes, stop and agree with the user how to preserve them; later steps revert your drafts and MUST NOT discard changes you did not make.
-2. Edit each affected slice in the working tree so it shows the target state. Mark elements with the `added`, `removed`, and `changed` draft highlighting from `docs/architecture/conventions.md` § Draft highlighting (classDefs in diagrams, `%% draft:` `rect` wrappers in sequence diagrams, `(added) ` / `(removed) ` / `(changed) ` table-row prefixes); `removed` elements stay drawn until implementation. Verified views (`%% verify:` / `<!-- verify: -->`) MUST stay within the parseability rules of conventions.md.
-3. Draft the wording changes the delta forces in ADRs and `CODING_STANDARDS.md`. Propose a new ADR only for a hard-to-reverse trade-off, judged by the `domain-modeling` ADR criteria.
-4. In chat, summarise the delta, its rationale, and at least one alternative considered with why it lost; list every changed file; point the user at the rendered slices (Markdown preview) and `git --no-pager diff -- ARCHITECTURE.md docs CODING_STANDARDS.md`.
+### Design: after the spec, before tickets
 
-Done when every affected view shows the target state with highlights and the chat summary names every changed file.
+1. Follow the [Git workflow](../../../docs/agents/git-workflow.md) before any
+   repository edit. Draft in the conversation or issue using
+   [DESIGN-TEMPLATE.md](DESIGN-TEMPLATE.md). Keep current-state slices intact.
+2. Reference relevant current docs and state the assumptions the design needs.
+   Inspect living code and docs; a pinned baseline commit is not required.
+3. Draw clean target views at the levels required by architecture conventions.
+   Each view depicts only the target. Explain removals and replacements in a
+   separate change summary. Include proposed ADR/standard wording and tests.
+   Issue-size limits may require linked detail comments on the same spec;
+   index them in the design section and give each detail one authoritative home.
+4. Reuse settled decisions. Invoke `grilling` only for remaining architectural
+   decisions or contradictions. When a product trade-off changes the spec,
+   return that specific question to discussion and update the spec explicitly.
+5. Once open architectural decisions are resolved, summarize the target,
+   rationale, alternatives, affected documents, and validation requirements.
+   Confirm shared understanding, then ask with `ask_user`:
+   `Approve this architecture design? <summary>; affected docs: <paths>`.
+   Only an explicit affirmative answer to that approval question counts.
+6. Record `Approved by @<user> on <YYYY-MM-DD>` and the approved scope in the
+   issue. Changed architectural decisions return the design to Proposed and
+   require renewed approval; editorial changes do not.
 
-## 4. Grill open decisions
+Done when the spec holds an approved, implementable target or explicitly lists
+what still blocks approval. An unapproved design is not implementation-ready.
 
-Invoke the `grilling` skill on the decisions the draft leaves open. Fold each round's answers into the slices and point the user at the updated diff.
+### Decompose: to-tickets
 
-Done when the grilling frontier is empty and the user confirms shared understanding.
+1. Read the spec and approved design. If required architectural decisions are
+   unresolved, return to design rather than publishing ready tickets.
+2. Follow the calling skill's slicing and breakdown review. Each architectural
+   ticket links the design and states its contribution, prerequisites, required
+   end state, current-doc updates, and verification. Use
+   `## Architecture contribution` after its acceptance criteria.
+3. Draw a clean intermediate-state view only when prose cannot unambiguously
+   specify a safe transition. Every commit must keep code and current docs
+   consistent, including work on a shared integration branch.
+4. Dependencies express actual prerequisites. Editing the same slice alone does
+   not make two tickets dependent. Review the route with the user; seek new
+   architecture approval only for changed target decisions or newly introduced
+   intermediate-state decisions. Record that approval alongside the transition.
+5. Publish only the approved breakdown, with readiness matching the tracker
+   guide. The parent spec is the specification, not a second executable ticket.
 
-## 5. Get explicit approval
+Done when every ticket has an unambiguous scope and end state, every real
+prerequisite is recorded, and any new architectural decisions are approved.
 
-Ask one yes/no question with your user-question tool (e.g. `ask_user`): `Approve this architecture delta? <one-line summary>; slices: <paths>`. When the work will be split into separately merged tickets, first cut the delta per ticket as 6b.1 describes and ask once for all of them: `Approve the architecture deltas of these tickets? <ticket titles>`. Only an explicit yes to that question approves the delta. Silence, "continue", a yes to any other question, or a yes to an earlier draft leaves it unapproved: ask again. A no returns you to step 4.
+### Implement: approved work or a small direct change
 
-Record `Approved by @<user> on <YYYY-MM-DD>` with the summary that was approved (`gh api user --jq .login` when you lack the handle). Any later edit to the delta MUST be approved again.
+1. Read the approved design and the ticket's contribution and prerequisites.
+   Recheck relevant assumptions against current code and docs before starting.
+   Unrelated drift does not invalidate approval. On a conflict, stop and
+   reconcile it; changed architectural decisions require renewed approval.
+2. A small direct task needs neither a spec issue nor a ticket breakdown.
+   Use a compact conversation proposal with the same current/target separation,
+   decisions, verification, and explicit approval. Preserve its approval
+   evidence in the handoff and, when authorized, the commit or PR.
+3. Implement only the approved scope. Update affected current-state views,
+   verified views, ADRs, and standards with the code they describe. An
+   intermediate ticket documents its resulting state, not the final target.
+4. Apply the governance review checklist. Run the build and architecture tests:
 
-Done when you hold an approval line for exactly the delta in the working tree.
+   ```text
+   dotnet build --artifacts-path artifacts
+   dotnet test --project tests\ChronicleOfHeros.Architecture.Tests\ChronicleOfHeros.Architecture.Tests.csproj --artifacts-path artifacts
+   ```
 
-## 6. Hand off the approved delta
+5. Update implementation progress in the tracker without replacing the target
+   design with a partially built state. Follow the Git workflow for permissions
+   and handoff; approval does not authorize commits, pushes, or PR creation.
 
-### 6a. Implement now (same session)
+Done when the approved contribution is implemented and verified, current docs
+match the code, tracker progress is accurate, and approval evidence is retained.
 
-1. Implement exactly the approved delta. When the code needs to deviate from it, stop and return to step 3 with the deviation drafted.
-2. Strip all draft highlighting so the slices describe the resulting code: the `classDef added|removed|changed` lines and their `class`/`cssClass`/`:::` assignments; the sequence-diagram `rect` wrappers that start with `%% draft:` (keep the wrapped messages); and the `(added) ` / `(changed) ` table-row prefixes. Delete `removed` elements, messages, and rows.
-3. Commit docs and code together in one commit, with the approval line in the commit message or PR body.
+## Non-interactive work
 
-### 6b. Spec or ticket flow (implemented later)
+Implement only no-impact work or a contribution covered by explicit approval.
+For unapproved impact, post a Proposed design or a scoped amendment as an
+issue/PR comment, apply `needs-architecture-approval`, and stop without
+implementing it. Use the template; leave unresolved decisions visible.
+If posting is unavailable, report the blocker and preserve the proposal in
+the handoff rather than claiming it was published.
 
-1. Write the approved Before/After, approval line filled, into the `## Architecture delta` section of the spec issue, using [DELTA-TEMPLATE.md](DELTA-TEMPLATE.md). When `to-tickets` splits the work into separately merged tickets, each ticket that changes architecture instead holds its own delta covering exactly what it builds, and the spec links to them. Chain tickets that touch the same slice through "Blocked by" so that each ticket's Before equals its predecessor's After.
-2. Revert your slice drafts (`git restore <slices>`; safe because step 3.1 found them unchanged), add `> Pending approved changes: #N` near the top of each affected slice naming the issue that holds its delta (placed as conventions.md shows), and commit the pointers as a docs-only change.
-3. The implementing PR later enters at step 2 ("covered by an approved delta"): it moves the After views into the slices without highlights and removes the pointers.
+## Existing plans
 
-Finish with the branch, issue, commit/push status, validation, and next action as specified in the Git workflow. A triage branch can continue into implementation; do not imply that pending pointers must first be merged to the base branch.
-
-## 7. Completion check
-
-Done when every box holds:
-
-- [ ] Every affected slice matches the code, and no draft highlighting remains (the check command in `docs/architecture/conventions.md` § Draft highlighting prints nothing).
-- [ ] `> Pending approved changes: #N` pointers are added (6b) or removed (when implementing #N); `## Known deviations` reflects reality.
-- [ ] Each touched ADR has an accurate status line under its H1 (e.g. `Status: Accepted, implementation pending (#N)`) and consistent content; any new ADR follows `domain-modeling` conventions.
-- [ ] `CODING_STANDARDS.md` is updated wherever a rule changed, and its architecture-governance review checklist passes for this change.
-- [ ] Every verified view (`%% verify:` / `<!-- verify: -->`) affected by the change is updated.
-- [ ] `dotnet build` and `dotnet test tests/ChronicleOfHeros.Architecture.Tests` pass; the doc-conformance tests compare verified views with the code.
-
-## Non-interactive branch
-
-With no user present (Copilot coding agent, background agent, CI), you implement only fast-path work or work covered by an approved delta. For any other impact your deliverable is the proposal, and you MUST NOT implement any part of the unapproved change:
-
-1. Run steps 1–3, then write the delta in the [DELTA-TEMPLATE.md](DELTA-TEMPLATE.md) format with `Status: Proposed — awaiting approval`.
-2. Post it as a comment on the issue (`gh issue comment <n> --body-file -`, body on stdin) or PR (`gh pr comment <n> --body-file -`).
-3. Apply the label: `gh issue edit <n> --add-label needs-architecture-approval` (`gh pr edit` for a PR).
-4. Revert your slice drafts (step 3.1 found them unchanged) and stop; report the comment URL.
-
-Done when the comment is posted, the label is applied, and the working tree holds no change from this task.
+An approved legacy `## Architecture delta` remains valid for its documented
+scope. Revalidate relevant assumptions; do not require mechanical conversion
+or rebuild its Before/After blocks in the slices. New or revised decisions use
+the design format. Migrate existing draft material only with permission:
+capture and verify its preservation in the issue before removing it from
+current docs. Retain decision/evidence history and its unapproved status.
