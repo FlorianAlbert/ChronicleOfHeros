@@ -18,7 +18,7 @@ Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [api.md](api.
 | Middleware | `UseHttpsRedirection()`, `UseRequestLocalization()`. ASP.NET Core's automatic CSRF protection is enabled implicitly; there is no explicit antiforgery middleware |
 | Endpoints | `MapStaticAssets()`, `MapRazorComponents<App>().AddInteractiveServerRenderMode()`, `MapDisplayLanguageEndpoint()`, `MapDefaultEndpoints()` |
 
-The Web host has no authentication, authorization, session, or Data Protection configuration of its own, and references only `ChronicleOfHeros.ServiceDefaults`. It calls no API operation and exposes no route to the API, so browsers cannot reach the API through it. The AppHost gives it service-discovery entries for `api` (`WithReference(api)`, kept for the future BFF in #84), which it does not use yet ([../system/deployment.md](../system/deployment.md)).
+The Web host has no authentication, authorization, session, or Data Protection configuration of its own, and references only `ChronicleOfHeros.ServiceDefaults`. It calls no API operation and exposes no route to the API, so browsers cannot reach the API through it. The AppHost gives it service-discovery entries for `api` (`WithReference(api)`, kept for the server-to-server API calls in [ADR 0004](../../adr/0004-same-origin-web-api-gateway.md)), which it does not use yet ([../system/deployment.md](../system/deployment.md)).
 
 ## Endpoints
 
@@ -75,4 +75,4 @@ flowchart TD
 
 ## Known deviations
 
-- The Web host has no capability-owned browser adapters for API operations and no Web session. Deviates from [ADR 0004](../../adr/0004-same-origin-web-api-gateway.md) and [CODING_STANDARDS.md § Web and security boundaries](../../../CODING_STANDARDS.md#web-and-security-boundaries): explicit browser adapters, an opaque Web session cookie, and server-held tokens. Tracking: #84.
+- The Web host has no Web session and makes no server-to-server API calls. Deviates from [ADR 0004](../../adr/0004-same-origin-web-api-gateway.md): an opaque Web session cookie and server-held tokens.

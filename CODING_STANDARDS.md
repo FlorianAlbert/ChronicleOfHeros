@@ -241,8 +241,8 @@ See [ADR 0002](docs/adr/0002-postgresql-as-the-datastore.md) and
   `https://` only, never `https+http://`. Transport security for non-HTTP
   protocols, such as PostgreSQL TLS, belongs to the deferred deployment-topology
   decision.
-- The Web host is the sole browser-facing origin. Expose explicit,
-  capability-owned browser adapters rather than a blanket API forwarder.
+- The Web host is the sole browser-facing origin. Web components call the API
+  server-to-server; Web MUST NOT expose a browser route that forwards to the API.
 - The API currently has no application authentication, authorization, or
   application endpoints. Browser mutations require antiforgery validation.
   Keep the approved browser-session direction in
@@ -291,7 +291,7 @@ architecture decision.
   capability's migrations through its migration registration option before
   constructing runtime registration. PGLite, EF Core InMemory, SQLite, mocked
   databases, and mocked internal collaborators are not substitutes.
-- Use distributed-application tests for cross-host behavior such as gateway,
+- Use distributed-application tests for cross-host behavior such as Web-to-API,
   health, and authentication flows, retaining the owned collaborators. Test
   browser-visible behavior with C# Playwright or an Aspire integration test
   rather than mocking a component's own services. Use xUnit v3 for .NET tests
