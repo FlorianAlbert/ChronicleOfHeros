@@ -9,13 +9,13 @@ Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [localization
 | Host | Authentication | Authorization | Browser protections |
 |---|---|---|---|
 | API | None | None | No application endpoints; shared Development health endpoints only |
-| Web | None | None | Antiforgery middleware; manual antiforgery check on `POST /display-language`; HTTPS redirection; HSTS outside Development |
+| Web | None | None | ASP.NET Core automatic CSRF protection (`Sec-Fetch-Site`/`Origin` checks), enforced on `POST /display-language` through form binding; HTTPS redirection; HSTS outside Development |
 
 The API currently has no application authentication, authorization policies, accounts, or protected operations.
 
 ## Cookies
 
-The only application cookie is the display-language preference ([localization.md](localization.md)); it carries no identity. Antiforgery uses ASP.NET Core's default cookie and form token.
+The only application cookie is the display-language preference ([localization.md](localization.md)); it carries no identity. CSRF protection is header-based, so there is no antiforgery cookie or form token.
 
 ## Transport
 

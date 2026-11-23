@@ -15,7 +15,7 @@ Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [api.md](api.
 | Localization | `AddLocalization()`, `MissingTranslationDiagnosticStringLocalizerFactory` as `IStringLocalizerFactory`, `RequestLocalizationOptions.ConfigureDisplayLanguages(["en-US", "de-DE"])` ([../cross-cutting/localization.md](../cross-cutting/localization.md)) |
 | Endpoint adapters | `AddDisplayLanguageEndpoint(["en-US", "de-DE"])` |
 | Error handling | Outside Development only: `UseExceptionHandler("/error")` and `UseHsts()`. Always: `UseStatusCodePagesWithReExecute("/not-found")` |
-| Middleware | `UseHttpsRedirection()`, `UseRequestLocalization()`, `UseAntiforgery()` |
+| Middleware | `UseHttpsRedirection()`, `UseRequestLocalization()`. ASP.NET Core's automatic CSRF protection is enabled implicitly; there is no explicit antiforgery middleware |
 | Endpoints | `MapStaticAssets()`, `MapRazorComponents<App>().AddInteractiveServerRenderMode()`, `MapDisplayLanguageEndpoint()`, `MapDefaultEndpoints()` |
 
 The Web host has no authentication, authorization, session, or Data Protection configuration of its own, and references only `ChronicleOfHeros.ServiceDefaults`. It calls no API operation and exposes no route to the API, so browsers cannot reach the API through it. The AppHost gives it service-discovery entries for `api` (`WithReference(api)`, kept for the future BFF in #84), which it does not use yet ([../system/deployment.md](../system/deployment.md)).
@@ -25,7 +25,7 @@ The Web host has no authentication, authorization, session, or Data Protection c
 | Route | Kind | Behavior |
 |---|---|---|
 | `/`, `/error`, `/not-found` | Razor pages | Static server-side rendering |
-| `POST /display-language` | `DisplayLanguageEndpoint` adapter | Validates antiforgery (400 on failure), stores the chosen culture in a cookie when supported, redirects (302) to a validated local return path ([../cross-cutting/localization.md](../cross-cutting/localization.md)) |
+| `POST /display-language` | `DisplayLanguageEndpoint` adapter | Binds `locale` and `returnUrl` from the form, so a request failing the automatic CSRF check is rejected with 400; stores the chosen culture in a cookie when supported, redirects (302) to a validated local return path ([../cross-cutting/localization.md](../cross-cutting/localization.md)) |
 | `/health`, `/alive` | `MapDefaultEndpoints` | Development only |
 
 The launch profile `https` listens on `https://localhost:7098` only; there is no plain-HTTP URL or `http` profile.
@@ -43,17 +43,13 @@ classDiagram
     class DisplayLanguageEndpoint {
         <<endpoint>>
     }
-    class IAntiforgery {
-        <<interface>>
-    }
     class DisplayLanguageRequestCultureProvider
     DisplayLanguageEndpointExtensions ..> DisplayLanguageEndpoint : register, map
-    DisplayLanguageEndpoint ..> IAntiforgery : validate request
     DisplayLanguageEndpoint ..> DisplayLanguageRequestCultureProvider : PreferenceCookieName
 ```
 
-- Both types are internal, in `ChronicleOfHeros.Web.Endpoints`, each in its own file. `AddDisplayLanguageEndpoint` registers the adapter as scoped, built by an explicit factory from `IAntiforgery` and the supported cultures.
-- The adapter's static `Map(IEndpointRouteBuilder)` maps `POST /display-language` to a lambda that receives the adapter from DI and calls its private `HandleAsync`. The adapter also owns the return-path validation.
+- Both types are internal, in `ChronicleOfHeros.Web.Endpoints`, each in its own file. `AddDisplayLanguageEndpoint` registers the adapter as scoped, built by an explicit factory from the supported cultures.
+- The adapter's static `Map(IEndpointRouteBuilder)` maps `POST /display-language` to a lambda that receives the adapter from DI and the `[FromForm]` values, and calls its private `Handle`. The adapter also owns the return-path validation.
 
 ## Render modes
 

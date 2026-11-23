@@ -287,17 +287,15 @@ public class LandingPageBrowserTests(LandingPageFixture fixture) : IClassFixture
     public async Task Supported_display_language_choice_persists_a_secure_preference_and_returns_to_the_local_path(string selectedLanguage)
     {
         using HttpClient webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
-        (string Token, string Cookie) antiforgery = await GetAntiforgeryTokenAsync(webClient);
         using HttpRequestMessage request = new(HttpMethod.Post, "/display-language")
         {
             Content = new FormUrlEncodedContent(
             [
                 new("locale", selectedLanguage),
                 new("returnUrl", "/?character-sheet"),
-                new("__RequestVerificationToken", antiforgery.Token),
             ]),
         };
-        request.Headers.Add("Cookie", $"{antiforgery.Cookie}; ChronicleOfHeros.DisplayLanguage=en-US");
+        request.Headers.Add("Cookie", "ChronicleOfHeros.DisplayLanguage=en-US");
 
         using HttpResponseMessage response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Found, response.StatusCode);
@@ -315,11 +313,11 @@ public class LandingPageBrowserTests(LandingPageFixture fixture) : IClassFixture
     }
 
     /// <summary>
-    /// Tests that a display language choice submission without an anti-forgery token is rejected with a Bad Request response, verifying the response status and absence of a Set-Cookie header for the preference cookie.
+    /// Tests that a cross-site display language choice submission is rejected by the automatic CSRF protection with a Bad Request response and does not set the preference cookie.
     /// </summary>
     /// <returns>A task representing the asynchronous operation.</returns>
     [Fact]
-    public async Task Display_language_choice_without_an_antiforgery_token_is_rejected()
+    public async Task Cross_site_display_language_choice_is_rejected()
     {
         using HttpClient webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
         using HttpRequestMessage request = new(HttpMethod.Post, "/display-language")
@@ -330,6 +328,7 @@ public class LandingPageBrowserTests(LandingPageFixture fixture) : IClassFixture
                 new("returnUrl", "/"),
             ]),
         };
+        request.Headers.Add("Sec-Fetch-Site", "cross-site");
 
         using HttpResponseMessage response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
 
@@ -349,17 +348,15 @@ public class LandingPageBrowserTests(LandingPageFixture fixture) : IClassFixture
     public async Task Unsupported_display_language_choice_does_not_change_the_preference(string selectedLanguage)
     {
         using HttpClient webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
-        (string Token, string Cookie) antiforgery = await GetAntiforgeryTokenAsync(webClient);
         using HttpRequestMessage request = new(HttpMethod.Post, "/display-language")
         {
             Content = new FormUrlEncodedContent(
             [
                 new("locale", selectedLanguage),
                 new("returnUrl", "/"),
-                new("__RequestVerificationToken", antiforgery.Token),
             ]),
         };
-        request.Headers.Add("Cookie", $"{antiforgery.Cookie}; ChronicleOfHeros.DisplayLanguage=en-US");
+        request.Headers.Add("Cookie", "ChronicleOfHeros.DisplayLanguage=en-US");
 
         using HttpResponseMessage response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
 
@@ -389,11 +386,9 @@ public class LandingPageBrowserTests(LandingPageFixture fixture) : IClassFixture
 #pragma warning restore CA1054 // URI-like parameters should not be strings
     {
         using HttpClient webClient = _fixture.CreateHttpClient(allowAutoRedirect: false);
-        (string Token, string Cookie) antiforgery = await GetAntiforgeryTokenAsync(webClient);
         List<KeyValuePair<string, string>> formValues =
         [
             new("locale", "de-DE"),
-            new("__RequestVerificationToken", antiforgery.Token),
         ];
         if (returnUrl is not null)
         {
@@ -404,7 +399,6 @@ public class LandingPageBrowserTests(LandingPageFixture fixture) : IClassFixture
         {
             Content = new FormUrlEncodedContent(formValues),
         };
-        request.Headers.Add("Cookie", antiforgery.Cookie);
 
         using HttpResponseMessage response = await webClient.SendAsync(request, TestContext.Current.CancellationToken);
 
@@ -503,7 +497,6 @@ public class LandingPageBrowserTests(LandingPageFixture fixture) : IClassFixture
 
             ILocator selector = page.GetByLabel("Display language");
             await Assertions.Expect(selector).ToBeVisibleAsync().ConfigureAwait(false);
-            await Assertions.Expect(page.Locator("input[name='__RequestVerificationToken']")).ToHaveValueAsync(new Regex(".+")).ConfigureAwait(false);
             _ = await selector.SelectOptionAsync("de-DE").ConfigureAwait(false);
 
             await Assertions.Expect(page).ToHaveURLAsync(new Uri(baseAddress, unknownRoute).AbsoluteUri).ConfigureAwait(false);
@@ -801,21 +794,4 @@ public class LandingPageBrowserTests(LandingPageFixture fixture) : IClassFixture
     private static Task<bool> HasVisibleFocusAsync(ILocator locator) =>
         locator.EvaluateAsync<bool>(
             "element => { const style = getComputedStyle(element); return style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) >= 2; }");
-
-    private static async Task<(string Token, string Cookie)> GetAntiforgeryTokenAsync(HttpClient webClient)
-    {
-        Uri landingPageUri = new("/", UriKind.Relative);
-        using HttpResponseMessage response = await webClient.GetAsync(landingPageUri, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        string landingPage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
-        Match tokenMatch = Regex.Match(
-            landingPage,
-            "<input[^>]*name=\"__RequestVerificationToken\"[^>]*value=\"(?<token>[^\"]+)\"",
-            RegexOptions.CultureInvariant);
-        string antiforgeryCookie = response.Headers.GetValues("Set-Cookie")
-            .Select(value => value.Split(';', 2)[0])
-            .Single(value => value.StartsWith(".AspNetCore.Antiforgery.", StringComparison.Ordinal));
-
-        Assert.True(tokenMatch.Success, "The response did not include an antiforgery token.");
-        return (WebUtility.HtmlDecode(tokenMatch.Groups["token"].Value), antiforgeryCookie);
-    }
 }

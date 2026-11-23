@@ -1,35 +1,24 @@
 using ChronicleOfHeros.Web.Services.Localization;
 
-using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ChronicleOfHeros.Web.Endpoints;
 
-internal sealed class DisplayLanguageEndpoint(IAntiforgery antiforgery, string[] supportedCultures)
+internal sealed class DisplayLanguageEndpoint(string[] supportedCultures)
 {
+    // Form binding makes the framework reject requests that fail .NET's automatic CSRF check with 400.
     internal static void Map(IEndpointRouteBuilder endpoints)
     {
         _ = endpoints.MapPost(
             "/display-language",
-            async (HttpContext context, DisplayLanguageEndpoint endpoint) =>
-            {
-                return await endpoint.HandleAsync(context).ConfigureAwait(false);
-            });
+            (HttpContext context, DisplayLanguageEndpoint endpoint, [FromForm] string? locale, [FromForm] string? returnUrl) =>
+                endpoint.Handle(context, locale, returnUrl));
     }
 
-    private async Task<IResult> HandleAsync(HttpContext context)
+    private IResult Handle(HttpContext context, string? locale, string? returnUrl)
     {
-        try
-        {
-            await antiforgery.ValidateRequestAsync(context).ConfigureAwait(false);
-        }
-        catch (AntiforgeryValidationException)
-        {
-            return Results.BadRequest();
-        }
-
-        IFormCollection form = await context.Request.ReadFormAsync(context.RequestAborted).ConfigureAwait(false);
         string? selectedCulture = supportedCultures.FirstOrDefault(culture =>
-            string.Equals(culture, form["locale"], StringComparison.OrdinalIgnoreCase));
+            string.Equals(culture, locale, StringComparison.OrdinalIgnoreCase));
 
         if (selectedCulture is not null)
         {
@@ -47,7 +36,7 @@ internal sealed class DisplayLanguageEndpoint(IAntiforgery antiforgery, string[]
                 });
         }
 
-        return Results.Redirect(GetSafeLocalReturnPath(form["returnUrl"].ToString()));
+        return Results.Redirect(GetSafeLocalReturnPath(returnUrl));
     }
 
     private static string GetSafeLocalReturnPath(string? returnUrl) =>

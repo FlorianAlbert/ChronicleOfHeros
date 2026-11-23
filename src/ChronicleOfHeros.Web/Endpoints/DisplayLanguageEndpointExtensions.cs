@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Antiforgery;
-
 namespace ChronicleOfHeros.Web.Endpoints;
 
 internal static class DisplayLanguageEndpointExtensions
@@ -8,9 +6,7 @@ internal static class DisplayLanguageEndpointExtensions
     {
         public WebApplicationBuilder AddDisplayLanguageEndpoint(string[] supportedCultures)
         {
-            _ = builder.Services.AddScoped(services => new DisplayLanguageEndpoint(
-                services.GetRequiredService<IAntiforgery>(),
-                supportedCultures));
+            _ = builder.Services.AddScoped(_ => new DisplayLanguageEndpoint(supportedCultures));
 
             return builder;
         }
