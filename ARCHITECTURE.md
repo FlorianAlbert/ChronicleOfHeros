@@ -23,7 +23,7 @@ Load only the slices for your task. Add [conventions.md](docs/architecture/conve
 | Add a capability, project, or project reference | [solution/capabilities](docs/architecture/solution/capabilities.md), [solution/projects](docs/architecture/solution/projects.md) |
 | AppHost resource, parameter, or start order | [system/deployment](docs/architecture/system/deployment.md), [flows/startup](docs/architecture/flows/startup.md) |
 | Web page, component, render mode, or Web endpoint | [hosts/web](docs/architecture/hosts/web.md), [cross-cutting/localization](docs/architecture/cross-cutting/localization.md) |
-| Browser-to-API path | [hosts/web](docs/architecture/hosts/web.md), [hosts/api](docs/architecture/hosts/api.md), [system/deployment](docs/architecture/system/deployment.md) |
+| Web-to-API path | [hosts/web](docs/architecture/hosts/web.md), [hosts/api](docs/architecture/hosts/api.md), [system/deployment](docs/architecture/system/deployment.md) |
 | Display languages or translations | [cross-cutting/localization](docs/architecture/cross-cutting/localization.md) |
 | Telemetry, health checks, resilience, service discovery | [cross-cutting/observability](docs/architecture/cross-cutting/observability.md) |
 | Plan a design; write or test architecture docs | [conventions](docs/architecture/conventions.md), then the affected slices |
