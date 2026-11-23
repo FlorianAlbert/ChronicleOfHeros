@@ -25,4 +25,4 @@ The only application cookie is the display-language preference ([localization.md
 
 ## Known deviations
 
-- The API no longer implements the ASP.NET Core Identity/JWT design recorded in [ADR 0006](../../adr/0006-identity-backed-jwt-authentication.md). The browser session and server-held API tokens described by [ADR 0004](../../adr/0004-same-origin-web-api-gateway.md) are also not implemented. The replacement remains tracked in #84; until it is implemented, there are no protected application endpoints.
+- The API no longer implements the ASP.NET Core Identity/JWT design recorded in [ADR 0006](../../adr/0006-identity-backed-jwt-authentication.md). The browser session and server-held API tokens described by [ADR 0004](../../adr/0004-same-origin-web-api-gateway.md) are also not implemented. Until a replacement is implemented, there are no protected application endpoints.
