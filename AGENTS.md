@@ -23,8 +23,8 @@ The repository uses a single-context domain-documentation layout. See `docs/agen
 
 ### Third-party skills
 
-Keep repository-specific guidance outside manually installed third-party skills,
-including `triage` and `dotnet-inspect`; use repository-owned docs and pointers.
+Installed third-party skills are updated only from upstream. Keep repository
+integration in repository-owned docs and pointers, not in those skills.
 
 ### .NET API lookup
 
@@ -40,6 +40,7 @@ For code design, implementation, or review, follow [CODING_STANDARDS.md](CODING_
 ## Workflow gates
 
 - **Git:** Before repository edits or Git writes, follow [the Git workflow](docs/agents/git-workflow.md), including hook installation, task branches, operation permissions, and handoff.
-- **Architecture:** Before every code change, and when planning architecture in specs or tickets, run [architecture-planning](.agents/skills/architecture-planning/SKILL.md). Load [ARCHITECTURE.md](ARCHITECTURE.md) and its task-selected slices. The skill and [architecture governance](CODING_STANDARDS.md#architecture-governance) own approval, pending deltas, and completion checks.
-- **Precedence:** Architecture governance overrides conflicting vendored skills. `to-spec`'s interview restriction does not skip architectural grilling or approval.
-- **Reviews:** Before `code-review`, run the build and architecture tests. Give the Standards reviewer the results and approval evidence from the issue delta, PR description, and commit messages. Tool-enforced checks do not replace the governance approval/test checklist.
+- **Planning:** Run [architecture-planning](.agents/skills/architecture-planning/SKILL.md) at the current stage: explore during grilling/wayfinding; synthesize during `to-spec`; perform dedicated architecture design after the spec and before `to-tickets`; scope contributions during ticket creation. Carry settled decisions forward. Publishing an architecture-impacting spec does not mark it implementation-ready or automatically start the next stage.
+- **Architecture:** Before every code change, run the skill's impact/approval check. Load [ARCHITECTURE.md](ARCHITECTURE.md) and its selected slices. The skill and [architecture governance](CODING_STANDARDS.md#architecture-governance) own approval and completion checks.
+- **Precedence:** Repository governance overrides conflicting installed-skill instructions, including automatic readiness labels and inline ADR writes. Proposed architecture and ADR/standard wording stay in the issue; current-state docs change with implementation.
+- **Reviews:** Before `code-review`, run the build and architecture tests. Give the Standards reviewer the results and approval evidence from the design, ticket contribution, PR description, and commit messages. Tool-enforced checks do not replace the governance approval/test checklist.

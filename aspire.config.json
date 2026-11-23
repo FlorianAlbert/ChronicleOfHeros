@@ -1,5 +1,8 @@
 {
   "appHost": {
     "path": "src/ChronicleOfHeros.AppHost/ChronicleOfHeros.AppHost.csproj"
+  },
+  "sdk": {
+    "version": "17.0.0"
   }
 }

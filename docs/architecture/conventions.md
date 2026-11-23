@@ -1,7 +1,7 @@
 # Architecture documentation conventions
 
-Scope: slice structure, diagram rules, draft highlighting, and the verified-view specification.
-Load when: writing, drafting, or reviewing a slice or an `## Architecture delta`; implementing or fixing doc-conformance tests.
+Scope: slice structure, diagram rules, planning-view separation, and the verified-view specification.
+Load when: writing or reviewing a slice or an `## Architecture design`; implementing or fixing doc-conformance tests.
 Parent: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 
 ## Slice structure
@@ -25,15 +25,23 @@ Parent: [ARCHITECTURE.md](../../ARCHITECTURE.md)
   - <What the code does>. Deviates from [<ADR or standard>](<link>): <what it requires>. Tracking: #N.
   ```
 
-## Pending approved changes
+## Planning-view separation
 
-An approved but unbuilt change lives in its issue's `## Architecture delta`. Each slice the delta changes carries one pointer line directly after the header block, before any other content. It names every issue whose `## Architecture delta` holds part of the change, comma-separated:
+The spec issue's `## Architecture design` holds the target architecture.
+Current-state slices contain no target drafts or pending-design pointers.
+Use the [issue tracker guide](../agents/issue-tracker.md#architecture-design)
+to discover relevant plans.
 
-```text
-> Pending approved changes: #N, #M
-```
+Each target diagram or inventory depicts only the intended state. Explain
+introduced, removed, and replaced elements in a separate change summary.
+Reference current-state views and relevant assumptions rather than embedding
+Before/After overlays or requiring a pinned baseline commit. Recheck those
+assumptions against living code and docs when implementation starts.
 
-The implementing change moves the delta into the slice and removes its issue number; it removes the line once no number is left.
+Ticket contributions reference the approved target and describe their own
+required end state. Add a clean intermediate-state view only when needed to
+make the transition unambiguous. Implementing a ticket updates current slices
+to that increment's actual state, not the effort's unbuilt final target.
 
 ## Diagrams
 
@@ -58,20 +66,12 @@ Diagrams are Mermaid fenced blocks (info string `mermaid`). Inventories are Mark
   - Relationships: `A ..|> B` A implements B; `A <|-- B` B inherits A; `A ..> B : label` A uses B; `A --> B : label` A holds or navigates to B.
 - Node ids are simple identifiers (`[A-Za-z][A-Za-z0-9_]*`) with the full name in `["label"]`.
 
-## Draft highlighting
+## Legacy draft residue
 
-Used only while drafting a delta (see `.agents/skills/architecture-planning/SKILL.md`); never committed in a slice.
-
-| Class | Style | Meaning |
-|---|---|---|
-| `added` | `fill:#dafbe1,stroke:#1a7f37` | The delta adds the element. |
-| `removed` | `fill:#ffebe9,stroke:#cf222e,stroke-dasharray:5 5` | The delta removes the element; it stays drawn until implementation. |
-| `changed` | `fill:#fff8c5,stroke:#9a6700` | The element's relationships, operations, or attributes change. |
-
-- `flowchart`, `classDiagram`, `stateDiagram-v2`, `erDiagram`: declare each class used, at the end of the block, as `classDef <class> <style>`. Mark elements with `<id>:::<class>` or `class <id>,<id> <class>` (class diagrams also accept `cssClass "<id>" <class>`).
-- `sequenceDiagram`: wrap affected messages in `rect rgb(218,251,225)` (added), `rect rgb(255,235,233)` (removed), or `rect rgb(255,248,197)` (changed); the first line inside the `rect` is `%% draft: <class>`.
-- Tables: prefix the first cell of an affected row with `(added) `, `(removed) `, or `(changed) `.
-- Before committing, this command MUST print nothing. It finds every marker form above, including in new files not yet added to git:
+New planning views use no draft highlighting. The verified-view parsers still
+accept legacy markers for compatibility, not as permission to put plans in
+current slices. Before completing a migration or implementation, this command
+MUST print nothing. It finds old highlight markers, including untracked files:
 
   ```text
   git grep -nE --untracked "classDef (added|removed|changed)|:::(added|removed|changed)|^[[:space:]]*(class [A-Za-z0-9_,]+|cssClass [^[:space:]]+) (added|removed|changed)([[:space:];]|$)|%% draft:|rect rgb\((218, ?251, ?225|255, ?235, ?233|255, ?248, ?197)\)|^\| \((added|removed|changed)\) " -- ARCHITECTURE.md docs/architecture ":!docs/architecture/conventions.md"
@@ -97,10 +97,10 @@ Every verified Mermaid view is a flowchart. After the marker, each line, trimmed
 | Line | Form |
 |---|---|
 | Header, exactly once, before nodes and edges | `flowchart <dir>` or `graph <dir>`; `<dir>` is `TB`, `TD`, `BT`, `LR`, or `RL` |
-| Node | `<id>["<label>"]`, optionally followed by `:::<class>` (drafts only) |
+| Node | `<id>["<label>"]`, optionally followed by `:::<class>` (legacy input only) |
 | Edge | `<id> --> <id>` |
 | Comment | starts with `%%` |
-| Draft styling, ignored | `classDef <class> <style>` or `class <id>[,<id>…] <class>` |
+| Legacy styling, ignored | `classDef <class> <style>` or `class <id>[,<id>…] <class>` |
 | Blank | empty |
 
 - `<id>` matches `[A-Za-z][A-Za-z0-9_]*`; `<label>` has one or more characters, none of them `"`.
@@ -120,7 +120,7 @@ flowchart LR
 
 - The header row holds exactly the view's columns, in order. The delimiter row follows (cells match `:?-{3,}:?`). Data rows follow until the first line that does not start with `|`.
 - Rows start and end with `|`. Cells are split on `|` (escaped pipes are not supported), trimmed, and stripped of every backtick character.
-- A first cell starting with `(added) `, `(removed) `, or `(changed) ` loses that prefix before comparison.
+- Legacy input compatibility: a first cell starting with `(added) `, `(removed) `, or `(changed) ` loses that prefix before comparison.
 - `-` means none. List cells separate items with `, ` and compare as sets; a duplicate item fails.
 - Rows compare as a set by key; a duplicate key fails. Row order is free.
 

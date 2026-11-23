@@ -51,12 +51,60 @@ the maintainer before proceeding, and carry the limitation into the agent
 brief. Missing actionable reproduction details are a strong `needs-info` signal.
 Finish with the [Git workflow handoff](git-workflow.md#handoff).
 
-## Architecture delta
+## Architecture design
 
-- A spec or ticket issue with architecture impact (as defined in `CODING_STANDARDS.md#architecture-governance`) carries a `## Architecture delta` section in its body: before/after Mermaid diagrams of the affected slices, approved by the user. Start from `.agents/skills/architecture-planning/DELTA-TEMPLATE.md`.
-- Affected slices point at the issue with `> Pending approved changes: #N` until the implementing change moves the delta into them.
-- A non-interactive agent (no user present) that finds architecture impact without an approved delta posts the proposed delta as an issue or PR comment (`gh issue comment <number> --body-file <file>`), applies the label (`gh issue edit <number> --add-label needs-architecture-approval`), and stops without implementing.
-- After the user approves, the delta moves into the issue body's `## Architecture delta` section with its `Approved by @<user> on <YYYY-MM-DD>` line, and the label is removed (`--remove-label needs-architecture-approval`).
+The [architecture-planning procedure](../../.agents/skills/architecture-planning/SKILL.md)
+integrates installed planning skills without modifying them:
+
+- **Grilling/wayfinding:** record decisions, alternatives, evidence, and open
+  questions. Planning tickets are not implementation tickets.
+- **Spec creation:** publish requirements and settled constraints. For
+  architecture-impacting work awaiting design, state
+  `Readiness: Awaiting architecture design` and keep `needs-triage`; do not
+  apply `ready-for-agent` or `ready-for-human`.
+- **Dedicated design:** use the
+  [design template](../../.agents/skills/architecture-planning/DESIGN-TEMPLATE.md)
+  for `## Architecture design` in the spec issue. It owns the target views,
+  assumptions, decisions, proposed ADR/standard wording, and verification.
+  If the body limit requires detail comments, index their URLs in that
+  section; each detailed view or decision has one authoritative home.
+- **Discovery:** first read the task issue, comments, and parent spec. When
+  another design may affect the same area, search open issues, for example
+  `gh issue list --state open --search '"Architecture design" in:body Keycloak' --json number,title,body`.
+  Replace `Keycloak` with relevant area vocabulary; inspect returned designs
+  for actual overlap. Search matches are not approval evidence. A failed
+  tracker request is a blocker to report, not evidence that no plans exist.
+- **Approval:** record `Status: Approved`,
+  `Approved by @<user> on <YYYY-MM-DD>`, and the approved scope only after the
+  explicit approval question. Unresolved decisions remain Proposed.
+  Approval and implementation progress are separate.
+- **Ticket creation:** each architectural ticket has an
+  `## Architecture contribution` linking the design and specifying its scope,
+  prerequisites, required end state, current-doc updates, and verification.
+  Review the breakdown. New architectural decisions in intermediate states
+  need explicit approval; merely splitting an approved target does not.
+  Set native blocking edges only for real prerequisites. Update the parent
+  with links to its implementation tickets, overriding an installed skill's
+  instruction not to modify the parent.
+- **Readiness:** an approved design may make an unsplit spec implementation-ready
+  once the rest of triage is complete. A split spec stays the parent
+  specification, without an executable readiness label; readiness belongs to
+  its reviewed tickets. A blocked ticket can be fully specified, but its open
+  blocking edges still prevent starting it.
+- **Implementation:** recheck relevant assumptions against living code/docs;
+  no baseline commit is required. Report conflicts and reapprove changed
+  decisions. Update implementation progress in the issue, not target views
+  to pretend the entire design has been built.
+- **No human present:** post an unapproved proposal or amendment with
+  `gh issue comment <number> --body-file <file>` (or the PR equivalent), apply
+  `needs-architecture-approval`, remove executable readiness labels, and stop
+  without implementation. After explicit approval, incorporate the proposal
+  into the issue's design and remove the waiting label. Finish remaining
+  triage or breakdown review before restoring executable readiness.
+
+Current-state slices carry no pending-design pointers. Existing approved
+legacy deltas remain valid for their scope; migrate draft material only with
+permission and verify its preservation before removing it from current docs.
 
 ## Wayfinding operations
 

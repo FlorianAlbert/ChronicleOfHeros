@@ -34,6 +34,8 @@ Finish triage or implementation by naming:
 - the next action: continue implementation on this branch, or open a PR
   against the intended base once implementation and validation are complete.
 
-Approved architecture deltas live in the issue. Pending pointers may accompany
-the implementation on its task branch; they are not a reason to commit on
-`main`. Implementing the delta updates the slices and removes its pointers.
+Approved architecture designs live in the spec issue; tickets link their
+contributions. Current-state slices receive no pending-design pointers.
+Implementation updates the slices to the code's resulting state. For a small
+direct task approved in conversation, retain the approved scope and approval
+line in the handoff and, when authorized, the commit message or PR description.
