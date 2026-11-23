@@ -70,8 +70,8 @@ integrates installed planning skills without modifying them:
   section; each detailed view or decision has one authoritative home.
 - **Discovery:** first read the task issue, comments, and parent spec. When
   another design may affect the same area, search open issues, for example
-  `gh issue list --state open --search '"Architecture design" in:body Keycloak' --json number,title,body`.
-  Replace `Keycloak` with relevant area vocabulary; inspect returned designs
+  `gh issue list --state open --search '"Architecture design" in:body localization' --json number,title,body`.
+  Replace `localization` with relevant area vocabulary; inspect returned designs
   for actual overlap. Search matches are not approval evidence. A failed
   tracker request is a blocker to report, not evidence that no plans exist.
 - **Approval:** record `Status: Approved`,

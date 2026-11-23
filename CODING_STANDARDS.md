@@ -241,17 +241,14 @@ See [ADR 0002](docs/adr/0002-postgresql-as-the-datastore.md) and
   `https://` only, never `https+http://`. Transport security for non-HTTP
   protocols, such as PostgreSQL TLS, belongs to the deferred deployment-topology
   decision.
-- The Web host is the sole browser-facing origin and acts as a backend for
-  frontend (BFF); the API remains an internal JWT-bearer API. Expose explicit,
+- The Web host is the sole browser-facing origin. Expose explicit,
   capability-owned browser adapters rather than a blanket API forwarder.
-- Keep API tokens server-side. Browser authentication uses an opaque Web session
-  cookie; browser mutations require antiforgery validation. Follow the session,
-  token custody, authorization, refresh, and sign-out requirements in
-  [ADR 0004](docs/adr/0004-same-origin-web-api-gateway.md) and
-  [ADR 0006](docs/adr/0006-identity-backed-jwt-authentication.md). Both ADRs
-  are under revision (#84): the current code's departures from this rule and
-  the previous one are known deviations, and agents MUST NOT resolve them
-  outside #84.
+- The API currently has no application authentication, authorization, or
+  application endpoints. Browser mutations require antiforgery validation.
+  Keep the approved browser-session direction in
+  [ADR 0004](docs/adr/0004-same-origin-web-api-gateway.md); the removed
+  ASP.NET Core Identity/JWT implementation in ADR 0006 is not current code.
+  Authentication replacement remains tracked by #84.
 
 See also [ADR 0001](docs/adr/0001-aspire-orchestrated-distributed-architecture.md)
 and [ADR 0003](docs/adr/0003-blazor-static-rendering-with-interactive-server.md).
@@ -311,7 +308,7 @@ architecture decision.
   run on Microsoft.Testing.Platform (see `global.json`), so select a test
   project with `--project`, for example
   `dotnet test --project tests/ChronicleOfHeros.Architecture.Tests/ChronicleOfHeros.Architecture.Tests.csproj`.
-  The AppHost and Identity test projects need Docker. When a running app locks
+  The AppHost test project needs Docker. When a running app locks
   build outputs, add `--artifacts-path artifacts` (git-ignored; it must stay
   inside the repository because the architecture tests locate the repository
   root from their output directory).

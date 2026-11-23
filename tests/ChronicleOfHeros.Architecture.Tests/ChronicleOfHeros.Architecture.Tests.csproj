@@ -20,9 +20,6 @@
   <ItemGroup>
     <ProjectReference Include="../../src/ChronicleOfHeros.Api/ChronicleOfHeros.Api.csproj" />
     <ProjectReference Include="../../src/ChronicleOfHeros.AppHost/ChronicleOfHeros.AppHost.csproj" />
-    <ProjectReference Include="../../src/ChronicleOfHeros.Identity.AspNetCore/ChronicleOfHeros.Identity.AspNetCore.csproj" />
-    <ProjectReference Include="../../src/ChronicleOfHeros.Identity.Contracts/ChronicleOfHeros.Identity.Contracts.csproj" />
-    <ProjectReference Include="../../src/ChronicleOfHeros.Migrations/ChronicleOfHeros.Migrations.csproj" />
     <ProjectReference Include="../../src/ChronicleOfHeros.ServiceDefaults/ChronicleOfHeros.ServiceDefaults.csproj" />
     <ProjectReference Include="../../src/ChronicleOfHeros.Web/ChronicleOfHeros.Web.csproj" />
   </ItemGroup>

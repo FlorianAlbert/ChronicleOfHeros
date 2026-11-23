@@ -15,10 +15,8 @@ Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [localization
 
 | Host | `AddServiceDefaults` | `MapDefaultEndpoints` | Notes |
 |---|---|---|---|
-| API | yes | yes | The Aspire Npgsql integration adds a database health check to `/health`. The AppHost polls `/health` ([../system/deployment.md](../system/deployment.md)). |
+| API | yes | yes | The AppHost polls `/health` ([../system/deployment.md](../system/deployment.md)). |
 | Web | yes | yes | Creates no `HttpClient` and calls no other resource ([../hosts/web.md](../hosts/web.md)). |
-| Migrations | yes | no | Generic host, not a web host; maps no endpoints ([../hosts/migrations.md](../hosts/migrations.md)). |
 
-- Aspire supplies `OTEL_EXPORTER_OTLP_ENDPOINT` to the projects it starts, so the telemetry of the API, Web, and Migrations hosts reaches the Aspire dashboard when the AppHost runs. No resource references a project resource except `web`, which references `api`; Web therefore receives `https` service-discovery entries for `api` but creates no `HttpClient` that uses them ([../system/deployment.md](../system/deployment.md)).
+- Aspire supplies `OTEL_EXPORTER_OTLP_ENDPOINT` to the projects it starts, so the telemetry of the API and Web hosts reaches the Aspire dashboard when the AppHost runs. No resource references a project resource except `web`, which references `api`; Web therefore receives `https` service-discovery entries for `api` but creates no `HttpClient` that uses them ([../system/deployment.md](../system/deployment.md)).
 - No application code creates its own `ActivitySource` or `Meter`, and no health check exists beyond `self` and those integrations add.
-- The `ChronicleOfHerosDbContext` registration keeps the Aspire Npgsql integration's retrying execution strategy ([../capabilities/identity/persistence.md](../capabilities/identity/persistence.md)).

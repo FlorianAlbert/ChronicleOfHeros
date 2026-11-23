@@ -8,32 +8,25 @@ namespace ChronicleOfHeros.Architecture.Tests;
 /// </summary>
 public sealed class VerifiedViewConformanceTests
 {
-    /// <summary>
-    /// Gets the <c>capability-layers:&lt;capability&gt;</c> ids the solution requires.
-    /// </summary>
-    public static TheoryData<string> CapabilityLayerViews => [.. CapabilityLayerModel.Capabilities()
-        .Select(capability => VerifiedViewCheckers.CapabilityLayersPrefix + capability)];
-
-    /// <summary>
-    /// Gets the <c>dbcontext-entities:&lt;DbContext&gt;</c> ids the solution requires.
-    /// </summary>
-    public static TheoryData<string> DbContextEntityViews => [.. DbContextModel.ProductionContexts()
-        .Select(context => VerifiedViewCheckers.DbContextEntitiesPrefix + context.Name)];
-
 #pragma warning disable CA1707 // Identifiers should not contain underscores
+
+    /// <summary>
+    /// Verifies that each <c>capability-layers</c> diagram matches the compiled namespace dependencies of its capability.
+    /// </summary>
+    [Fact]
+    public void Capability_layers_views_match_compiled_dependencies()
+    {
+        foreach (string capability in CapabilityLayerModel.Capabilities())
+        {
+            AssertMatches(VerifiedViewCheckers.CapabilityLayersPrefix + capability);
+        }
+    }
 
     /// <summary>
     /// Verifies that the <c>project-references</c> diagram matches the solution's projects and project references.
     /// </summary>
     [Fact]
     public void Project_references_view_matches_the_solution() => AssertMatches(VerifiedViewCheckers.ProjectReferences);
-
-    /// <summary>
-    /// Verifies that each <c>capability-layers</c> diagram matches the compiled namespace dependencies of its capability.
-    /// </summary>
-    [Theory]
-    [MemberData(nameof(CapabilityLayerViews))]
-    public void Capability_layers_view_matches_compiled_dependencies(string viewId) => AssertMatches(viewId);
 
     /// <summary>
     /// Verifies that the <c>aspire-resources</c> table matches the AppHost's declared resources.
@@ -52,13 +45,6 @@ public sealed class VerifiedViewConformanceTests
     /// </summary>
     [Fact]
     public void Api_endpoints_view_matches_the_mapped_endpoints() => AssertMatches(VerifiedViewCheckers.ApiEndpoints);
-
-    /// <summary>
-    /// Verifies that each <c>dbcontext-entities</c> table matches its EF Core model.
-    /// </summary>
-    [Theory]
-    [MemberData(nameof(DbContextEntityViews))]
-    public void DbContext_entities_view_matches_the_EF_Core_model(string viewId) => AssertMatches(viewId);
 
 #pragma warning restore CA1707 // Identifiers should not contain underscores
 

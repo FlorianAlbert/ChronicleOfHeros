@@ -1,56 +1,46 @@
+using ChronicleOfHeros.Architecture.Tests.CodeModels;
+
 namespace ChronicleOfHeros.Architecture.Tests;
 
 /// <summary>
-/// Verifies that executable hosts remain capability composition and transport adapters.
+/// Verifies that the API and AppHost do not retain the removed authentication capability.
 /// </summary>
 public sealed class HostCompositionRulesTests
 {
 #pragma warning disable CA1707 // Identifiers should not contain underscores
 
     /// <summary>
-    /// Verifies that the API registers Identity exactly once without enabling migrations.
+    /// Verifies that the API currently has no authentication middleware or application endpoints.
     /// </summary>
     [Fact]
-    public void Api_installs_Identity_once_without_enabling_migrations()
+    public void Api_has_no_authentication_or_application_endpoints()
     {
         string program = ReadProgram("src", "ChronicleOfHeros.Api");
 
-        Assert.Equal(1, Count(program, "builder.AddAspNetCoreIdentity("));
-        Assert.DoesNotContain("EnableMigrations", program, StringComparison.Ordinal);
+        Assert.DoesNotContain("AddAuthentication", program, StringComparison.Ordinal);
+        Assert.DoesNotContain("UseAuthentication", program, StringComparison.Ordinal);
+        Assert.DoesNotContain("UseAuthorization", program, StringComparison.Ordinal);
+        Assert.Empty(ApiEndpointModel.Load().Endpoints);
     }
 
     /// <summary>
-    /// Verifies that only the migrations host enables Identity migrations through registration.
+    /// Verifies that the AppHost no longer provisions the removed database migration host.
     /// </summary>
     [Fact]
-    public void Migrations_host_enables_Identity_migrations_through_its_registration_call()
+    public void AppHost_does_not_provision_the_removed_migrations_host()
     {
-        string program = ReadProgram("src", "ChronicleOfHeros.Migrations");
+        AppHostModel model = AppHostModel.Load();
 
-        Assert.Equal(1, Count(program, "builder.AddAspNetCoreIdentity("));
-        Assert.Contains("options => options.EnableMigrations()", program, StringComparison.Ordinal);
-    }
-
-    /// <summary>
-    /// Verifies that the public registration adapter delegates assembly to the DependencyInjection layer.
-    /// </summary>
-    [Fact]
-    public void Public_Identity_registration_does_not_assemble_services()
-    {
-        string registration = File.ReadAllText(ArchitectureTestPaths.FromRoot(
+        Assert.DoesNotContain(model.Resources, resource => resource.Name == "migrations");
+        Assert.DoesNotContain(model.Resources, resource => resource.Name == "postgres");
+        Assert.False(File.Exists(ArchitectureTestPaths.FromRoot(
             "src",
-            "ChronicleOfHeros.Identity.AspNetCore",
-            "AspNetCoreIdentityRegistration.cs"));
-
-        Assert.Contains("IdentityCapabilityRegistration.Register", registration, StringComparison.Ordinal);
-        Assert.DoesNotContain("builder.Services", registration, StringComparison.Ordinal);
-        Assert.DoesNotContain("AddNpgsqlDbContext", registration, StringComparison.Ordinal);
+            "ChronicleOfHeros.Migrations",
+            "ChronicleOfHeros.Migrations.csproj")));
     }
 
 #pragma warning restore CA1707 // Identifiers should not contain underscores
 
     private static string ReadProgram(params string[] directory) =>
         File.ReadAllText(ArchitectureTestPaths.FromRoot([.. directory, "Program.cs"]));
-
-    private static int Count(string value, string needle) => value.Split(needle, StringSplitOptions.None).Length - 1;
 }

@@ -112,8 +112,8 @@ Every verified Mermaid view is a flowchart. After the marker, each line, trimmed
 %% verify: project-references
 flowchart LR
     api["ChronicleOfHeros.Api"]
-    contracts["ChronicleOfHeros.Identity.Contracts"]
-    api --> contracts
+    serviceDefaults["ChronicleOfHeros.ServiceDefaults"]
+    api --> serviceDefaults
 ```
 
 ### Table grammar
@@ -128,7 +128,7 @@ flowchart LR
 <!-- verify: api-endpoints -->
 | Method | Route | Adapter | Authorization |
 |---|---|---|---|
-| GET | /players/me | CurrentPlayerEndpoint | Policy:Player |
+| GET | /characters | ListCharactersEndpoint | None |
 ```
 
 ### View catalogue
@@ -140,7 +140,6 @@ flowchart LR
 | `aspire-resources` | table | [system/deployment.md](system/deployment.md) | Resource | always |
 | `aspire-parameters` | table | [system/deployment.md](system/deployment.md) | Parameter | always |
 | `api-endpoints` | table | [hosts/api.md](hosts/api.md) | Method + Route | always |
-| `dbcontext-entities:<DbContext>` | table | `capabilities/<capability>/persistence.md` | Entity | one per production `DbContext` |
 
 #### `project-references`
 
@@ -184,14 +183,6 @@ Columns: `Method | Route | Adapter | Authorization`. Extracted from the syntax o
 - Authorization, from calls chained on the endpoint or its groups: `Anonymous` for `AllowAnonymous()`, `Policy:<name>` per string argument of `RequireAuthorization(…)`, `Authenticated` for `RequireAuthorization()` without arguments, `None` when there is none of these.
 - Shared `MapDefaultEndpoints` routes live in `ChronicleOfHeros.ServiceDefaults` and are out of scope.
 - A `Map*` call or `RequireAuthorization` argument that is not a string literal makes the check fail ("code not extractable"); it is never silently ignored.
-
-#### `dbcontext-entities:<DbContext>`
-
-Columns: `Entity | Table`. Compared with the runtime EF Core model:
-
-- Required for each non-abstract `DbContext` subclass in a production assembly; `<DbContext>` is its class name.
-- The test creates the context with the Npgsql provider and a placeholder connection string (the model needs no connection) and reads `Model.GetEntityTypes()`.
-- Entity: the CLR type name without namespace; a generic type is written `Name<Arg>`, with C# keyword aliases such as `string`. Table: `GetTableName()`, or `-` when null.
 
 ### Failure messages
 

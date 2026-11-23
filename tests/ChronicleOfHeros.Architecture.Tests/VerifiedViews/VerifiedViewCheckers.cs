@@ -22,9 +22,6 @@ internal static class VerifiedViewCheckers
     /// <summary>The <c>capability-layers:&lt;capability&gt;</c> view id prefix.</summary>
     internal const string CapabilityLayersPrefix = "capability-layers:";
 
-    /// <summary>The <c>dbcontext-entities:&lt;DbContext&gt;</c> view id prefix.</summary>
-    internal const string DbContextEntitiesPrefix = "dbcontext-entities:";
-
     /// <summary>The <c>aspire-resources</c> columns.</summary>
     internal static readonly TableSchema AspireResourcesSchema = new(
         ["Resource", "Declared by", "Parent", "Project", "References", "Waits for", "Health check"],
@@ -43,11 +40,8 @@ internal static class VerifiedViewCheckers
         ["Method", "Route"],
         ["Authorization"]);
 
-    /// <summary>The <c>dbcontext-entities:&lt;DbContext&gt;</c> columns.</summary>
-    internal static readonly TableSchema DbContextEntitiesSchema = new(["Entity", "Table"], ["Entity"], []);
-
     /// <summary>
-    /// Gets every view id the code requires: the fixed ids, one per capability contracts project, and one per production <c>DbContext</c>.
+    /// Gets every view id the code requires: the fixed ids and one per capability contracts project.
     /// </summary>
     internal static IReadOnlyList<string> RequiredIds() =>
         [
@@ -56,7 +50,6 @@ internal static class VerifiedViewCheckers
             AspireParameters,
             ApiEndpoints,
             .. CapabilityLayerModel.Capabilities().Select(capability => CapabilityLayersPrefix + capability),
-            .. DbContextModel.ProductionContexts().Select(context => DbContextEntitiesPrefix + context.Name),
         ];
 
     /// <summary>
@@ -70,8 +63,6 @@ internal static class VerifiedViewCheckers
         ApiEndpoints => CheckApiEndpoints(view),
         string id when id.StartsWith(CapabilityLayersPrefix, StringComparison.Ordinal) =>
             CheckCapabilityLayers(view, id[CapabilityLayersPrefix.Length..]),
-        string id when id.StartsWith(DbContextEntitiesPrefix, StringComparison.Ordinal) =>
-            CheckDbContextEntities(view, id[DbContextEntitiesPrefix.Length..]),
         _ => throw new InvalidOperationException($"{view.Location}: no checker is registered for verified view '{view.Id}'."),
     };
 
@@ -147,20 +138,5 @@ internal static class VerifiedViewCheckers
         return new ViewDifferences()
             .CompareRows(ApiEndpointsSchema, TableView.Parse(view, ApiEndpointsSchema), actual)
             .AddCodeErrors(errors);
-    }
-
-    private static ViewDifferences CheckDbContextEntities(VerifiedView view, string contextName)
-    {
-        Type? context = DbContextModel.ProductionContexts().SingleOrDefault(type => type.Name == contextName);
-        IEnumerable<TableRow> actual = context is null
-            ? []
-            : DbContextModel.Entities(context).Select(entity => TableRows.Create(DbContextEntitiesSchema, new Dictionary<string, string>(StringComparer.Ordinal)
-            {
-                ["Entity"] = entity.Entity,
-                ["Table"] = entity.Table,
-            }));
-        return new ViewDifferences()
-            .CompareRows(DbContextEntitiesSchema, TableView.Parse(view, DbContextEntitiesSchema), actual)
-            .AddCodeErrors(context is null ? [$"no production DbContext named '{contextName}' exists."] : []);
     }
 }

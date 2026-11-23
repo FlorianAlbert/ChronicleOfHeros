@@ -20,15 +20,6 @@ public sealed class VerifiedViewMutationTests
     }
 
     /// <summary>
-    /// Verifies that removing a documented layer dependency is reported as missing from the doc.
-    /// </summary>
-    [Fact]
-    public void Removed_capability_layer_edge_is_reported()
-    {
-        AssertRemovedEdgeIsReported(VerifiedViewCheckers.CapabilityLayersPrefix + CapabilityLayerModel.Capabilities()[0], "dependency");
-    }
-
-    /// <summary>
     /// Verifies that removing a project node is reported and that a project node without a project is reported.
     /// </summary>
     [Fact]
@@ -69,35 +60,6 @@ public sealed class VerifiedViewMutationTests
     public void Fake_aspire_parameter_row_is_reported()
     {
         AssertAddedRowIsReported(VerifiedViewCheckers.AspireParameters, "| fake-parameter | yes | api:Fake__Value |");
-    }
-
-    /// <summary>
-    /// Verifies that a fake entity row is reported as missing from the code.
-    /// </summary>
-    [Fact]
-    public void Fake_entity_row_is_reported()
-    {
-        AssertAddedRowIsReported(
-            VerifiedViewCheckers.DbContextEntitiesPrefix + DbContextModel.ProductionContexts()[0].Name,
-            "| `FakeEntity` | FakeEntities |");
-    }
-
-    /// <summary>
-    /// Verifies that changing a documented cell is reported as a differing row.
-    /// </summary>
-    [Fact]
-    public void Changed_parameter_secret_is_reported_as_differing()
-    {
-        VerifiedView original = ArchitectureDocuments.Repository.Single(VerifiedViewCheckers.AspireParameters);
-        DocumentLine firstRow = original.Body[2];
-        string[] cells = firstRow.Text.Split('|');
-        cells[2] = cells[2].Contains("yes", StringComparison.Ordinal) ? " no " : " yes ";
-        VerifiedView mutated = Mutate(original, lines => lines.Select(line => line.Number == firstRow.Number ? string.Join('|', cells) : line.Text));
-
-        string message = VerifiedViewCheckers.Check(mutated).ToFailureMessage(mutated);
-
-        Assert.Contains("column 'Secret'", message, StringComparison.Ordinal);
-        Assert.Contains(original.Location, message, StringComparison.Ordinal);
     }
 
     /// <summary>

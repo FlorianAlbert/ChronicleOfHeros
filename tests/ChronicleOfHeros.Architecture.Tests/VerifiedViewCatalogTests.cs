@@ -1,3 +1,4 @@
+using ChronicleOfHeros.Architecture.Tests.CodeModels;
 using ChronicleOfHeros.Architecture.Tests.VerifiedViews;
 
 namespace ChronicleOfHeros.Architecture.Tests;
@@ -60,7 +61,7 @@ public sealed class VerifiedViewCatalogTests
     }
 
     /// <summary>
-    /// Verifies that the required view ids include the fixed catalogue entries and one per capability and DbContext.
+    /// Verifies that the required view ids include the fixed catalogue entries and one per capability.
     /// </summary>
     [Fact]
     public void Required_views_cover_the_catalogue()
@@ -71,8 +72,8 @@ public sealed class VerifiedViewCatalogTests
         Assert.Contains(VerifiedViewCheckers.AspireResources, required);
         Assert.Contains(VerifiedViewCheckers.AspireParameters, required);
         Assert.Contains(VerifiedViewCheckers.ApiEndpoints, required);
-        Assert.Contains(required, id => id.StartsWith(VerifiedViewCheckers.CapabilityLayersPrefix, StringComparison.Ordinal));
-        Assert.Contains(required, id => id.StartsWith(VerifiedViewCheckers.DbContextEntitiesPrefix, StringComparison.Ordinal));
+        Assert.All(CapabilityLayerModel.Capabilities(), capability =>
+            Assert.Contains(VerifiedViewCheckers.CapabilityLayersPrefix + capability, required));
     }
 
 #pragma warning restore CA1707 // Identifiers should not contain underscores

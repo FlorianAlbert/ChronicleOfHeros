@@ -28,8 +28,7 @@ public sealed class LandingPageFixture : IAsyncLifetime
     public async ValueTask InitializeAsync()
     {
         IDistributedApplicationTestingBuilder appHost = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.ChronicleOfHeros_AppHost>(
-                BootstrapOperatorTestParameters.CreateAppHostArguments()).ConfigureAwait(false);
+            .CreateAsync<Projects.ChronicleOfHeros_AppHost>().ConfigureAwait(false);
         _ = appHost.Services.AddHttpClient(NoRedirectWebClientName)
             .ConfigurePrimaryHttpMessageHandler(static () => new HttpClientHandler
             {
