@@ -24,9 +24,9 @@ flowchart TD
 
 ## Display-language selector
 
-`DisplayLanguageSelector` renders a form with an antiforgery token, a `returnUrl`, and a `locale` select that submits on change to `POST /display-language` ([../hosts/web.md](../hosts/web.md)). The endpoint:
+`DisplayLanguageSelector` renders a form with a `returnUrl` and a `locale` select that submits on change to `POST /display-language` ([../hosts/web.md](../hosts/web.md)). The endpoint:
 
-1. Validates antiforgery; 400 on failure.
+1. Binds `locale` and `returnUrl` from the form; a request failing ASP.NET Core's automatic CSRF check (for example `Sec-Fetch-Site: cross-site`) is rejected with 400.
 2. When `locale` matches a supported culture (case-insensitive), sets cookie `ChronicleOfHeros.DisplayLanguage`: 400 days (`Expires` and `Max-Age`), `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`. An unsupported value sets nothing.
 3. Redirects with 302 to `returnUrl` if it is a safe local path (relative; after repeated URL-decoding it starts with a single `/` and contains no `\`), else to `/`.
 
