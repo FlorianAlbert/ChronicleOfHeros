@@ -3,7 +3,10 @@ using ChronicleOfHeros.Web.Endpoints;
 using ChronicleOfHeros.Web.Extensions;
 using ChronicleOfHeros.Web.Services.Localization;
 
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.Localization;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +23,22 @@ builder.Services.Configure<RequestLocalizationOptions>(
 
 builder.AddDisplayLanguageEndpoint(supportedCultures);
 
+builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+    .AddCookie()
+    .AddKeycloakOpenIdConnect(
+        serviceName: "keycloak",
+        realm: "chronicleofheroes",
+        options =>
+        {
+            // The default "https+http://" authority fails the HTTPS metadata check; resolve HTTPS only.
+            options.Authority = "https://keycloak/realms/chronicleofheroes";
+            options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            options.ClientId = "chronicleofheroes-web";
+            options.ResponseType = OpenIdConnectResponseType.Code;
+            options.Scope.Add("chronicleofheroes:all");
+        });
+builder.Services.AddAuthorizationBuilder();
+
 WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -32,6 +51,9 @@ if (!app.Environment.IsDevelopment())
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
 app.UseRequestLocalization();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()

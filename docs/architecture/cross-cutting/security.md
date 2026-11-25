@@ -26,3 +26,4 @@ The only application cookie is the display-language preference ([localization.md
 ## Known deviations
 
 - The API no longer implements the ASP.NET Core Identity/JWT design recorded in [ADR 0006](../../adr/0006-identity-backed-jwt-authentication.md). The browser session and server-held API tokens described by [ADR 0004](../../adr/0004-same-origin-web-api-gateway.md) are also not implemented. Until a replacement is implemented, there are no protected application endpoints.
+- The current first-run/development realm import creates a Keycloak user with Player and Operator realm roles from Aspire parameters and requires `UPDATE_PASSWORD`. Only Keycloak receives the secret bootstrap password. This user is not Keycloak's `master`-realm administrator, and assigning realm roles does not implement application account management or authorization. The import skips an existing realm; it is not a tracked, verified production setup.

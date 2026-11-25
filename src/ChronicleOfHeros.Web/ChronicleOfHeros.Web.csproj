@@ -8,4 +8,8 @@
     <ProjectReference Include="../ChronicleOfHeros.ServiceDefaults/ChronicleOfHeros.ServiceDefaults.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Aspire.Keycloak.Authentication" />
+  </ItemGroup>
+
 </Project>

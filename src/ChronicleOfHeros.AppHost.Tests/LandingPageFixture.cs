@@ -29,6 +29,8 @@ public sealed class LandingPageFixture : IAsyncLifetime
     {
         IDistributedApplicationTestingBuilder appHost = await DistributedApplicationTestingBuilder
             .CreateAsync<Projects.ChronicleOfHeros_AppHost>().ConfigureAwait(false);
+        appHost.Configuration["Parameters:bootstrap-operator-username"] = "test-operator";
+        appHost.Configuration["Parameters:bootstrap-operator-password"] = Guid.NewGuid().ToString("N");
         _ = appHost.Services.AddHttpClient(NoRedirectWebClientName)
             .ConfigurePrimaryHttpMessageHandler(static () => new HttpClientHandler
             {
