@@ -15,7 +15,7 @@ The API has no protected operations yet. Neither host defines authorization poli
 
 ## Sign-in and sign-out
 
-- **Sign in:** `POST /authentication/login` challenges the OpenID Connect scheme. Keycloak authenticates the user, runs any required actions (the bootstrap Operator must update their password and complete the default user profile on first sign-in) and redirects to `/signin-oidc`. Web then issues its authentication cookie and redirects to the validated local `returnUrl`.
+- **Sign in:** `POST /authentication/login` challenges the OpenID Connect scheme. Keycloak authenticates the user, runs any required actions (the bootstrap Operator must update their password and complete the realm user profile on first sign-in; username, first name, and last name are required, while email is optional for end users) and redirects to `/signin-oidc`. Web then issues its authentication cookie and redirects to the validated local `returnUrl`.
 - **Sign out:** `POST /authentication/logout` signs out of the cookie and the OpenID Connect scheme. Keycloak's end-session endpoint receives the saved `id_token` as hint, ends the Keycloak session, and returns through `/signout-callback-oidc` to `/`.
 - **Display name:** inbound claims are not mapped. `preferred_username` is the name claim; the header shows the `name` claim when present.
 

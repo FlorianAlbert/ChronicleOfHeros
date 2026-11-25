@@ -36,8 +36,7 @@ public class AuthenticationBrowserTests(LandingPageFixture fixture) : IClassFixt
             await page.Locator("#password-confirm").FillAsync(newPassword).ConfigureAwait(false);
             await page.Locator("#password-confirm").PressAsync("Enter").ConfigureAwait(false);
 
-            // Keycloak's default user profile requires these before completing the first sign-in.
-            await page.GetByLabel("Email").FillAsync("operator@example.test").ConfigureAwait(false);
+            // The realm profile requires a name but leaves email optional.
             await page.GetByLabel("First name").FillAsync("Test").ConfigureAwait(false);
             await page.GetByLabel("Last name").FillAsync("Operator").ConfigureAwait(false);
             await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync().ConfigureAwait(false);
