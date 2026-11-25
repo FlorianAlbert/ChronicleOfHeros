@@ -9,10 +9,12 @@ Parent: [ARCHITECTURE.md](../../../ARCHITECTURE.md) · Neighbours: [web.md](web.
 `Program.cs` (top-level statements), in order:
 
 1. `AddServiceDefaults()` ([../cross-cutting/observability.md](../cross-cutting/observability.md)).
-2. Build the application.
-3. `MapDefaultEndpoints()`.
+2. `AddAuthentication().AddKeycloakJwtBearer("keycloak", "chronicleofheroes")` with authority `https://keycloak/realms/chronicleofheroes` and audience `chronicleofheroes-api`; `AddAuthorizationBuilder()` without policies.
+3. Build the application.
+4. `UseHttpsRedirection()`, `UseAuthentication()`, `UseAuthorization()`.
+5. `MapDefaultEndpoints()`.
 
-The API currently has no authentication or authorization services, application endpoints, or database integration. It has no HTTPS redirection, exception handler, CORS, or antiforgery middleware; configuration comes from the AppHost ([../system/deployment.md](../system/deployment.md)).
+The API has no application endpoints or database integration, so no endpoint requires a bearer token yet. It has no exception handler, CORS, or antiforgery middleware; configuration comes from the AppHost ([../system/deployment.md](../system/deployment.md)).
 
 ## Endpoints
 

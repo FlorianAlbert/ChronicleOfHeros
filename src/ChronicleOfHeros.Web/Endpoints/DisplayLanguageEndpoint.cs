@@ -36,39 +36,6 @@ internal sealed class DisplayLanguageEndpoint(string[] supportedCultures)
                 });
         }
 
-        return Results.Redirect(GetSafeLocalReturnPath(returnUrl));
-    }
-
-    private static string GetSafeLocalReturnPath(string? returnUrl) =>
-        IsSafeLocalReturnPath(returnUrl) ? returnUrl! : "/";
-
-    private static bool IsSafeLocalReturnPath(string? returnUrl)
-    {
-        if (string.IsNullOrWhiteSpace(returnUrl)
-            || returnUrl.Contains('\\', StringComparison.Ordinal)
-            || !Uri.TryCreate(returnUrl, UriKind.Relative, out _))
-        {
-            return false;
-        }
-
-        int pathEnd = returnUrl.IndexOfAny(['?', '#']);
-        string encodedPath = pathEnd < 0 ? returnUrl : returnUrl[..pathEnd];
-        string decodedPath = encodedPath;
-
-        while (true)
-        {
-            string nextPath = Uri.UnescapeDataString(decodedPath);
-            if (nextPath == decodedPath)
-            {
-                break;
-            }
-
-            decodedPath = nextPath;
-        }
-
-        return decodedPath[0] == '/'
-               && !decodedPath.StartsWith("//", StringComparison.Ordinal)
-               && !decodedPath.StartsWith("/\\", StringComparison.Ordinal)
-               && !decodedPath.Contains('\\', StringComparison.Ordinal);
+        return Results.Redirect(LocalReturnPath.GetSafe(returnUrl));
     }
 }

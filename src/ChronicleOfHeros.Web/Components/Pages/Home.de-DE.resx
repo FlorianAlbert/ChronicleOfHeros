@@ -39,9 +39,6 @@
   <data name="CharacterSheets" xml:space="preserve">
     <value>Charakterbögen</value>
   </data>
-  <data name="ComingSoon" xml:space="preserve">
-    <value>Demnächst</value>
-  </data>
   <data name="Constitution" xml:space="preserve">
     <value>Konstitution</value>
   </data>

@@ -24,13 +24,23 @@ public sealed class LandingPageFixture : IAsyncLifetime
 
     private Uri BaseAddress { get; set; } = null!;
 
+    /// <summary>
+    /// Gets the username of the bootstrap Operator imported into the Keycloak realm.
+    /// </summary>
+    public string BootstrapUsername { get; } = "test-operator";
+
+    /// <summary>
+    /// Gets the initial password of the bootstrap Operator imported into the Keycloak realm.
+    /// </summary>
+    public string BootstrapPassword { get; } = Guid.NewGuid().ToString("N");
+
     /// <inheritdoc/>
     public async ValueTask InitializeAsync()
     {
         IDistributedApplicationTestingBuilder appHost = await DistributedApplicationTestingBuilder
             .CreateAsync<Projects.ChronicleOfHeros_AppHost>().ConfigureAwait(false);
-        appHost.Configuration["Parameters:bootstrap-operator-username"] = "test-operator";
-        appHost.Configuration["Parameters:bootstrap-operator-password"] = Guid.NewGuid().ToString("N");
+        appHost.Configuration["Parameters:bootstrap-operator-username"] = BootstrapUsername;
+        appHost.Configuration["Parameters:bootstrap-operator-password"] = BootstrapPassword;
         _ = appHost.Services.AddHttpClient(NoRedirectWebClientName)
             .ConfigurePrimaryHttpMessageHandler(static () => new HttpClientHandler
             {

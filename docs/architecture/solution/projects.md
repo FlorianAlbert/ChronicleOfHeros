@@ -27,9 +27,9 @@ flowchart LR
 
 | Project | Role | Production packages beyond the SDK |
 |---|---|---|
-| `ChronicleOfHeros.AppHost` | Aspire orchestrator; adds hosts by path, not by reference | `Aspire.Hosting.Dotnet` |
-| `ChronicleOfHeros.Api` | Executable ASP.NET Core host; currently only shared health endpoints | none |
-| `ChronicleOfHeros.Web` | Executable host: Blazor Web App | none |
+| `ChronicleOfHeros.AppHost` | Aspire orchestrator; adds hosts by path, not by reference | `Aspire.Hosting.Dotnet`, `Aspire.Hosting.Keycloak`, `Aspire.Hosting.PostgreSQL`, `CommunityToolkit.Aspire.Hosting.Keycloak.Extensions` |
+| `ChronicleOfHeros.Api` | Executable ASP.NET Core host; currently only shared health endpoints | `Aspire.Keycloak.Authentication` |
+| `ChronicleOfHeros.Web` | Executable host: Blazor Web App | `Aspire.Keycloak.Authentication` |
 | `ChronicleOfHeros.ServiceDefaults` | Shared host defaults: telemetry, health, service discovery, resilience | `Microsoft.Extensions.Http.Resilience`, `Microsoft.Extensions.ServiceDiscovery`, `OpenTelemetry.*` (exporter, hosting, ASP.NET Core, HTTP, runtime) |
 | `ChronicleOfHeros.AppHost.Tests` | Distributed-application and Playwright browser tests | test only |
 | `ChronicleOfHeros.Architecture.Tests` | ArchUnitNET, project-file, and doc-conformance rules | test only |

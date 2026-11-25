@@ -23,7 +23,11 @@ builder.Services.Configure<RequestLocalizationOptions>(
 
 builder.AddDisplayLanguageEndpoint(supportedCultures);
 
-builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+    })
     .AddCookie()
     .AddKeycloakOpenIdConnect(
         serviceName: "keycloak",
@@ -36,8 +40,13 @@ builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
             options.ClientId = "chronicleofheroes-web";
             options.ResponseType = OpenIdConnectResponseType.Code;
             options.Scope.Add("chronicleofheroes:all");
+            // Keeps the id_token for the Keycloak end-session request on sign-out.
+            options.SaveTokens = true;
+            options.MapInboundClaims = false;
+            options.TokenValidationParameters.NameClaimType = "preferred_username";
         });
 builder.Services.AddAuthorizationBuilder();
+builder.Services.AddCascadingAuthenticationState();
 
 WebApplication app = builder.Build();
 
@@ -60,6 +69,7 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.MapDisplayLanguageEndpoint();
+app.MapAuthenticationEndpoints();
 
 app.MapDefaultEndpoints();
 

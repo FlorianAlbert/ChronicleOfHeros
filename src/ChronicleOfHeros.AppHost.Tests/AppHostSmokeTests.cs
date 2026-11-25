@@ -29,7 +29,8 @@ public class AppHostSmokeTests(LandingPageFixture fixture) : IClassFixture<Landi
         Assert.Contains(">Armor<", landingPage, StringComparison.Ordinal);
         Assert.Contains(">Initiative<", landingPage, StringComparison.Ordinal);
         Assert.Contains(">Speed<", landingPage, StringComparison.Ordinal);
-        Assert.Matches("<button[^>]*disabled[^>]*>Coming soon</button>", landingPage);
+        Assert.Matches("<button[^>]*>Sign in</button>", landingPage);
+        Assert.DoesNotContain("Coming soon", landingPage, StringComparison.Ordinal);
         Assert.DoesNotContain("prototype-switcher", landingPage, StringComparison.Ordinal);
         Assert.DoesNotContain("Visual Prototype", landingPage, StringComparison.Ordinal);
     }

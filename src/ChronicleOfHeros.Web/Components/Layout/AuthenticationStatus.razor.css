@@ -1,0 +1,25 @@
+.authentication-status {
+    align-items: center;
+    display: flex;
+    gap: 0.75rem;
+}
+
+.greeting {
+    color: var(--ink, #1d2630);
+    font: 700 0.78rem "Trebuchet MS", sans-serif;
+    white-space: nowrap;
+}
+
+.authentication-status button {
+    background: var(--signal, #b9412a);
+    border: 0;
+    color: #ffffff;
+    cursor: pointer;
+    font: 700 0.78rem "Trebuchet MS", sans-serif;
+    padding: 0.75rem 1rem;
+}
+
+.authentication-status :focus-visible {
+    outline: 2px solid var(--signal, #b9412a);
+    outline-offset: 3px;
+}

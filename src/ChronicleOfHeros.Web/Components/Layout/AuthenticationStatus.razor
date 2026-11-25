@@ -1,0 +1,45 @@
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject NavigationManager NavigationManager
+@inject IStringLocalizer<AuthenticationStatus> Localizer
+
+<AuthorizeView>
+    <Authorized>
+        <form class="authentication-status" method="post" action="/authentication/logout">
+            <span class="greeting">@Localizer["Greeting", GetDisplayName(context.User) ?? string.Empty]</span>
+            <button type="submit">@Localizer["SignOut"]</button>
+        </form>
+    </Authorized>
+    <NotAuthorized>
+        <form class="authentication-status" method="post" action="/authentication/login">
+            <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+            <button type="submit">@Localizer["SignIn"]</button>
+        </form>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [CascadingParameter(Name = "OriginalPathAndQuery")]
+    private string? OriginalPathAndQuery { get; set; }
+
+    private string ReturnUrl
+    {
+        get
+        {
+            if (OriginalPathAndQuery is not null)
+            {
+                return OriginalPathAndQuery;
+            }
+
+            var currentUri = new Uri(NavigationManager.Uri);
+            return currentUri.PathAndQuery + currentUri.Fragment;
+        }
+    }
+
+    private static string? GetDisplayName(ClaimsPrincipal user)
+    {
+        string? fullName = user.FindFirst("name")?.Value;
+        return string.IsNullOrWhiteSpace(fullName) ? user.Identity?.Name : fullName;
+    }
+}
