@@ -1,0 +1,200 @@
+.login-pf {
+    --paper: #f5f6f2;
+    --paper-raised: #ffffff;
+    --ink: #1d2630;
+    --ink-muted: #586169;
+    --rule: #cbd1c9;
+    --signal: #b9412a;
+    --pf-global--primary-color--100: var(--signal);
+    --pf-global--primary-color--200: var(--ink);
+    --pf-global--active-color--100: var(--signal);
+    --pf-global--FontFamily--text: "Trebuchet MS", sans-serif;
+    background: var(--paper);
+}
+
+.login-pf body {
+    background:
+        linear-gradient(rgba(29, 38, 48, 0.025) 1px, transparent 1px) 0 0 / 100% 2rem,
+        var(--paper);
+    color: var(--ink);
+    font: 1rem/1.6 "Trebuchet MS", sans-serif;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.login-pf-page {
+    padding: 0 1.5rem 3rem;
+}
+
+#kc-header {
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink);
+    margin: 0 auto clamp(2.5rem, 7vw, 5rem);
+    max-width: 1136px;
+    padding: 1.25rem 0;
+    text-align: left;
+}
+
+#kc-header-wrapper {
+    color: var(--ink);
+    font: 700 1.25rem Georgia, "Times New Roman", serif;
+    letter-spacing: 0;
+    padding: 0;
+    text-transform: none;
+}
+
+.login-pf-page .card-pf {
+    background: var(--paper-raised);
+    border: 1px solid var(--ink);
+    box-shadow: 12px 12px 0 #d9ded5;
+    margin: 0 auto;
+    max-width: 32rem;
+    padding: clamp(1.25rem, 4vw, 2.5rem);
+    width: 100%;
+}
+
+.login-pf-page .login-pf-header {
+    margin-bottom: 1.75rem;
+}
+
+h1#kc-page-title {
+    color: var(--ink);
+    font: 500 clamp(2rem, 5vw, 2.75rem)/1.15 Georgia, "Times New Roman", serif;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+#kc-content-wrapper {
+    margin-top: 1.5rem;
+}
+
+.login-pf .pf-c-form__label,
+.login-pf .pf-c-form__label-text {
+    color: var(--ink);
+    font: 700 0.75rem/1.5 "Courier New", monospace;
+    letter-spacing: 0.04em;
+}
+
+.login-pf .pf-c-form-control {
+    background-color: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: 0;
+    color: var(--ink);
+    font: inherit;
+    min-height: 2.75rem;
+    padding: 0.6rem 0.75rem;
+}
+
+.login-pf .pf-c-form-control:hover {
+    border-color: var(--ink-muted);
+}
+
+.login-pf .pf-c-form-control[aria-invalid="true"] {
+    border-color: var(--signal);
+}
+
+.login-pf .pf-c-input-group {
+    min-width: 0;
+}
+
+.login-pf .pf-c-button {
+    border-radius: 0;
+    font: 700 0.8rem/1.5 "Trebuchet MS", sans-serif;
+    min-height: 2.75rem;
+}
+
+.login-pf .pf-c-button.pf-m-primary {
+    background-color: var(--signal);
+    color: var(--paper-raised);
+    padding: 0.8rem 1rem;
+}
+
+.login-pf .pf-c-button.pf-m-primary:hover {
+    background-color: var(--ink);
+}
+
+.login-pf .pf-c-button.pf-m-control,
+.login-pf .pf-c-button.btn-default {
+    background-color: var(--paper);
+    border: 1px solid var(--rule);
+    color: var(--ink);
+}
+
+.login-pf a,
+.login-pf a:hover {
+    color: var(--signal);
+    text-underline-offset: 0.2rem;
+}
+
+.login-pf :is(a, button, input, select, textarea):focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 4px;
+}
+
+.login-pf .pf-c-alert {
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--signal);
+    box-shadow: none;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+
+.login-pf .pf-c-alert__title {
+    color: var(--ink);
+    font-family: "Trebuchet MS", sans-serif;
+}
+
+.login-pf .subtitle,
+.login-pf .instruction,
+.login-pf .pf-c-form__helper-text {
+    color: var(--ink-muted);
+}
+
+.login-pf .pf-m-error,
+.login-pf .required {
+    color: var(--signal);
+}
+
+/* Keycloak's required-fields header uses a floated grid that pushes the title off-centre. */
+.login-pf-page .login-pf-header > div {
+    display: flex;
+    flex-direction: column-reverse;
+    margin: 0;
+}
+
+.login-pf-page .login-pf-header > div > [class*="col-"] {
+    float: none;
+    padding: 0;
+    width: 100%;
+}
+
+.login-pf-page .login-pf-header .subtitle {
+    font-size: 0.9rem;
+    margin-top: 0.75rem;
+    text-align: center;
+}
+
+#kc-info {
+    margin: 1.5rem 0 0;
+}
+
+#kc-info-wrapper {
+    background: var(--paper);
+    border-top: 1px solid var(--rule);
+    font-size: 0.9rem;
+    padding: 1rem;
+}
+
+@media (max-width: 767px) {
+    .login-pf-page {
+        padding: 0 1.25rem 2rem;
+    }
+
+    .login-pf-page .card-pf {
+        box-shadow: 6px 6px 0 #d9ded5;
+    }
+
+    #kc-header {
+        white-space: normal;
+    }
+}

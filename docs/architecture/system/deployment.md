@@ -34,7 +34,8 @@ flowchart LR
 - `WithReference(api)` gives Web a service-discovery entry for `api` over its single `https` endpoint. Web does not use it yet.
 - The API and Web launch profiles declare only `https` URLs, so each project resource has a single `https` endpoint and no plain-HTTP endpoint. Both health checks poll `/health` on that endpoint.
 - API waits for Keycloak; Web waits for Keycloak and API health. `/health` exists only in the Development environment ([../cross-cutting/observability.md](../cross-cutting/observability.md)).
-- Keycloak uses `keycloakdb` through `WithPostgres` and imports `chronicleofheroes-realm.json` on startup. No application database, migration host, explicit persistent lifetime, or data volume is declared.
+- Keycloak uses `keycloakdb` through `WithPostgres` and imports `Keycloak/chronicleofheroes-realm.json` on startup. No application database, migration host, explicit persistent lifetime, or data volume is declared.
+- AppHost bind-mounts its `Keycloak/themes/chronicleofheros` directory read-only at `/opt/keycloak/themes/chronicleofheros`. The realm import selects that login theme; it inherits Keycloak's `keycloak` theme and adds local CSS and the product wordmark without replacing templates. Keep the theme directory available on the container host when using this bind-mount configuration outside local development.
 - `WEB_PUBLIC_ORIGIN` comes from `web.GetEndpoint("https").PrimaryBrowserOrigin`. This deferred browser-facing origin is not rewritten to a container address and does not require Web to start before Keycloak.
 
 ## Parameters
@@ -58,3 +59,8 @@ URLs and initial Operator. It is initialization only: Keycloak skips an existing
 realm entirely, including changed URLs, users and passwords. Update an existing
 realm through Keycloak administration instead of expecting redeployment to apply
 the import. Retain PostgreSQL storage separately when data must survive redeployment.
+
+For an existing `chronicleofheroes` realm, select **chronicleofheros** under
+**Realm settings > Themes > Login theme** after starting Keycloak with the theme
+mount. Do not delete the realm or its database to apply a theme change. The
+account console, admin console, and email themes remain unchanged.

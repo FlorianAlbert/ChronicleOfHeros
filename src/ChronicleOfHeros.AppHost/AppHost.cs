@@ -9,7 +9,8 @@ IResourceBuilder<PostgresServerResource> postgres = builder.AddPostgres("postgre
 
 IResourceBuilder<PostgresDatabaseResource> keycloakDatabase = postgres.AddDatabase("keycloakdb");
 IResourceBuilder<KeycloakResource> keycloak = builder.AddKeycloak("keycloak", 8080)
-    .WithRealmImport("./chronicleofheroes-realm.json")
+    .WithRealmImport("./Keycloak/chronicleofheroes-realm.json")
+    .WithBindMount("./Keycloak/themes/chronicleofheros", "/opt/keycloak/themes/chronicleofheros", isReadOnly: true)
     .WithEnvironment("CHRONICLE_BOOTSTRAP_USERNAME", bootstrapUsername)
     .WithEnvironment("CHRONICLE_BOOTSTRAP_PASSWORD", bootstrapPassword)
     .WithPostgres(keycloakDatabase);

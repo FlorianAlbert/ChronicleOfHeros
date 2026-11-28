@@ -1,6 +1,7 @@
 {
   "id": "40e71360-fdd5-4cec-aed7-08fa83ddfccc",
   "realm": "chronicleofheroes",
+  "loginTheme": "chronicleofheros",
   "notBefore": 0,
   "defaultSignatureAlgorithm": "RS256",
   "revokeRefreshToken": false,
